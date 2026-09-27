@@ -2,6 +2,7 @@ package theflogat.technomancy;
 
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
@@ -10,6 +11,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import theflogat.technomancy.common.energy.EnergyUnits;
+import theflogat.technomancy.common.essentia.fuel.EssentiaFuelLoader;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.registry.TechnomBlocks;
 import theflogat.technomancy.common.registry.TechnomCreativeTabs;
@@ -45,6 +47,8 @@ public final class Technomancy {
         TechnomCreativeTabs.TABS.register(modBus);
 
         modBus.addListener(this::commonSetup);
+        // Server-side data: the aspect fuel table is a data pack, so it reloads with /reload.
+        MinecraftForge.EVENT_BUS.addListener(EssentiaFuelLoader::onAddReloadListener);
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                 () -> () -> theflogat.technomancy.client.TechnomancyClient.init(modBus));
     }
