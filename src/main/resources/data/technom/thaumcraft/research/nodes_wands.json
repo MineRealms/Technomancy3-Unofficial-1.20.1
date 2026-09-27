@@ -1,0 +1,69 @@
+{
+  "entries": [
+    {
+      "key": "technom:NODEDYNAMO",
+      "forge:conditions": [
+        {
+          "type": "forge:and",
+          "values": [
+            {
+              "type": "forge:item_exists",
+              "item": "technom:node_dynamo"
+            },
+            {
+              "type": "forge:item_exists",
+              "item": "technom:essentia_dynamo"
+            }
+          ]
+        }
+      ],
+      "category": "technom:TECHNOMANCY",
+      "aspects": {
+        "auram": 5,
+        "potentia": 5,
+        "machina": 3
+      },
+      "display_column": 3,
+      "display_row": 1,
+      "complexity": 2,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:node_dynamo"
+        }
+      },
+      "flags": [
+        "SECONDARY"
+      ],
+      "parents": [
+        "technom:DYNAMO"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.NODEDYNAMO.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "ARCANE_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:arcane/node_dynamo"
+          ]
+        }
+      ]
+    }
+  ]
+}

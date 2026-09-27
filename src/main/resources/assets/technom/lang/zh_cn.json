@@ -30,5 +30,11 @@
   "technom.research_page.DYNAMO.2": "用红石火把右击能源炉可以使能源炉变成反转红石信号模式。使用火药右击能源炉可以使能源炉忽略红石信号。使用红石右击能源炉可以重置红石信号设定。使用大多数的扳手都可以改变能源炉的输出方向。",
   "technom.research_page.DYNAMO.4": "你也发现了当能源炉的燃料增加的时候，能量输出也会相应增长。使用力量宝石右击能源炉可以让能源炉的消耗和输出都变成4倍。空手潜行右击能源炉可以移除力量宝石。",
   "technom.research_page.QUANTUMJARS.1": "你发现了一种利用万能的科学的力量的方法来让要素罐子能容纳更多源质。这种新罐子用量子原理来使其中寄宿着一只神奇的猫来增加存储上限,量子罐子也变得机智一点,它的吸力比没贴标签的罐子更强并且随源质含量增长。它也因此有些不稳定，天知道什么时候会不会飞出一只猫来。",
-  "technom.research_page.TECHNOBASICS.1": "经过一系列系统的探索,你想要把电子产品和魔法结合在一起，从而合成一些新的基础材料。可能会创造出一些神奇的机械。"
+  "technom.research_page.TECHNOBASICS.1": "经过一系列系统的探索,你想要把电子产品和魔法结合在一起，从而合成一些新的基础材料。可能会创造出一些神奇的机械。",
+  "block.technom.node_dynamo": "节点能源炉",
+  "block.technom.node_dynamo.rate": "从 %2$s 格内的灵气节点抽取魔力，输出 %1$s Q/t",
+  "block.technom.node_dynamo.per_vis": "每点魔力相当于 %s 点燃料值，按 essentiaFuelScale 缩放",
+  "tc.research_name.technom:NODEDYNAMO": "节点能源炉",
+  "tc.research_text.technom:NODEDYNAMO": "来自灵气本身的能量。",
+  "technom.research_page.NODEDYNAMO.1": "通过对魔法能量的进一步研究,你意识到节点中的魔力与物品中所含有的源质十分相似。通过消耗节点的能量,你可以让它的魔力流出变为能量。记得将发电机放置在节点下方并连接足够管线。它的红石控制与源质能源炉相同。"
 }

@@ -30,6 +30,15 @@ public final class TechnomBlockEntities {
                     .of(EssentiaDynamoBlockEntity::new, TechnomBlocks.ESSENTIA_DYNAMO.get())
                     .build(null));
 
+    // ---- S2 nodes, wands and fusion ----
+
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.nodes.NodeDynamoBlockEntity>> NODE_DYNAMO =
+            TYPES.register("node_dynamo", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.nodes.NodeDynamoBlockEntity::new, TechnomBlocks.NODE_DYNAMO.get())
+                    .build(null));
+
+    // ---- end S2 nodes, wands and fusion ----
+
     private TechnomBlockEntities() {
     }
 }

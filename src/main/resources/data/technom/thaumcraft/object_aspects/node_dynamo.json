@@ -1,0 +1,16 @@
+{
+  "forge:conditions": [
+    {
+      "type": "forge:item_exists",
+      "item": "technom:node_dynamo"
+    }
+  ],
+  "direct": {
+    "technom:node_dynamo": {
+      "machina": 10,
+      "potentia": 8,
+      "auram": 6,
+      "metallum": 6
+    }
+  }
+}

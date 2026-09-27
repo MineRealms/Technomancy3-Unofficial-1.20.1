@@ -87,6 +87,23 @@ public final class TechnomBlocks {
                     .noOcclusion()
                     .isValidSpawn((state, level, pos, type) -> false)));
 
+    // ---- S2 nodes, wands and fusion ----
+
+    /**
+     * {@code nodeDynamo}. Burns Vis drained from nearby aura nodes; see
+     * {@link theflogat.technomancy.common.tiles.nodes.NodeDynamoBlockEntity}.
+     */
+    public static final RegistryObject<Block> NODE_DYNAMO = register("node_dynamo",
+            () -> new theflogat.technomancy.common.blocks.nodes.NodeDynamoBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .strength(3.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)));
+
+    // ---- end S2 nodes, wands and fusion ----
+
     private TechnomBlocks() {
     }
 

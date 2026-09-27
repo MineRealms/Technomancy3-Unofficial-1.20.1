@@ -30,5 +30,11 @@
   "technom.research_page.DYNAMO.2": "Right clicking on the Dynamo with a Redstone Torch will cause the Dynamo to be disabled by a redstone signal, Gunpowder will make it ignore redstone, and Redstone Dust will return it to its original behavior. The dynamo can be rotated using most wrenches.",
   "technom.research_page.DYNAMO.4": "You have also discovered that Dynamos can have their power output increased at the cost of fuel consumption. By right clicking on the Dynamo with a Potency Gem, the Dynamo will output four times the power, but will also consume four times the fuel. Shift Right clicking on the Dynamo with an empty hand will remove the Potency Gem.",
   "technom.research_page.QUANTUMJARS.1": "You have discovered a way to use the power of the almighty science to cram more essentia into a jar. This new jar uses quantum mechanics to increase its maximum storage capacity and therefore can be a bit unstable. The quantum jar is a bit more intelligent and has a higher suction rate than unlabeled warded jars and its suction increases depending on the amount of essentia within it.",
-  "technom.research_page.TECHNOBASICS.1": "After a series of scientific discoveries, you've figured out ways to incorporate your pre-existing electronics into your new magical discoveries unlocking some new basic materials."
+  "technom.research_page.TECHNOBASICS.1": "After a series of scientific discoveries, you've figured out ways to incorporate your pre-existing electronics into your new magical discoveries unlocking some new basic materials.",
+  "block.technom.node_dynamo": "Node Dynamo",
+  "block.technom.node_dynamo.rate": "%s Q/t from Vis drained out of aura nodes within %s blocks",
+  "block.technom.node_dynamo.per_vis": "One Vis is worth %s fuel points, scaled by essentiaFuelScale",
+  "tc.research_name.technom:NODEDYNAMO": "Node Dynamo",
+  "tc.research_text.technom:NODEDYNAMO": "Power from the aura itself.",
+  "technom.research_page.NODEDYNAMO.1": "Continuing your research into magical energy, you have realised that the vis of a node is not unlike the essentia held in items. A Node Dynamo drains one vis at a time from aura nodes and jarred nodes within four blocks, never taking the last point of an aspect, and burns it into Forge Energy through its output face. Its redstone behaviour, potency gem and rotation work exactly as on the Essentia Dynamo."
 }

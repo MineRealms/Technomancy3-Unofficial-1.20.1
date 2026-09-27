@@ -1,0 +1,39 @@
+{
+  "type": "thaumcraft:arcane_shaped",
+  "conditions": [
+    {
+      "type": "forge:item_exists",
+      "item": "technom:node_dynamo"
+    }
+  ],
+  "research": "technom:NODEDYNAMO",
+  "pattern": [
+    " C ",
+    "GIG",
+    "IRI"
+  ],
+  "key": {
+    "C": {
+      "item": "technom:enchanted_coil"
+    },
+    "G": {
+      "item": "technom:neutronized_gear"
+    },
+    "I": {
+      "item": "technom:neutronized_metal"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "result": {
+    "item": "technom:node_dynamo",
+    "count": 1
+  },
+  "vis": {
+    "terra": 5,
+    "ordo": 25,
+    "ignis": 15,
+    "perditio": 10
+  }
+}
