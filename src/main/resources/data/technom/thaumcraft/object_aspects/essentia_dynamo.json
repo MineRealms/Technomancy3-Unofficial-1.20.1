@@ -1,0 +1,17 @@
+{
+  "forge:conditions": [
+    {
+      "type": "forge:item_exists",
+      "item": "technom:essentia_dynamo"
+    }
+  ],
+  "direct": {
+    "technom:essentia_dynamo": {
+      "machina": 12,
+      "potentia": 8,
+      "aqua": 6,
+      "perditio": 6,
+      "metallum": 6
+    }
+  }
+}

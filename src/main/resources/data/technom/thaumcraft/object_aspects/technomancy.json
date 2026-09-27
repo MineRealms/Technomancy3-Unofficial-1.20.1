@@ -1,0 +1,35 @@
+{
+  "direct": {
+    "technom:neutronized_metal": {
+      "metallum": 4,
+      "ordo": 2,
+      "potentia": 2
+    },
+    "technom:enchanted_coil": {
+      "metallum": 2,
+      "potentia": 3,
+      "praecantatio": 2
+    },
+    "technom:neutronized_gear": {
+      "metallum": 6,
+      "machina": 4,
+      "ordo": 2
+    },
+    "technom:potency_gem": {
+      "potentia": 6,
+      "vitreus": 2,
+      "lucrum": 2
+    },
+    "technom:quantized_glass": {
+      "vitreus": 4,
+      "ordo": 2,
+      "ignis": 1
+    },
+    "technom:quantum_jar": {
+      "vitreus": 12,
+      "ordo": 8,
+      "vacuos": 6,
+      "metallum": 4
+    }
+  }
+}
