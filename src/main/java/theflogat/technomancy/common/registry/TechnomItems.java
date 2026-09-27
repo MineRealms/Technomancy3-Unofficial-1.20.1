@@ -30,6 +30,12 @@ public final class TechnomItems {
     /** {@code itemBoost}: quadruples a dynamo's throughput, not its efficiency. */
     public static final RegistryObject<Item> POTENCY_GEM = simple("potency_gem");
 
+    // ---- S2 coils ----
+    /** {@code coilCoupler}: links a coil to the blocks it draws from. */
+    public static final RegistryObject<Item> COIL_COUPLER = ITEMS.register("coil_coupler",
+            () -> new theflogat.technomancy.common.items.coils.CoilCouplerItem(new Item.Properties().stacksTo(1)));
+    // ---- end S2 coils ----
+
     private TechnomItems() {
     }
 
