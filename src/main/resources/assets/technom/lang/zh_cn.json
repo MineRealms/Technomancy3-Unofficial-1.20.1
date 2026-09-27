@@ -41,5 +41,11 @@
   "item.Wand.technom:electric.rod": "激发能量",
   "tc.research_name.technom:ROD_electric": "激发能量杖柄",
   "tc.research_text.technom:ROD_electric": "抽尽能量!",
-  "technom.research_page.ROD_electric.1": "通过给普通的银树杖芯注入能量,机械结构赋予它特殊的魔力消耗特性。当你的背包里有激活的RF容器时,法杖会从RF容器中抽取能量来填充它的魔力储存。这个杖柄有25vis魔力储存值，虽然看上去不是非常多但是补充方便。每 100 Q 充入 1 厘魔力，即 1 点魔力需 10000 Q；任意提供 Forge Energy 的电池都可作为能源。"
+  "technom.research_page.ROD_electric.1": "通过给普通的银树杖芯注入能量,机械结构赋予它特殊的魔力消耗特性。当你的背包里有激活的RF容器时,法杖会从RF容器中抽取能量来填充它的魔力储存。这个杖柄有25vis魔力储存值，虽然看上去不是非常多但是补充方便。每 100 Q 充入 1 厘魔力，即 1 点魔力需 10000 Q；任意提供 Forge Energy 的电池都可作为能源。",
+  "item.technom.technoturge_core": "激发中子杖柄",
+  "item.Wand.technom:technoturge.rod": "激发中子",
+  "tc.research_name.technom:TECHNOTURGESCEPTER": "激发中子杖柄",
+  "tc.research_text.technom:TECHNOTURGESCEPTER": "这才是工作的正确姿势！",
+  "technom.research_page.TECHNOTURGESCEPTER.1": "在受够了激发能量杖芯的低容量之后，你开始进行魔改来增加它的容量。然而不论你如何尝试，最终得到的总是一个超大的装置，这对于日常使用来说并没有什么卵用。但是现在你已经充分掌握了杖芯的制作工艺，你最终意识到这些失败的实验会让你完成一个完美的杖柄。激发中子杖柄拥有每种要素150vis的容量，并且可以使用任意的RF充能站进行充能。甚至可以当作一个扳手来使用它。哼哼，也许熟练以后可以当作撬棍来用？权杖每种原始魔力存 150，可用法杖充能底座或任意 Forge Energy 源充能，每 100 Q 换 1 厘魔力。",
+  "technom.research_page.TECHNOTURGESCEPTER.2": "组装使用神秘时代自带的权杖配方：三个相同法杖帽、一个神秘护符和 Technoturges 杆芯，因此还需要「权杖」研究。权杖在 Technomancy 机器上算作扳手；旧版对其他模组扳手接口和旋转方块的支持不在本次移植范围内。"
 }

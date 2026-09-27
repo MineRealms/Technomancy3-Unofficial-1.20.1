@@ -16,6 +16,22 @@
         "texture": "technom:textures/models/electricwand.png",
         "order": 100
       }
+    },
+    "technom:technoturge_core": {
+      "forge:conditions": [
+        {
+          "type": "forge:item_exists",
+          "item": "technom:technoturge_core"
+        }
+      ],
+      "value": {
+        "material": "technom:technoturge",
+        "capacity": 100,
+        "craft_cost": 11,
+        "research": "technom:TECHNOTURGESCEPTER",
+        "texture": "technom:textures/models/electricwand.png",
+        "order": 101
+      }
     }
   }
 }

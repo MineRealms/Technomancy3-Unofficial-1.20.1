@@ -41,5 +41,11 @@
   "item.Wand.technom:electric.rod": "Energized",
   "tc.research_name.technom:ROD_electric": "Energized Wand",
   "tc.research_text.technom:ROD_electric": "Drain all the energy!",
-  "technom.research_page.ROD_electric.1": "Infusing a normal silverwood wand core with some energy and machines gives it special properties at the cost of its vis storage. With any Forge Energy battery in your inventory, the wand draws energy from it to refill its own vis storage at 100 Q per centivis, that is 10000 Q for one whole vis of a primal aspect. This wand can store 25 vis of each primal."
+  "technom.research_page.ROD_electric.1": "Infusing a normal silverwood wand core with some energy and machines gives it special properties at the cost of its vis storage. With any Forge Energy battery in your inventory, the wand draws energy from it to refill its own vis storage at 100 Q per centivis, that is 10000 Q for one whole vis of a primal aspect. This wand can store 25 vis of each primal.",
+  "item.technom.technoturge_core": "Technoturges Scepter Core",
+  "item.Wand.technom:technoturge.rod": "Technoturges",
+  "tc.research_name.technom:TECHNOTURGESCEPTER": "Technoturges Scepter",
+  "tc.research_text.technom:TECHNOTURGESCEPTER": "The right tool for every job!",
+  "technom.research_page.TECHNOTURGESCEPTER.1": "After struggling with the low storage of the Energized Wand, you have started experimenting with ways to increase this capacity. No matter what you try, you always end up with a rod which is too big for normal use as a wand. But now that you have mastered scepters, you realise these failed experiments would make a perfect scepter core! The Technoturges Scepter holds 150 vis of each primal and recharges from a wand recharge pedestal or from any Forge Energy source, at 100 Q per centivis.",
+  "technom.research_page.TECHNOTURGESCEPTER.2": "Assembly is Thaumcraft's own scepter recipe: three identical wand caps, a thaumic charm and the Technoturges core, which also means it needs the Scepters research. The scepter counts as a wrench on Technomancy machines; the 1.7.10 version's wrench support for other mods and its block-rotation gestures are not part of this port."
 }

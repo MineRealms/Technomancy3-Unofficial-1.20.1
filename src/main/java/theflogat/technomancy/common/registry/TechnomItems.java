@@ -38,6 +38,17 @@ public final class TechnomItems {
      * {@link theflogat.technomancy.common.wands.TechnomWandRods}.
      */
     public static final RegistryObject<Item> ENERGIZED_WAND_CORE = simple("energized_wand_core");
+    /**
+     * {@code itemWandCores:1}, the technoturge sceptre rod. Glinted, as {@code hasEffect} was for
+     * metadata 1; both cores shared one icon in 1.7.10 and still do.
+     */
+    public static final RegistryObject<Item> TECHNOTURGE_CORE = ITEMS.register("technoturge_core",
+            () -> new Item(new Item.Properties()) {
+                @Override
+                public boolean isFoil(net.minecraft.world.item.ItemStack stack) {
+                    return true;
+                }
+            });
 
     // ---- end S2 nodes, wands and fusion ----
 

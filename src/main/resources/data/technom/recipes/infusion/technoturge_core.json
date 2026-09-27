@@ -1,0 +1,50 @@
+{
+  "type": "thaumcraft:infusion",
+  "conditions": [
+    {
+      "type": "forge:item_exists",
+      "item": "technom:technoturge_core"
+    }
+  ],
+  "research": "technom:TECHNOTURGESCEPTER",
+  "central": {
+    "item": "thaumcraft:silverwood_wand_rod"
+  },
+  "components": [
+    {
+      "item": "technom:energized_wand_core"
+    },
+    {
+      "item": "technom:enchanted_coil"
+    },
+    {
+      "item": "technom:energized_wand_core"
+    },
+    {
+      "item": "technom:enchanted_coil"
+    },
+    {
+      "item": "technom:energized_wand_core"
+    },
+    {
+      "item": "technom:enchanted_coil"
+    }
+  ],
+  "instability": 20,
+  "aspects": {
+    "potentia": 64,
+    "praecantatio": 64,
+    "machina": 64,
+    "permutatio": 64,
+    "ignis": 32,
+    "terra": 32,
+    "aer": 32,
+    "aqua": 32,
+    "ordo": 32,
+    "perditio": 32
+  },
+  "result": {
+    "item": "technom:technoturge_core",
+    "count": 1
+  }
+}

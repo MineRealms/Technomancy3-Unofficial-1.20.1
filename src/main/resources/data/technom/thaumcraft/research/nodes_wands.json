@@ -125,6 +125,83 @@
           ]
         }
       ]
+    },
+    {
+      "key": "technom:TECHNOTURGESCEPTER",
+      "forge:conditions": [
+        {
+          "type": "forge:item_exists",
+          "item": "technom:technoturge_core"
+        }
+      ],
+      "category": "technom:TECHNOMANCY",
+      "aspects": {
+        "instrumentum": 5,
+        "praecantatio": 5,
+        "potentia": 5,
+        "permutatio": 5
+      },
+      "display_column": -1,
+      "display_row": 3,
+      "complexity": 3,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:technoturge_core"
+        }
+      },
+      "flags": [
+        "HIDDEN"
+      ],
+      "parents": [
+        "technom:ROD_electric"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [
+        {
+          "item": "technom:energized_wand_core"
+        }
+      ],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.TECHNOTURGESCEPTER.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:infusion/technoturge_core"
+          ]
+        },
+        {
+          "type": "SCEPTRE_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.TECHNOTURGESCEPTER.2",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        }
+      ]
     }
   ]
 }

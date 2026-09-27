@@ -1,8 +1,17 @@
 {
   "forge:conditions": [
     {
-      "type": "forge:item_exists",
-      "item": "technom:energized_wand_core"
+      "type": "forge:and",
+      "values": [
+        {
+          "type": "forge:item_exists",
+          "item": "technom:energized_wand_core"
+        },
+        {
+          "type": "forge:item_exists",
+          "item": "technom:technoturge_core"
+        }
+      ]
     }
   ],
   "direct": {
@@ -12,6 +21,13 @@
       "praecantatio": 8,
       "machina": 6,
       "permutatio": 4
+    },
+    "technom:technoturge_core": {
+      "potentia": 20,
+      "instrumentum": 12,
+      "praecantatio": 12,
+      "machina": 10,
+      "permutatio": 8
     }
   }
 }

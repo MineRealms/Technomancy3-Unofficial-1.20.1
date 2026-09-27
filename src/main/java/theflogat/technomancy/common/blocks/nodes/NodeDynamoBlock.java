@@ -35,11 +35,11 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import theflogat.technomancy.common.blocks.dynamo.EssentiaDynamoBlock;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.registry.TechnomItems;
 import theflogat.technomancy.common.tiles.base.RedstoneControl;
 import theflogat.technomancy.common.tiles.nodes.NodeDynamoBlockEntity;
+import theflogat.technomancy.common.wands.TechnomWrench;
 
 /**
  * The node dynamo block. Same four right-click interactions as the essentia dynamo (potency gem,
@@ -146,7 +146,7 @@ public class NodeDynamoBlock extends BaseEntityBlock {
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
-        if (held.is(EssentiaDynamoBlock.WRENCHES)) {
+        if (TechnomWrench.isWrench(held)) {
             return turn(level, pos, dynamo);
         }
         InteractionResult redstone = RedstoneControl.interact(dynamo.redstone(), level, pos, player, held);
