@@ -87,6 +87,15 @@ dependencies {
         runtimeOnly(fg.deobf("com.gregtechceu.gtceu:gtceu-1.20.1:${gtceu_version}", { transitive = false }))
         // LDLib, Registrate and Configuration are embedded by GTCEu.
     }
+
+    testImplementation(platform("org.junit:junit-bom:${junit_version}"))
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
+    testLogging { events 'failed'; exceptionFormat 'full' }
 }
 
 tasks.register('verifyLocalDependencies') {
