@@ -219,4 +219,47 @@ JAR 条目检查结果：`com/gregtechceu` 0 条、`theflogat/technomancy/gamete
 - `EUToFEProvider.GTEnergyWrapper` 的退让分支（只有 FE 的邻居返回 `NOT_APPLICABLE` 以便走原生 FE）没有在游戏内触发；当前可用方块里没有“暴露 FE 但不暴露原生 EU”的对象，该分支只有代码审查依据。
 - 没有执行 `runClient`、联机或专用服务器长期运行；也没有验证存档重载后 EU 读数与 Q 余额的一致性。
 
+## 量子源质罐实机验证（2026-09-28）
+
+这是本工程第一次在**运行中的专用服务器**里验证玩法行为，而不是只跑单元测试或加载期冒烟。手段是用户提供的 `RosettaRemoteDebugBridge`：它能在服务器线程上编译并执行任意 Java，因此可以真的摆出 TC4R 管道网络、观察源质流动、读取双方内部状态并断言守恒——这一段是 GameTest 不容易覆盖的跨模组部分。
+
+### 环境与部署
+
+- `.\gradlew.bat runServer`（`run-server/`，端口 25567，RCON 25577），JDK 17，平坦世界 `world-probe`。
+- 桥的预构建产物是 SRG 重混淆的，在 ForgeGradle 开发环境里无法加载，因此用 `./gradlew.bat jar -x reobfJar` 重新构建了开发映射版本放进 `run-server/mods/rosetta_bridge_dev.jar`（该目录已被 `.gitignore` 忽略，不入库）。**用户原始产物已立即还原并用 `cmp` 校验字节一致（SHA-256 `93b9aaf7e442d8c04d6930532cc6413155dbbe22090d7fc496fb0f4d935ac506`）。**
+- 关服使用桥的 `console stop`，日志出现 `Stopping the server` 与四个维度的 `All chunks are saved`，`BUILD SUCCESSFUL`，事后 `Get-Process java` 为空。
+
+### 注册与拓扑
+
+- 注册确认：`technom:quantum_jar` → `QuantumJarBlock`、`technom:quantized_glass` → `GlassBlock`、BE 类型 `technom:quantum_jar`、7 个物品。
+- TC4R 实际 ID 由注册表读出而非猜测：`thaumcraft:warded_jar`、`thaumcraft:essentia_tube`（另有 `void_jar`、`node_jar`、`brain_jar`、三种特殊管道）。
+- 拓扑：**未贴标签的 TC4R 封印罐（装入 64 ignis）→ 源质管道 → 源质管道 → 我们的量子罐**。选未贴标签的源罐是因为已贴标签罐的 `minimumSuction` 是 64，两节管道各衰减 1 之后吸力不足，本来就取不出来——这是 TC4 的设计，不是缺陷。
+- `ThaumcraftApiHelper.getConnectableTransport` 双向互认：管道向下看到 `QuantumJarBlockEntity`，我们向上看到 `EssentiaTubeBlockEntity`；管道方块状态自动连成 `down=true,west=true` 与 `down=true,east=true`。
+
+### 一个必须记下的陷阱
+
+初次观察**完全没有流动**，管道的 `count` 字段在 gameTime 4507 时仍是 0——**没有玩家在线时没有任何区块在 tick**，方块实体根本没跑。`level.setChunkForced(0, 0, true)` 之后立刻开始流动。任何无人值守的实机验证都必须先强制加载区块，否则会把"没 tick"误判成"逻辑不工作"。
+
+### 实测结果
+
+- **守恒**：强制加载 15 秒后，源罐 8 + 管道在途 1 + 我们 55 = 64，与初始 64 一致；抽干后源罐 0 + 我们 64 = 64。整条链路没有复制也没有销毁源质。
+- **未贴标签罐自动采纳来料类型**：量子罐由空、无 aspect 变为 `thaumcraft:ignis`，走的正是 TC4 只在"尚未绑定 aspect"分支才检查对方 `minimumSuction` 的那条路径。
+- **吸力公式逐档实测**（未贴标签基数 48，每 50 点 +1）：存量 0→48、49→48（整数除法，不是四舍五入）、50→49、100→50、320→54、639→60、**640→0**（满罐停止抽取）而 `minimumSuction` 仍为 60。满罐时两者不一致是 TC4R 参考实现的既有语义，不是缺陷。
+- **贴标签档**：存量 100 时吸力 66（64 + 2），确实严格强于 TC4R 已贴标签罐的 64——这正是本次刻意偏离要达到的效果。
+- **比较器输出**：0 → 15 随存量线性变化，满罐 15。
+- **容量硬上限**：`add(10000)` 只接收 640；满罐后 `addEssentia` 返回 0；第二种 aspect 返回 0。
+- **`EssentiaSource` 全有或全无**：从 640 中取 641 返回 0 且存量不变；`SIMULATE` 取 640 返回 640 且存量不变（模拟无副作用）。
+- **面规则（在空罐上单独复测，避免被"满罐"混淆结论）**：只有 `up` 面 `canInputFrom`/`canOutputTo` 为真、`addEssentia(SIMULATE)` 返回 5、吸力 48；其余五面全部为 0。`takeEssentia` 从 `up` 面实际取出 5（20→15），从 `down` 面返回 0 且存量不变。
+- **未注册 aspect 被拒**：`addEssentia` 返回 0 且不落库，不会用伪 ID 存东西。
+- **标签语义**：`clearFilter()` 保留已记住的 aspect（TC4 原行为，TC4R 也刻意保留）；`clearContents()` 之后 aspect 变为 `null`，即附录 A-2 的修复生效。
+- **掉落物往返**：`Block.getDrops` 产出 `1 quantum_jar`，NBT 为 `{BlockEntityTag:{Essentia:{aspects:[{id:"ignis",n:321}],filters:["ignis"],v:1}}}`——内容、标签和 schema 版本都带走了，loot table 的 `copy_nbt` 有效。
+
+### 本节尚未验证
+
+- **渲染**：无头环境无法执行 `runClient`。液面与标签渲染器还没写，罐目前是静态模型；静态模型、方块状态和贴图路径都没有在客户端看过。
+- **持久化跨重启**：本轮只验证了掉落物 NBT，没有存盘后重启再读取同一个方块。
+- **右键交互**：`use(...)` 的三条分支（清空/贴摘标签/小瓶与罐物品互倒）是用 `EssentiaContainerApi` 实现的，但本轮没有模拟玩家右键，只验证了它们调用的底层存储与 API 语义。
+- **发电机与凝聚器**：尚未实现，因此"管道 → 罐 → 发电机 → 耗能设备"闭环只走通了前两段。
+- 只在单机专用服务器、无 GTCEu 的运行时下验证；没有联机、没有与 GT 共存时重跑这组探针。
+
 下一阶段开始后，每批功能都应更新此记录，写明实际运行命令、观察结果和未覆盖的环境；不要用 `test NO-SOURCE`、启动成功或 GameTest 冒烟结果代替功能验收。
