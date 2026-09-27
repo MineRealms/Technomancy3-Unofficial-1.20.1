@@ -260,6 +260,23 @@ class EssentiaFuelTableTest {
     }
 
     @Test
+    void aDataPackOverridesTheShippedTableWhateverItsNamespaceSortsAs() {
+        // "aaa_pack" sorts before "technom", so a plain alphabetical merge would apply the pack
+        // first and then overwrite it with our own defaults - a silent revert that reads as a
+        // balance change rather than a mistake.
+        EssentiaFuelTable table = EssentiaFuelLoader.parse(Map.of(
+                new ResourceLocation("technom", "default"), read(SHIPPED),
+                new ResourceLocation("aaa_pack", "tweaks"),
+                json("{ \"fallback\": 1, \"entries\": [ { \"aspects\": [\"ignis\"], \"value\": 7 } ] }")));
+        TestFuelEnvironment here = new TestFuelEnvironment();
+        assertEquals(7, value(table, "ignis", here), "the data pack did not win");
+        assertEquals(1, table.fallback(), "the data pack's fallback did not win");
+        assertEquals(800, value(table, "potentia", here),
+                "overriding one aspect of a shared row must not disturb the others");
+        assertEquals(75, value(table, "terra", here), "the rest of the shipped table is still there");
+    }
+
+    @Test
     void badFilesAreSkippedWithoutTakingTheTableDown() {
         ResourceLocation good = new ResourceLocation("technom", "aaa_good");
         EssentiaFuelTable table = EssentiaFuelLoader.parse(Map.of(

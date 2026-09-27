@@ -65,11 +65,6 @@ public final class EssentiaFuelTable {
         return byAspect.isEmpty() && fallback == 0;
     }
 
-    @Nullable
-    public EssentiaFuelEntry entry(AspectId aspect) {
-        return byAspect.get(aspect);
-    }
-
     /**
      * Fuel value of one unit of {@code aspect} here and now, or 0 for no aspect.
      *

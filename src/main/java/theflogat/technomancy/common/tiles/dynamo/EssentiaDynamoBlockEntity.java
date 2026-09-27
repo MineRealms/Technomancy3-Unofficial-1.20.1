@@ -268,10 +268,13 @@ public final class EssentiaDynamoBlockEntity extends BlockEntity implements Esse
             }
             int mine = suctionAmount(face);
             int theirs = neighbour.suctionAmount(theirFace);
-            // Both TC4 rules, always: strictly more suction than the giver, and at least the
-            // giver's own minimum. The original applied both here too, and the tube
-            // implementation requires them.
-            if (!EssentiaSuction.canDiscover(mine, theirs, neighbour.minimumSuction())) {
+            // Strictly more suction than the giver, and at least the giver's own minimum -
+            // both checks on every pull, not only while discovering an aspect. TC4's jar
+            // applies the minimum only on its discovery branch (see EssentiaSuction.canDiscover),
+            // but the dynamo never did, and neither does TC4R's own tube
+            // (EssentiaTubeBlockEntity.equalizeWithNeighbours), so a dynamo that skipped it
+            // would out-pull the tubes feeding it.
+            if (!EssentiaSuction.canTake(mine, theirs) || mine < neighbour.minimumSuction()) {
                 continue;
             }
             // Only ever ask for what this dynamo can actually store. The original asked for
@@ -465,9 +468,20 @@ public final class EssentiaDynamoBlockEntity extends BlockEntity implements Esse
         return known(held) ? held : null;
     }
 
+    /**
+     * Always 0, like every other "what can I get out of this face" answer here.
+     *
+     * <p>Reporting the fuel cache would be actively harmful, not merely inconsistent: TC4R's
+     * buffer tube tests {@code neighbor.essentiaAmount(face) > 0} together with the suction
+     * comparison <em>before</em> it looks at {@code canOutputTo}, then transfers whatever
+     * {@code EssentiaApi.take} returns - zero, here - and {@code return}s without scanning its
+     * remaining faces ({@code EssentiaTubeBlockEntity.fillBuffer}, line 436). A buffer tube
+     * beside a dynamo holding cached essentia would stall on it permanently. The contents are
+     * still visible to goggles and probes through {@link #visibleAspects()}.</p>
+     */
     @Override
     public int essentiaAmount(Direction face) {
-        return essentiaType(face) == null ? 0 : store.total();
+        return 0;
     }
 
     @Nullable
@@ -476,7 +490,6 @@ public final class EssentiaDynamoBlockEntity extends BlockEntity implements Esse
         return null;
     }
 
-    /** Nothing is extractable, so the default "what I hold" answer would be misleading. */
     @Override
     public int availableEssentia(AspectId aspect, Direction face) {
         return 0;

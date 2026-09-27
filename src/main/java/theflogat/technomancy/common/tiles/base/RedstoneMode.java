@@ -11,10 +11,10 @@ import net.minecraft.world.level.Level;
 /**
  * The three ways a machine can answer a redstone signal, as the 1.7.10 {@code RedstoneSet} did.
  *
- * <p>The cycle order {@code NONE -> HIGH -> LOW} and the three "programming" items are kept
- * verbatim, because that is the entire user interface of these machines: there is no GUI, so
- * right-clicking a machine with gunpowder, redstone dust or a redstone torch is how the mode
- * is set.</p>
+ * <p>The three "programming" items are kept verbatim, because they are the entire user
+ * interface of these machines: there is no GUI, so right-clicking a machine with gunpowder,
+ * redstone dust or a redstone torch is how the mode is set. The original also had a
+ * {@code cycle()} that nothing ever called; it is not reproduced.</p>
  */
 public enum RedstoneMode implements StringRepresentable {
 
@@ -43,11 +43,6 @@ public enum RedstoneMode implements StringRepresentable {
     /** The item that selects this mode, and that is handed back when the mode is replaced. */
     public Item programmingItem() {
         return programmingItem;
-    }
-
-    /** The next mode in the fixed {@code NONE, HIGH, LOW} rotation. */
-    public RedstoneMode cycle() {
-        return ORDER[(ordinal() + 1) % ORDER.length];
     }
 
     /**

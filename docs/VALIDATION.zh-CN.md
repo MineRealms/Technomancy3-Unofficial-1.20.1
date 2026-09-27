@@ -238,7 +238,7 @@ JAR 条目检查结果：`com/gregtechceu` 0 条、`theflogat/technomancy/gamete
 
 ### JUnit（无世界层）
 
-`build` 中的 `test` 共 **115 项通过、0 失败**（原有 88 项；新增 27 项：`EssentiaFuelTableTest` 15、`DynamoFuelBankTest` 12）。
+`build` 中的 `test` 共 **116 项通过、0 失败**（原有 88 项；新增 28 项：`EssentiaFuelTableTest` 16、`DynamoFuelBankTest` 12）。
 
 `EssentiaFuelTableTest` 从 classpath 读取**实际随包发布的** `data/technom/technomancy/essentia_fuel/default.json`，用真实 codec 解析，因此断言的是玩家会拿到的数据本身，不是它的副本：
 
@@ -256,7 +256,8 @@ JAR 条目检查结果：`com/gregtechceu` 0 条、`theflogat/technomancy/gamete
 | `exchangeRollsInTheCorrectedRangeAndNeverZero` | 4000 次取样全部落在 200..1199，且确实覆盖两端（A-16） |
 | `energyPerUnitIsFuelValueTimesEightyTimesTheScale` | `fuelValue × 80 × scale`：scale=1.0 时 ignis 为 64000 Q；scale=0.25 时 16000 Q（与一块煤直接烧打平）；四舍五入只发生一次 |
 | `firstMatchingConditionWins` | 条件列表有序、首个命中生效 |
-| `laterFilesOverrideRowsAndReplaceClearsThem` | 按资源 ID 顺序合并、逐 aspect 覆盖、`"replace": true` 可清空 |
+| `laterFilesOverrideRowsAndReplaceClearsThem` | 逐 aspect 覆盖、`"replace": true` 可清空 |
+| `aDataPackOverridesTheShippedTableWhateverItsNamespaceSortsAs` | 命名空间 `aaa_pack`（字典序早于 `technom`）的数据包仍然覆盖本模组的默认值。审查发现的真实缺陷：原先按资源 ID 纯字典序合并，于是排在 `technom` 之前的数据包会被本模组的默认文件反向覆盖 —— 一次静默回退。现在本模组命名空间先合并、其余在后 |
 | `badFilesAreSkippedWithoutTakingTheTableDown` | 未知条件类型、负数燃料值、缺 `aspects` 的文件整份被拒并写日志，有效文件照常生效 |
 | `anEmptyTableIsTheStartingState` | 数据包加载前表为空，机器必须容忍 0 燃料值 |
 
@@ -271,7 +272,7 @@ JAR 条目检查结果：`com/gregtechceu` 0 条、`theflogat/technomancy/gamete
 | GameTest | 日志实测结果 |
 |---|---|
 | `theFuelTableIsLoadedFromTheDataPack` | 运行时表含 44 个 aspect、兜底 25 —— 证明 `AddReloadListenerEvent` 真的挂上了，不只是写了 |
-| `faceRulesAgreeAndTheOutputFaceCarriesOnlyEnergy` | `up-facing dynamo accepts essentia on the other five faces only, canInputFrom == isConnectable on all six, canOutputTo and takeEssentia are 0 everywhere, suction 128/128 and FE extract only on up`（A-7） |
+| `faceRulesAgreeAndTheOutputFaceCarriesOnlyEnergy` | `up-facing dynamo accepts essentia on the other five faces only, canInputFrom == isConnectable on all six, canOutputTo and takeEssentia are 0 everywhere, suction 128/128 and FE extract only on up`（A-7）。测试先塞进 10 点源质再断言，因此“什么都取不出来”不会因为缓存本来是空的而侥幸通过；同时验证 `addEssentia` 返回的是**已接收量** |
 | `turningTheOutputMovesEveryFaceRule` | 六次无条件旋转回到 `up`，每次源质面与 FE 视图同步跟随（A-19） |
 | `theBlockCanBeMinedForItsItem` | 在 `minecraft:mineable/pickaxe` 内、石镐即为正确工具、剪刀不是；战利品表产出恰好 1 个 `essentia_dynamo` |
 | `savedStateIsRestoredVerbatim` | `6400 Q, 57600 Q of banked fuel, 4 units of thaumcraft:ignis, the potency gem and redstone mode LOW all survived a save and load` |
@@ -280,16 +281,16 @@ JAR 条目检查结果：`com/gregtechceu` 0 条、`theflogat/technomancy/gamete
 | `redstoneGatingStopsGenerationAndTheEssentiaPull` | `60 ticks on HIGH with no signal took 0 essentia and produced 0 Q; 60 ticks after a redstone block it had pulled 12 units and delivered 4400 Q`（A-18） |
 | `aFullBufferTakesNoEssentiaAndWastesNoFuel` | `60 ticks at 40000 of 40000 Q burned no fuel (13200 Q banked throughout) and bought no charge (1 units burned throughout)`（A-14） |
 | `thePotencyGemQuadruplesThroughputAndNotEfficiency` | `320 Q/t on 4 units per charge burned 4 units worth 64000 Q and produced exactly 64000 Q, delivering 32000 Q in 120 ticks` —— 每点 16000 Q，与未升级完全一致 |
-| `essentiaReachesTheDynamoThroughRealTubes` | 罐 + **2 节真实 `thaumcraft:essentia_tube`** + 发电机：`through 2 essentia tubes in 160 ticks the jar gave up 24 units, 23 are cached, 1 were burned into 16000 Q and 0 are in flight inside the tubes`（含 GTCEu 的那次为 23/22/1/0，管道 tick 抖动所致，守恒等式两次都精确成立）。这条链路才是吸力规则真正管辖的路径：每节管道把 128 的吸力衰减 1、一次只持有 1 点，发电机的吸力或最小吸力写错的话它根本不会流动 |
+| `essentiaReachesTheDynamoThroughRealTubes` | 罐 + **2 节真实 `thaumcraft:essentia_tube`** + 发电机（该布置已占满模板的 4 层空气，故这条测试不带 FE 接收端，改用发电机自身缓冲计量）：`through 2 essentia tubes in 160 ticks the jar gave up 24 units, 22 are cached, 1 were burned into 16000 Q and 1 are in flight inside the tubes`。**160 tick 内跨越管道的点数在多次运行中实测为 8..24**，取决于两节管道的 BlockEntity 相对 tick 顺序（TC4R 管道每 5 tick 只移动 1 点，顺序不利时一个点要 15 tick 才能走完两跳）；这是 TC4R 管道自身的性质，不是本移植的行为。**每一次运行守恒等式与“管道中在途点数 ≤ 管道节数”都精确成立**，所以断言只对下界和在途上界设限。这条链路才是吸力规则真正管辖的路径：每节管道把 128 的吸力衰减 1、一次只持有 1 点，发电机的吸力或最小吸力写错的话它根本不会流动 |
 
 真实 Forge Energy 消费者由 `GameTestEnergySink` 通过 `AttachCapabilitiesEvent` 挂在普通木桶上：原版与 Thaumcraft 都没有接收 FE 的方块，本模组自己的方块是发电机，所以必须专门造一个接收端。发电机因此是用它对任何第三方机器都会用的那一次 capability 查询找到它的，**发电机代码里没有任何测试钩子**。该监听器只从测试代码注册、只在测试要求的坐标上挂载，且整个 `gametest` 包不进发行 JAR。
 
 ### 发行 JAR 卫生
 
-先删除 `build/libs`、`build/classes`、`build/resources`、`build/tmp`，再分别以不带参数和 `-PwithGtceu=true` 重新构建，两次产物逐字节相同（890,186 字节、332 个条目），SHA-256：
+先删除 `build/libs`、`build/classes`、`build/resources`、`build/tmp`，再分别以不带参数和 `-PwithGtceu=true` 重新构建，两次产物逐字节相同（890,304 字节、332 个条目），SHA-256：
 
 ```text
-ddd0b3df90b6debbf4faf2bafe4dcf3339c4d8c8b2fe41f24dff6e08ca16fc29
+066d80b9f58f54178cd3b44140ace4953730fded529636eee5ac5bdeb66a74c4
 ```
 
 JAR 内 `theflogat/technomancy/gametest/` 0 条、`com/gregtechceu` 0 条；`data/technom/technomancy/essentia_fuel/default.json`、`assets/technom/blockstates/essentia_dynamo.json`、两个模型与战利品表均在。GTCEu 隔离扫描从 12 个类增长到 56 个类，仍然 0 个类在 `compat/gtceu/` 之外链接 GT（发电机确实引用了 `compat.gtceu.EuTier`，但那是不含 GT 类型的电压表，按 `EuTier` 自身文档“机器的 EU 限额必须从 `voltage()` 推导”使用）。
@@ -308,6 +309,20 @@ JAR 内 `theflogat/technomancy/gametest/` 0 条、`com/gregtechceu` 0 条；`dat
 
 发电速率、缓冲、输出上限、源质缓存与吸力全部 1:1 保留（80 / 320 / 40,000 / 320 / 64 / 128）。
 
+### 代码审查发现并已修掉的问题
+
+本批次对自己的 diff 做了一轮独立代码审查，修掉的实质问题：
+
+1. **数据包合并顺序**（见上表 `aDataPackOverridesTheShippedTableWhateverItsNamespaceSortsAs`）：纯字典序会让排在 `technom` 之前的命名空间被本模组默认值反向覆盖。已改为本模组命名空间先合并。
+2. **`essentiaAmount(face)` 会让 TC4R 缓冲管道永久卡死**：`EssentiaTubeBlockEntity.fillBuffer()`（`:436`，已核对该行）先判断 `neighbor.essentiaAmount(face) > 0` 与吸力比较，**在 `canOutputTo` 之前**，命中后调用 `EssentiaApi.take`（对发电机返回 0）然后**无条件 `return`**，不再扫描自己其余的面。因此发电机只要在任何面报出非零可取量，紧贴它的缓冲管道每 5 tick 就会卡在这一面上。现已与 `canOutputTo` / `takeEssentia` / `availableEssentia` 一致地返回 0；缓存内容仍由 `AspectContainerView.visibleAspects()` 提供给护目镜与探测器。
+3. **`VoxelShape` 比模型矮 1 像素**：模型的中轴画到 y=16，选择框只到 y=15，准星会穿过方块可见的顶端。已改为 16。
+4. **旋转在纯净环境下无法触发**：见下文“尚未验证”中的扳手条目，已补一条空手潜行右键输出面的触发方式。
+5. **`essentiaReachesTheDynamoThroughRealTubes` 会把木桶放到模板外**：2 节管道时接收端落在相对 y=5，越出 5×5×5 模板且不会被结构清理带走。已改为该测试不带接收端，并在 `DynamoChain.place` 里加了高度断言。
+6. **除零**：管道测试在 `essentiaFuelScale = 0` 时会抛 `ArithmeticException` 而不是给出可读的失败信息。已补 `perUnit > 0` 断言。
+7. **死代码**：`RedstoneControl.cycle()`、`RedstoneMode.cycle()`、`RedstoneControl.defaultMode()`、`EssentiaFuelTable.entry()` 无任何调用方，已删除（原版的 `nextRedstoneSet()` 同样没有调用方）；`EssentiaFuelLoader.publish` 改为私有。
+
+另外修正了一处注释性矛盾：发电机对每一次取货都要求“吸力严格大于”与“达到来源最小吸力”两条，而共享的 `EssentiaSuction.canDiscover` 文档说明后者只属于罐的“发现”分支。现在发电机直接写出这两个条件，并注明为什么它与罐不同（原版发电机与 TC4R 管道的 `equalizeWithNeighbours` 都是每次都判）。
+
 ### 规格书之外新发现、且未复现的两个缺陷
 
 1. **`fill()` 会销毁源质**。`TileEssentiaDynamo.fill()`（`:180`）取邻居持有的任意 aspect 并交给 `addToContainer`；后者在已有别的 aspect 时拒收，并把这一点作为“未接收量”返回，而调用方**丢弃了返回值** —— 这一点源质已经被 `takeEssentia` 从管道里取出，于是被凭空销毁。本移植只索取自己能存下的 aspect，`EssentiaApi.take` 在邻居持有别的 aspect 时返回 0，安全跳过。
@@ -317,7 +332,7 @@ JAR 内 `theflogat/technomancy/gametest/` 0 条、`com/gregtechceu` 0 条；`dat
 
 - **客户端与渲染**：`runClient` 未执行，本环境 headless。发电机只提供**静态 JSON 模型**，没有 `BlockEntityRenderer`。原版 `ModelEssentiaDynamo` 的四个喷口是 **30°**（`0.5235988` rad），而方块模型的旋转只允许 ±22.5/±45，因此喷口按最接近的 **22.5°** 实现，这是**刻意的几何偏离**。64×32 的 `textures/models/essentiadynamo.png` 因此没有被使用；模型六面统一采用同图案的 16×16 `block/essentiadynamo`。模型是否好看、`LIT` 方块状态在客户端的表现、手持与物品栏渲染、贴图 UV 是否对位，**全部未经肉眼验证**。若后续要做 BER，请先在有显示的环境下核对。
 - **`LIT` 目前没有视觉差异**：12 个 variant 指向同一个模型。它是真实同步的状态（比较器、Jade、资源包可用），但没有发光贴图。
-- **扳手 tag 在纯 TC4R 环境下是空的**：`technom:tools/wrench` 只含可选引用 `#forge:tools/wrench` 与 `#c:wrenches`，没有任何 mod 提供时无物品命中。旋转逻辑本身由 GameTest 直接驱动 `cycleFacing()` 验证过，但 `use()` 里的分派路径未在游戏内点击验证。
+- **扳手 tag 在纯 TC4R 环境下是空的**：`technom:tools/wrench` 只含可选引用 `#forge:tools/wrench` 与 `#c:wrenches`，没有任何 mod 提供时无物品命中。因此**另加了一条不依赖任何 mod 的触发方式：潜行空手右键能量输出面即旋转**（其余五面仍是取回效能宝石），否则修掉 A-19 反而会让旋转在纯净环境下无法触发。旋转逻辑本身由 GameTest 直接驱动 `cycleFacing()` 验证过，但 `use()` 里这两条分派路径都**未在游戏内点击验证**。
 - **配方与研究**：发电机与效能宝石都还没有配方或研究条目，生存中不可获得（战利品表已验证，但那只解决“挖了能拿回来”）。这部分属于其他批次。
 - **管道**：验证了紧贴 `thaumcraft:warded_jar` 与经过 **2 节** `thaumcraft:essentia_tube`。**没有**验证长链路与吸力衰减的实际极限（按 §8.5 推算约 59 节到已贴标签的量子罐）、`restricted_essentia_tube`（吸力砍半）、`filtered_essentia_tube` 与 `directional_essentia_tube`。
 - **原生 EU 输出**：发电机按 `320 / (32 × qPerEu)` 推导出 LV 2 安培（默认 4 Q/EU），但**没有**任何 GameTest 让它向真实 GT 机器推送 EU —— 现有的 EU 交换测试仍然用木桶托管一个独立的 `MachineEnergy`。发电机的 EU 通路目前只有代码审查依据。

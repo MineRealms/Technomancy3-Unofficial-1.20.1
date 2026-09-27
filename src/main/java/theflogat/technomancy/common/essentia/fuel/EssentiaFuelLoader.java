@@ -7,10 +7,10 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -26,9 +26,10 @@ import theflogat.technomancy.Technomancy;
  * The mod ships one file with the 1.7.10 table plus its three corrections; anything else merges
  * on top of it.</p>
  *
- * <p>Merge order is by resource location, so it is deterministic across operating systems.
- * A file may set {@code "replace": true} to discard everything accumulated so far, which is the
- * only way to <em>remove</em> a row rather than override it.</p>
+ * <p>This mod's own namespace is merged first and everything else after it, ordered by
+ * resource location so the result is deterministic across operating systems. A file may set
+ * {@code "replace": true} to discard everything accumulated so far, which is the only way to
+ * <em>remove</em> a row rather than override it.</p>
  */
 public final class EssentiaFuelLoader extends SimpleJsonResourceReloadListener {
 
@@ -55,10 +56,10 @@ public final class EssentiaFuelLoader extends SimpleJsonResourceReloadListener {
     }
 
     /**
-     * Replaces the table for tests and for the reload path. Publishing a whole new immutable
-     * table means a dynamo mid-tick never observes a partially built one.
+     * The single write point. Publishing a whole new immutable table means a dynamo mid-tick
+     * never observes a partially built one.
      */
-    public static void publish(EssentiaFuelTable replacement) {
+    private static void publish(EssentiaFuelTable replacement) {
         table = replacement;
     }
 
@@ -81,6 +82,11 @@ public final class EssentiaFuelLoader extends SimpleJsonResourceReloadListener {
      * Parses and merges a set of files into one table. Separate from {@link #apply} so the
      * shipped default file can be checked against this codec by a unit test.
      *
+     * <p>This mod's own namespace is merged first and everything else on top of it, so a data
+     * pack in its own namespace overrides a row without having to shadow our exact file path or
+     * reach for {@code "replace"} (which clears every other row with it). Beyond that the order
+     * is by resource location, which is deterministic across operating systems.</p>
+     *
      * <p>A file is taken whole or not at all, and a rejected one is logged with the reason. The
      * lenient alternative - keeping whatever decoded - would quietly drop a condition a pack
      * author mistyped and leave its row permanently on its base value, which looks like a
@@ -89,9 +95,11 @@ public final class EssentiaFuelLoader extends SimpleJsonResourceReloadListener {
     public static EssentiaFuelTable parse(Map<ResourceLocation, JsonElement> files) {
         List<EssentiaFuelEntry> entries = new ArrayList<>();
         int fallback = 0;
-        // TreeMap for a stable merge order; the map handed in is not ordered.
-        for (Map.Entry<ResourceLocation, JsonElement> file : new TreeMap<>(files).entrySet()) {
-            Optional<File> content = decode(file.getKey(), file.getValue());
+        List<ResourceLocation> order = new ArrayList<>(files.keySet());
+        order.sort(Comparator.comparing((ResourceLocation id) -> !id.getNamespace().equals(Technomancy.MOD_ID))
+                .thenComparing(ResourceLocation::toString));
+        for (ResourceLocation id : order) {
+            Optional<File> content = decode(id, files.get(id));
             if (content.isEmpty()) {
                 continue;
             }

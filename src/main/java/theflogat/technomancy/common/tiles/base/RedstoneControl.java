@@ -42,10 +42,6 @@ public final class RedstoneControl {
         return mode;
     }
 
-    public RedstoneMode defaultMode() {
-        return defaultMode;
-    }
-
     /** Whether a player ever set this mode, and therefore whether an item is owed back. */
     public boolean isModified() {
         return modified;
@@ -68,11 +64,6 @@ public final class RedstoneControl {
         modified = true;
         listener.run();
         return true;
-    }
-
-    /** Advances one step through {@code NONE, HIGH, LOW}. */
-    public boolean cycle() {
-        return set(mode.cycle());
     }
 
     /**

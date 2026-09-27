@@ -34,7 +34,7 @@
 
 | 功能与旧注册字段 | 来源实现 | 依赖、20721 适配与主要风险 | 阶段 | 必须验证 | 状态 |
 |---|---|---|---|---|---|
-| 精华发电机 `essentiaDynamo` | `TileEssentiaDynamo` | 已实现为 `technom:essentia_dynamo`：`essentia.EssentiaTransport` + `aspect.AspectContainerView`；**刻意不实现 `EssentiaSource`**（它是消费者，不该被注魔祭坛抽走燃料）；燃料值表改为数据驱动 `data/technom/technomancy/essentia_fuel/`；RF 输出改 FE/EU 共用账本 | S1 | 管道与罐取料；模拟不扣料；满电停机；两个端口同 tick 不重复输出；重载燃料进度 | **已实现**。真实 `thaumcraft:warded_jar` 取料、向真实 FE 消费者交付、红石三态双向门控、满缓冲不扣料不烧料、源质与能量守恒、六面旋转、掉落可得、存盘往返，以及经 2 节 `thaumcraft:essentia_tube` 的真实管道链路，均由 `technom_dynamo` 批次 11 个 GameTest 在有/无 GTCEu 下实测通过。**客户端渲染未验证**（无 BER，静态模型）；节点发电机仍属 S2。刻意偏离清单与实测数值见[验证记录](VALIDATION.zh-CN.md#源质发电机验证2026-09-28) |
+| 精华发电机 `essentiaDynamo` | `TileEssentiaDynamo` | 已实现为 `technom:essentia_dynamo`：`essentia.EssentiaTransport` + `aspect.AspectContainerView`；**刻意不实现 `EssentiaSource`**（它是消费者，不该被注魔祭坛抽走燃料）；燃料值表改为数据驱动 `data/technom/technomancy/essentia_fuel/`；RF 输出改 FE/EU 共用账本 | S1 | 管道与罐取料；模拟不扣料；满电停机；两个端口同 tick 不重复输出；重载燃料进度 | **已实现**。真实 `thaumcraft:warded_jar` 取料、向真实 FE 消费者交付、红石三态双向门控、满缓冲不扣料不烧料、源质与能量守恒、六面旋转、掉落可得、存盘往返，以及经 2 节 `thaumcraft:essentia_tube` 的真实管道链路，均由 `technom_dynamo` 批次 11 个 GameTest 在有/无 GTCEu 下实测通过（另有 116 项 JUnit 覆盖燃料表 codec、逐分支取值与满缓冲边界）。**客户端渲染未验证**（无 BER，静态模型，喷口角度按 22.5° 近似原版的 30°）；节点发电机仍属 S2。刻意偏离清单与实测数值见[验证记录](VALIDATION.zh-CN.md#源质发电机验证2026-09-28) |
 | 节点发电机 `nodeDynamo` | `TileNodeDynamo` | `node.AuraNodeView` / `NodeVis`；核对消耗节点 vis 的语义，不能把节点总容量当可用燃料 | S2 | 节点损耗/恢复、类型和亮度边界；节点卸载；FE/EU 输出守恒 | 待迁移 |
 | 量子精华罐 `essentiaContainer` | `TileEssentiaContainer` / 对应 Block | `EssentiaTransport`、容器视图、标签和显示；旧版内部罐继承改自有 BE | S1 | 容量、吸力、方向、标签筛选、邻罐抽取、破坏掉落和存储恢复 | 待迁移 |
 | 量子玻璃/装饰块 `cosmeticOpaque` | `BlockCosmeticOpaque` | 无独立机器 BE；与量子罐奥术配方一起迁移；不能遗漏无 TE 材料路径 | S1 | 配方可得、碰撞和透光、模型及掉落一致 | 待迁移 |

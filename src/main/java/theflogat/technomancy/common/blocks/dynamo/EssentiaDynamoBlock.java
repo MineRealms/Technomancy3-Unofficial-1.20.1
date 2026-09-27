@@ -49,8 +49,11 @@ import theflogat.technomancy.common.tiles.dynamo.EssentiaDynamoBlockEntity;
  * The essentia dynamo block: facing, working state and the four right-click interactions.
  *
  * <p>Like the original there is no GUI. Everything is done by right-clicking: a potency gem
- * installs the upgrade, one of the three redstone programming items sets the redstone mode, a
- * wrench turns the energy output, and a sneaking empty hand takes the gem back out.</p>
+ * installs the upgrade, one of the three redstone programming items sets the redstone mode, and
+ * a sneaking empty hand either turns the energy output (on the output face itself) or takes the
+ * gem back out (on any other face). Any item in {@link #WRENCHES} also turns the output, but
+ * that tag is empty unless a wrench-providing mod fills it, which is why the bare-handed gesture
+ * exists at all - without it, fixing defect A-19 would have left rotation unreachable.</p>
  */
 public class EssentiaDynamoBlock extends BaseEntityBlock {
 
@@ -79,7 +82,7 @@ public class EssentiaDynamoBlock extends BaseEntityBlock {
      */
     private static final VoxelShape SHAPE = Shapes.or(
             box(0.0, 0.0, 0.0, 16.0, 8.0, 16.0),
-            box(2.0, 8.0, 2.0, 14.0, 15.0, 14.0));
+            box(2.0, 8.0, 2.0, 14.0, 16.0, 14.0));
 
     public EssentiaDynamoBlock(Properties properties) {
         super(properties);
@@ -95,7 +98,8 @@ public class EssentiaDynamoBlock extends BaseEntityBlock {
 
     /**
      * The output points out of the surface the dynamo was placed against, so dropping one on the
-     * floor gives the original's default of {@link Direction#UP}. The wrench retargets it.
+     * floor gives the original's default of {@link Direction#UP}. A sneaking empty-handed click
+     * on that face, or a wrench, retargets it afterwards.
      */
     @Nullable
     @Override
@@ -182,7 +186,11 @@ public class EssentiaDynamoBlock extends BaseEntityBlock {
             return redstone;
         }
         if (held.isEmpty() && player.isSecondaryUseActive()) {
-            return removeGem(level, pos, player, dynamo, hit.getDirection());
+            // The output face turns the dynamo; the other five take the gem out, so the two
+            // gestures cannot be confused with one another.
+            return hit.getDirection() == dynamo.facing()
+                    ? turn(level, pos, dynamo)
+                    : removeGem(level, pos, player, dynamo, hit.getDirection());
         }
         return InteractionResult.PASS;
     }

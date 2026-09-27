@@ -67,6 +67,13 @@ final class DynamoChain {
      */
     static DynamoChain place(GameTestHelper helper, boolean withSink, int tubes) {
         ServerLevel level = helper.getLevel();
+        // The template is five tall with a floor at y = 0, so y = 1..4 is the usable air. These
+        // blocks go in by absolute position, which the helper cannot bounds-check, and one placed
+        // outside would survive the structure teardown and litter the next test's space.
+        int topY = tubes + 2 + (withSink ? 1 : 0);
+        helper.assertTrue(topY <= 4,
+                "a jar, " + tubes + " tube(s), a dynamo" + (withSink ? " and a receiver" : "")
+                        + " reach y = " + topY + ", past the top of the 5x5x5 template");
         BlockPos jarPos = helper.absolutePos(new BlockPos(2, 1, 2));
         BlockPos dynamoPos = jarPos.above(1 + tubes);
         BlockPos sinkPos = dynamoPos.above();

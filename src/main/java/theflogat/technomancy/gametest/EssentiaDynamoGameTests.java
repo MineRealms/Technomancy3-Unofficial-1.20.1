@@ -63,6 +63,14 @@ public final class EssentiaDynamoGameTests {
         Direction facing = dynamo.facing();
         helper.assertTrue(facing == Direction.UP, "the dynamo was placed facing " + facing);
 
+        // Give it something to hold, or every "nothing comes out" assertion below would pass for
+        // the wrong reason.
+        helper.assertTrue(dynamo.addEssentia(DynamoChain.IGNIS, 10, Direction.DOWN,
+                        EssentiaTransferMode.EXECUTE) == 10,
+                "addEssentia must return what it accepted, not what was left over");
+        helper.assertTrue(dynamo.visibleAspects().amounts().get(DynamoChain.IGNIS) == 10,
+                "the fuel cache is not visible to goggles and probes");
+
         for (Direction face : Direction.values()) {
             boolean input = dynamo.canInputFrom(face);
             boolean connectable = dynamo.isConnectable(face);
@@ -78,6 +86,12 @@ public final class EssentiaDynamoGameTests {
                     face + ": takeEssentia handed fuel back out");
             helper.assertTrue(dynamo.availableEssentia(DynamoChain.IGNIS, face) == 0,
                     face + ": advertised extractable essentia it will not hand over");
+            // Must be 0 even though the cache holds 10: TC4R's buffer tube checks essentiaAmount
+            // before canOutputTo and returns without scanning its other faces, so a non-zero
+            // answer here stalls it permanently.
+            helper.assertTrue(dynamo.essentiaAmount(face) == 0,
+                    face + ": reported " + dynamo.essentiaAmount(face) + " units available on a"
+                            + " face that gives nothing");
 
             IEnergyStorage view = dynamo.getCapability(ForgeCapabilities.ENERGY, face).orElse(null);
             helper.assertTrue(view != null, face + ": no Forge Energy view at all");
@@ -314,17 +328,19 @@ public final class EssentiaDynamoGameTests {
      */
     @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH, timeoutTicks = 300)
     public static void essentiaReachesTheDynamoThroughRealTubes(GameTestHelper helper) {
-        DynamoChain chain = DynamoChain.place(helper, true, 2);
+        // Two tubes and no receiver: jar, tube, tube, dynamo already fills the four air layers
+        // the template has, and the dynamo's own buffer is enough to measure production.
+        DynamoChain chain = DynamoChain.place(helper, false, 2);
         long perUnit = chain.energyPerUnit();
+        helper.assertTrue(perUnit > 0, "one unit of ignis is worth " + perUnit + " Q here");
 
         helper.runAfterDelay(160, () -> {
-            int left = chain.jarAmount();
             int cached = chain.dynamoAmount();
-            int moved = DynamoChain.JAR_CAPACITY - left;
+            int moved = DynamoChain.JAR_CAPACITY - chain.jarAmount();
             helper.assertTrue(moved > 0,
                     "nothing crossed two tubes in 160 ticks; the dynamo's suction of "
                             + EssentiaDynamoBlockEntity.SUCTION + " is not winning against them");
-            helper.assertTrue(chain.delivered() > 0, "no energy came out of the tube-fed dynamo");
+            helper.assertTrue(chain.dynamoEnergy() > 0, "no energy came out of the tube-fed dynamo");
 
             // Conservation still holds, but the units in flight inside the tubes are neither in
             // the jar nor in the dynamo, so they have to be accounted for separately.
