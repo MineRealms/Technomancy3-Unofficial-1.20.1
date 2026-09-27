@@ -103,8 +103,8 @@ def main() -> int:
                 client.wait(timeout=120)
                 print("client closed")
             except Exception:
-                print("client did not close in time; terminating", file=sys.stderr)
-                client.terminate()
+                print("client did not close in time; killing its process tree", file=sys.stderr)
+                harness.kill_tree(client)
 
 
 if __name__ == "__main__":

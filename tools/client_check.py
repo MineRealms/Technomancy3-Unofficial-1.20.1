@@ -31,6 +31,8 @@ import sys
 import time
 from pathlib import Path
 
+import probe_harness
+
 ROOT = Path(__file__).resolve().parents[1]
 LOG = ROOT / "build" / "client-check.log"
 MOD_ID = "technom"
@@ -126,13 +128,13 @@ def main() -> int:
             if args.keep:
                 print("\n--keep: the client is still running; close it yourself")
             else:
-                # A client at the title screen holds no world state, so there is
-                # nothing to flush and no graceful-stop path to honour.
-                client.terminate()
-                try:
-                    client.wait(timeout=60)
-                except subprocess.TimeoutExpired:
-                    client.kill()
+                # A client at the title screen holds no world state, so there is nothing to
+                # flush and no graceful-stop path to honour. It does need a TREE kill: this
+                # never joins a world, so the debug bridge is not listening and cannot be
+                # asked to close the game, and killing only the gradle wrapper we hold would
+                # leave the forked client JVM running - which is exactly what happened here,
+                # twice, before this was noticed.
+                probe_harness.kill_tree(client)
 
 
 if __name__ == "__main__":

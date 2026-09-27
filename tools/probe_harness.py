@@ -146,6 +146,27 @@ def run_probes(files: list[Path], port: int, token_file: Path) -> int:
     return failures
 
 
+def kill_tree(process: subprocess.Popen) -> None:
+    """Last resort: kill the launched process AND its descendants.
+
+    Popen starts gradlew.bat, which starts a java wrapper, which forks the game's own
+    JVM. Killing only the object we hold leaves the whole java tree running - two
+    orphaned Minecraft clients were found that way, hours after their runs "finished".
+    Only ever call this after a graceful stop has been tried and has not worked.
+    """
+    if process.poll() is not None:
+        return
+    if sys.platform == "win32":
+        subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                       capture_output=True, check=False)
+    else:
+        process.terminate()
+    try:
+        process.wait(timeout=30)
+    except subprocess.TimeoutExpired:
+        process.kill()
+
+
 def launch(gradle_args: list[str], log: Path) -> subprocess.Popen:
     log.parent.mkdir(parents=True, exist_ok=True)
     log.write_bytes(b"")

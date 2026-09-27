@@ -66,8 +66,8 @@ def main() -> int:
             try:
                 server.wait(timeout=180)
             except Exception:
-                print("server did not stop within 180s; terminating", file=sys.stderr)
-                server.terminate()
+                print("server did not stop within 180s; killing its process tree", file=sys.stderr)
+                harness.kill_tree(server)
 
 
 if __name__ == "__main__":
