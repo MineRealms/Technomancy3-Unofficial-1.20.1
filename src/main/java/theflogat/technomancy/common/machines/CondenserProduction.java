@@ -45,15 +45,15 @@ public final class CondenserProduction {
         return costQ;
     }
 
-    public long maxRateQPerTick() {
-        return maxRateQPerTick;
-    }
-
+    /** Q already spent on the unit being made; what a save or a break has to account for. */
     public long progressQ() {
         return progress;
     }
 
-    /** Fraction of the current unit that is paid for, in {@code [0, 1)}. */
+    /**
+     * Fraction of the current unit that is paid for, in {@code [0, 1)}. The readable progress
+     * is the reason for the metered model; the original could only ever show 0% or 100%.
+     */
     public float progressFraction() {
         return (float) progress / costQ;
     }
@@ -86,11 +86,6 @@ public final class CondenserProduction {
         }
         progress -= costQ;
         return 1;
-    }
-
-    /** Total Q spent on units not yet finished; what a break or a save has to account for. */
-    public long unfinishedQ() {
-        return progress;
     }
 
     public CompoundTag save() {

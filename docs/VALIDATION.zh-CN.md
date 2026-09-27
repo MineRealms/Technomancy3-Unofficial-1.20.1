@@ -254,7 +254,7 @@ JAR 条目检查结果：`com/gregtechceu` 0 条、`theflogat/technomancy/gamete
 | `condenserTurnsForgeEnergyIntoEssentia` | 唯一一项走游戏自身 tick 循环（`startSequence().thenExecuteFor(150, …)`），因此同时验证注册、`getTicker` 接线与配置成本。每 tick 经 `ForgeCapabilities.ENERGY` 灌入 8,192 Q，结束时要求 `已灌入 == 缓存 + 进度 + 产量 × 成本`。实测 **1,228,800 Q 真实 Forge Energy → 6 点 `thaumcraft:potentia`，缓存 28,800 Q，进度 0 Q**（6 × 200,000 + 28,800 = 1,228,800，逐 Q 平衡） |
 | `condenserFillsARealWardedJar` | 凝聚器位于真实 `thaumcraft:warded_jar` 正上方并开启 DOWN 输出面；20 点 potentia 全部进入真实罐、凝聚器归零、总量不变、罐内 aspect 为 `thaumcraft:potentia` |
 | `aReceiverFillingUpNeitherDuplicatesNorDestroys` | A-9 的世界内版本：罐预装 60、凝聚器持有 20，一次推送后罐 64 / 凝聚器 16 / 总量仍 80；再推一次仍是 64 / 16。原版在这里会复制（全收分支）或销毁（不收分支） |
-| `redstoneGatingStopsAndStartsProduction` | 默认 `LOW`（无信号运行）；未加电时确实在消耗 Q；放下红石块后 10 tick 内能量与进度完全不变；切到 `HIGH` 后同一个信号又让它工作 |
+| `redstoneGatingStopsAndStartsProduction` | 默认 `LOW`（无信号运行）；未加电时确实在消耗 Q，且 `isWorking()` 为真、`progress()` 落在 (0, 1) 内；放下红石块后 10 tick 内能量与进度完全不变且 `isWorking()` 为假；切到 `HIGH` 后同一个信号又让它工作。最后把源质缓存填到 64 点再跑 10 tick：**能量与进度一个都不动，`isWorking()` 为假**，即功能矩阵要求的「满槽不耗电」 |
 | `noFaceAcceptsEssentiaAndTheClaimMatches` | A-10：六面 `canInputFrom` 全 `false`、`addEssentia` 恒 0、经 `EssentiaApi.add` 也是 0 且缓存不变；`suctionAmount`/`suctionType`/`minimumSuction` 为 `0`/`null`/`0`；未开启的面不可连接且 `essentiaAmount` 为 0；开启后可连接并交出真实量；`takeEssentia` 返回**实际取出量**（请求 100、库存 10 → 10），`SIMULATE` 不改状态，关闭的面返回 0 |
 | `everyFaceTakesEnergyAndNoFaceGivesItBack` | A-11：六面都有 FE 能力、`canReceive` 为真、`canExtract` 为假、`extractEnergy` 恒 0；`null` 面只拿到只读视图；模拟不动余额；5,000 Q 真实灌入成功后无法被抽回 |
 | `interactingWithoutABlockEntityDoesNotThrow` | A-12：在空气与木桶（外来 BE）两个位置，以空手 / 玻璃瓶 / 红石三种手持、潜行与非潜行两种状态，共 12 次调用 `use`，全部返回 `PASS` 且不抛异常。原版正是在"非潜行且手上有东西"这条分支上解引用 null |
@@ -265,7 +265,7 @@ JAR 条目检查结果：`com/gregtechceu` 0 条、`theflogat/technomancy/gamete
 ### 其它实测结果
 
 - 启动期平衡检查在两种运行时都记录：`balance.condenserCostQ=200000 against a dynamo yield of 16000 Q per unit of potentia at balance.essentiaFuelScale=0.25: the condenser is a net energy sink, as intended.`
-- 两次 `build` 的 `build/libs/technom-1.20.1-0.1.0-dev.jar` 逐字节相同：856,479 字节、307 个条目，SHA-256 `2dae5405ec1818250e2f2c8a143a233139367415209a4e2717dfb823980bfdca`；`com/gregtechceu` 0 条、`gametest` 0 条。`GtceuIsolationGameTests` 扫描 42 个发行类、0 个越界引用。
+- 两次 `build` 的 `build/libs/technom-1.20.1-0.1.0-dev.jar` 逐字节相同：857,360 字节、312 个条目，SHA-256 `7416ec018f2587592889fa247ce9a6746a48d70fe6d14b29869ebc3d77948850`；`com/gregtechceu` 0 条、`gametest` 0 条。`GtceuIsolationGameTests` 扫描 42 个发行类、0 个越界引用。
 - 方块状态与模型的**离线**校验（不是渲染验证）：按原版 multipart 匹配规则枚举全部 4 × 64 = 256 个状态，六个面各**恰好**命中 1 个模型（0 个缺面、0 个重叠），包括被方块逻辑禁止的"正面开输出"组合也不会重叠；`blockstates/energy_condenser.json` 引用的 7 个单面模型、`block/energy_condenser`、`item/energy_condenser` 及其 `parent` 链上引用的全部纹理都存在于磁盘。
 - 中文方块名取自 `reference/legacy-1.12/lang/zh_cn.json` 的 `tile.techno:condenserblock.name`，以程序方式复制并按码位核对（U+80FD U+91CF U+8F6C U+6362 U+7535 U+5BB9）；两个 lang 文件改动后仍是合法 JSON，各 13 个键。
 

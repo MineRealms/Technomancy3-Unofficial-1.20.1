@@ -166,6 +166,9 @@ public final class CondenserGameTests {
         tick(helper, pos, condenser, 3);
         long unpowered = condenser.energy().ledger().stored();
         helper.assertTrue(unpowered < full, "an unpowered LOW condenser did not convert anything");
+        helper.assertTrue(condenser.isWorking(), "a converting condenser does not report itself as working");
+        helper.assertTrue(condenser.progress() > 0.0F && condenser.progress() < 1.0F,
+                "the progress readout is " + condenser.progress() + " part-way through a unit");
 
         level.setBlockAndUpdate(lever, Blocks.REDSTONE_BLOCK.defaultBlockState());
         helper.assertTrue(level.hasNeighborSignal(pos), "the redstone block does not power the condenser");
@@ -174,13 +177,26 @@ public final class CondenserGameTests {
         helper.assertTrue(condenser.energy().ledger().stored() == unpowered,
                 "a powered LOW condenser spent " + (unpowered - condenser.energy().ledger().stored()) + " Q anyway");
         helper.assertTrue(condenser.unfinishedQ() == progress, "a gated condenser still made progress");
+        helper.assertTrue(!condenser.isWorking(), "a gated condenser still reports itself as working");
 
         // The same signal now starts it, which is what makes this a mode and not a lockout.
         condenser.setRedstoneMode(RedstoneMode.HIGH);
         tick(helper, pos, condenser, 3);
         helper.assertTrue(condenser.energy().ledger().stored() < unpowered,
                 "a powered HIGH condenser did not convert anything");
-        Technomancy.LOGGER.info("GameTest condenser: redstone gating holds in both directions");
+        helper.assertTrue(condenser.isWorking(), "a running HIGH condenser does not report itself as working");
+
+        // A full output buffer is the other reason to stop, and it must cost nothing either.
+        condenser.store().add(POTENTIA, CondenserBalance.ESSENTIA_CAPACITY, false);
+        long beforeFull = condenser.energy().ledger().stored();
+        long progressWhenFull = condenser.unfinishedQ();
+        tick(helper, pos, condenser, 10);
+        helper.assertTrue(condenser.energy().ledger().stored() == beforeFull,
+                "a full condenser burned " + (beforeFull - condenser.energy().ledger().stored()) + " Q for nothing");
+        helper.assertTrue(condenser.unfinishedQ() == progressWhenFull, "a full condenser still made progress");
+        helper.assertTrue(!condenser.isWorking(), "a full condenser reports itself as working");
+        Technomancy.LOGGER.info("GameTest condenser: redstone gating holds in both directions and a full"
+                + " buffer spends nothing");
         helper.succeed();
     }
 

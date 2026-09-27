@@ -209,9 +209,9 @@ public final class EnergyCondenserBlockEntity extends BlockEntity
         return production.progressFraction();
     }
 
-    /** Q already spent on the unit being made; the rest of the books' third column. */
+    /** Q already spent on the unit being made; the third column of the energy books. */
     public long unfinishedQ() {
-        return production.unfinishedQ();
+        return production.progressQ();
     }
 
     /** Q one unit of essentia costs, as configured when this machine was created. */
