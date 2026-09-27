@@ -65,16 +65,25 @@ public final class QuantumJarRenderer implements BlockEntityRenderer<QuantumJarB
 
     private static void renderEssentia(AspectId aspect, int amount, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
-        AspectDefinition definition = AspectApi.get(aspect);
-        if (definition == null) {
-            return;
-        }
         /*
          * The height is a float fraction of the capacity. The original computed
          * (abs(amount / 5) / abs(maxAmount / 5)) * 0.65f entirely in integers, so it only ever
          * produced 0 or 0.65 and the level never moved with the contents (defect A-4).
          */
-        float top = LIQUID_FLOOR + Math.min(1.0F, (float) amount / QuantumJarBlockEntity.CAPACITY) * LIQUID_RANGE;
+        renderColumn(aspect, (float) amount / QuantumJarBlockEntity.CAPACITY, poseStack, buffer, packedLight);
+    }
+
+    /**
+     * Draws an essentia column of the given fill fraction inside a jar-shaped shell; shared with
+     * the creative jar, which has the same shell.
+     */
+    public static void renderColumn(AspectId aspect, float fill, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight) {
+        AspectDefinition definition = AspectApi.get(aspect);
+        if (definition == null) {
+            return;
+        }
+        float top = LIQUID_FLOOR + Math.max(0.0F, Math.min(1.0F, fill)) * LIQUID_RANGE;
         TextureAtlasSprite sprite = Minecraft.getInstance()
                 .getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(LIQUID);
         int color = definition.color();

@@ -14,8 +14,13 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.function.Supplier;
 import theflogat.technomancy.Technomancy;
 import theflogat.technomancy.common.blocks.dynamo.EssentiaDynamoBlock;
+import theflogat.technomancy.common.blocks.essentia.CreativeJarBlock;
+import theflogat.technomancy.common.blocks.essentia.EssentiaReservoirBlock;
 import theflogat.technomancy.common.blocks.essentia.QuantumJarBlock;
 import theflogat.technomancy.common.blocks.machines.EnergyCondenserBlock;
+import theflogat.technomancy.common.blocks.machines.EssentiaFusorBlock;
+import theflogat.technomancy.common.blocks.machines.ProcessorBlock;
+import theflogat.technomancy.common.blocks.machines.TcProcessorBlock;
 
 /**
  * Every block of the mod, plus the {@link BlockItem} that goes with it.
@@ -123,6 +128,45 @@ public final class TechnomBlocks {
             () -> new theflogat.technomancy.common.blocks.nodes.NodeFabricatorBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_PURPLE)
                     .strength(5.0F, 12.0F)
+
+    // ---- S2 machines and storage ----
+
+    /** {@code reservoir}. No recipe or research in the original either; creative tab only. */
+    public static final RegistryObject<Block> ESSENTIA_RESERVOIR = register("essentia_reservoir",
+            () -> new EssentiaReservoirBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .strength(2.0F)
+                    .sound(SoundType.STONE)
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)));
+
+    /** {@code creativeJar}. Unbreakable outside creative and no drops: see {@link CreativeJarBlock}. */
+    public static final RegistryObject<Block> CREATIVE_JAR = register("creative_jar",
+            () -> new CreativeJarBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_MAGENTA)
+                    .strength(-1.0F, 3_600_000.0F)
+                    .sound(SoundType.GLASS)
+                    .noLootTable()
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)
+                    .isRedstoneConductor((state, level, pos) -> false)
+                    .isSuffocating((state, level, pos) -> false)
+                    .isViewBlocking((state, level, pos) -> false)));
+
+    /** {@code processorTC}: purifies ores for ignis. Lights up and smokes while working. */
+    public static final RegistryObject<Block> PROCESSOR_TC = register("processor_tc",
+            () -> new TcProcessorBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(3.0F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .lightLevel(state -> state.getValue(ProcessorBlock.LIT) ? ProcessorBlock.LIT_LIGHT : 0)));
+
+    /** {@code essentiaFusor}: combines two aspects into the compound they make. */
+    public static final RegistryObject<Block> ESSENTIA_FUSOR = register("essentia_fusor",
+            () -> new EssentiaFusorBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .strength(3.0F, 6.0F)
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()

@@ -1,0 +1,116 @@
+{
+  "entries": [
+    {
+      "key": "technom:PROCESSOR",
+      "category": "technom:TECHNOMANCY",
+      "aspects": {
+        "ignis": 5,
+        "permutatio": 5,
+        "perditio": 5
+      },
+      "display_column": -2,
+      "display_row": -1,
+      "complexity": 3,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:processor_tc"
+        }
+      },
+      "flags": [],
+      "parents": [
+        "technom:TECHNOBASICS"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.PROCESSOR.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "ARCANE_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:arcane/processor_tc"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "technom:ESSENTIAFUSOR",
+      "category": "technom:TECHNOMANCY",
+      "aspects": {
+        "machina": 10,
+        "permutatio": 10,
+        "praecantatio": 10,
+        "fabrico": 10
+      },
+      "display_column": -2,
+      "display_row": -4,
+      "complexity": 3,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:essentia_fusor"
+        }
+      },
+      "flags": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "parents": [
+        "technom:TECHNOBASICS"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [
+        {
+          "item": "thaumcraft:essentia_tube"
+        }
+      ],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.ESSENTIAFUSOR.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.ESSENTIAFUSOR.2",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:infusion/essentia_fusor"
+          ]
+        }
+      ]
+    }
+  ]
+}

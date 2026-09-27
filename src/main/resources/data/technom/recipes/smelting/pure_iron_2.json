@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "item": "technom:pure_iron_2"
+  },
+  "result": {
+    "item": "minecraft:iron_ingot",
+    "count": 4
+  },
+  "experience": 1.0,
+  "cookingtime": 200
+}

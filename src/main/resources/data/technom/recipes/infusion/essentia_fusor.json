@@ -1,0 +1,44 @@
+{
+  "type": "thaumcraft:infusion",
+  "research": "technom:ESSENTIAFUSOR",
+  "central": {
+    "item": "thaumcraft:essentia_valve"
+  },
+  "components": [
+    {
+      "item": "thaumcraft:warded_jar"
+    },
+    {
+      "item": "thaumcraft:essentia_tube"
+    },
+    {
+      "item": "thaumcraft:warded_jar"
+    },
+    {
+      "item": "technom:neutronized_metal"
+    },
+    {
+      "item": "thaumcraft:warded_jar"
+    },
+    {
+      "item": "thaumcraft:essentia_tube"
+    },
+    {
+      "item": "thaumcraft:warded_jar"
+    },
+    {
+      "item": "technom:neutronized_metal"
+    }
+  ],
+  "instability": 10,
+  "aspects": {
+    "praecantatio": 32,
+    "fabrico": 32,
+    "permutatio": 16,
+    "machina": 16
+  },
+  "result": {
+    "item": "technom:essentia_fusor",
+    "count": 1
+  }
+}

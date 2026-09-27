@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "item": "technom:pure_copper_0"
+  },
+  "result": {
+    "item": "minecraft:copper_ingot",
+    "count": 2
+  },
+  "experience": 1.0,
+  "cookingtime": 200
+}

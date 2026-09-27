@@ -1,0 +1,49 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "technom:block/processortcactive",
+    "face": "technom:block/processortcactive",
+    "bottom": "technom:block/processortcside",
+    "top": "technom:block/processortctop"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#bottom",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#top",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#face",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#face",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#face",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#face",
+          "cullface": "east"
+        }
+      }
+    }
+  ]
+}

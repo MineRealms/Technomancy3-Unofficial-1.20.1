@@ -1,0 +1,21 @@
+{
+  "direct": {
+    "technom:processor_tc": {
+      "machina": 8,
+      "ignis": 12,
+      "perditio": 6,
+      "metallum": 4
+    },
+    "technom:essentia_reservoir": {
+      "vacuos": 8,
+      "praecantatio": 6,
+      "vitreus": 4
+    },
+    "technom:essentia_fusor": {
+      "machina": 8,
+      "permutatio": 12,
+      "praecantatio": 6,
+      "vitreus": 4
+    }
+  }
+}

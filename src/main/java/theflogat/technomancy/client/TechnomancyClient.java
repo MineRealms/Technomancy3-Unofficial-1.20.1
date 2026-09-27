@@ -25,11 +25,23 @@ public final class TechnomancyClient {
     }
 
     public static void init(IEventBus modBus) {
+        modBus.addListener(TechnomancyClient::clientSetup);
         modBus.addListener(TechnomancyClient::registerRenderers);
+        S2MachinesClient.init(modBus);
+    }
+
+    /**
+     * The S1 blocks declare their chunk render type as {@code "render_type"} in their model
+     * JSON instead (see this class's javadoc), so only the S2 machines' client setup is left
+     * here.
+     */
+    private static void clientSetup(final FMLClientSetupEvent event) {
+        event.enqueueWork(S2MachinesClient::clientSetup);
     }
 
     private static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
         // Only the essentia level and the label need drawing in code; the shell is a JSON model.
         event.registerBlockEntityRenderer(TechnomBlockEntities.QUANTUM_JAR.get(), QuantumJarRenderer::new);
+        S2MachinesClient.registerRenderers(event);
     }
 }

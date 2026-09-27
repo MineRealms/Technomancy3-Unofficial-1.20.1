@@ -66,6 +66,13 @@ public final class TechnomItems {
 
     // ---- end S2 nodes, wands and fusion ----
 
+    // ---- S2 machines and storage ----
+
+    static {
+        // One item per material and purity stage; see TechnomPureOres for why the set is fixed.
+        TechnomPureOres.register(ITEMS);
+    }
+
     private TechnomItems() {
     }
 
