@@ -1,0 +1,149 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "out_down": "false"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_down_base"
+      }
+    },
+    {
+      "when": {
+        "out_down": "true"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_down_vent"
+      }
+    },
+    {
+      "when": {
+        "out_up": "false"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_up_base"
+      }
+    },
+    {
+      "when": {
+        "out_up": "true"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_up_vent"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "out_north": "false"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_front"
+      }
+    },
+    {
+      "when": {
+        "facing": "east|south|west",
+        "out_north": "false"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_side"
+      }
+    },
+    {
+      "when": {
+        "out_north": "true"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_vent"
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "out_east": "false"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_front",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "north|south|west",
+        "out_east": "false"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_side",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "out_east": "true"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_vent",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "out_south": "false"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_front",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north|east|west",
+        "out_south": "false"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_side",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "out_south": "true"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_vent",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "out_west": "false"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_front",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north|east|south",
+        "out_west": "false"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_side",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "out_west": "true"
+      },
+      "apply": {
+        "model": "technom:block/condenser_face_vent",
+        "y": 270
+      }
+    }
+  ]
+}

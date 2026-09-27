@@ -1,0 +1,28 @@
+{
+  "ambientocclusion": true,
+  "textures": {
+    "tex": "technom:block/condenserblockfront",
+    "particle": "technom:block/condenserblockfront"
+  },
+  "elements": [
+    {
+      "name": "north",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tex",
+          "cullface": "north"
+        }
+      }
+    }
+  ]
+}

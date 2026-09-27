@@ -1,0 +1,28 @@
+{
+  "ambientocclusion": true,
+  "textures": {
+    "tex": "technom:block/condenserblocktop",
+    "particle": "technom:block/condenserblocktop"
+  },
+  "elements": [
+    {
+      "name": "up",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#tex",
+          "cullface": "up"
+        }
+      }
+    }
+  ]
+}

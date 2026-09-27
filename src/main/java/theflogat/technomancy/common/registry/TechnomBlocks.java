@@ -14,6 +14,7 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.function.Supplier;
 import theflogat.technomancy.Technomancy;
 import theflogat.technomancy.common.blocks.essentia.QuantumJarBlock;
+import theflogat.technomancy.common.blocks.machines.EnergyCondenserBlock;
 
 /**
  * Every block of the mod, plus the {@link BlockItem} that goes with it.
@@ -60,6 +61,17 @@ public final class TechnomBlocks {
                     .isRedstoneConductor((state, level, pos) -> false)
                     .isSuffocating((state, level, pos) -> false)
                     .isViewBlocking((state, level, pos) -> false)));
+
+    /**
+     * {@code condenserBlock}. Spends Forge Energy to make potentia; see
+     * {@link theflogat.technomancy.common.tiles.machines.EnergyCondenserBlockEntity}.
+     */
+    public static final RegistryObject<Block> ENERGY_CONDENSER = register("energy_condenser",
+            () -> new EnergyCondenserBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(3.0F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()));
 
     private TechnomBlocks() {
     }

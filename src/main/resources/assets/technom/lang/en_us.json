@@ -2,9 +2,14 @@
   "itemGroup.technom": "Technomancy",
   "block.technom.quantized_glass": "Quantized Glass",
   "block.technom.quantum_jar": "Quantum Jar",
+  "block.technom.energy_condenser": "Energy Condenser",
   "item.technom.neutronized_metal": "Neutronized Metal",
   "item.technom.enchanted_coil": "Enchanted Coil",
   "item.technom.neutronized_gear": "Neutronized Gear",
   "item.technom.pen_core": "Pen Core",
-  "item.technom.potency_gem": "Potency Gem"
+  "item.technom.potency_gem": "Potency Gem",
+  "technom.condenser.redstone_mode": "Redstone: %s",
+  "technom.redstone_mode.none": "Ignore redstone",
+  "technom.redstone_mode.high": "Run with a signal",
+  "technom.redstone_mode.low": "Run without a signal"
 }

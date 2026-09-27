@@ -2,9 +2,14 @@
   "itemGroup.technom": "量子魔法",
   "block.technom.quantized_glass": "量子化玻璃",
   "block.technom.quantum_jar": "量子罐",
+  "block.technom.energy_condenser": "能量转换电容",
   "item.technom.neutronized_metal": "中子金属",
   "item.technom.enchanted_coil": "魔力线圈",
   "item.technom.neutronized_gear": "中子齿轮",
   "item.technom.pen_core": "笔芯",
-  "item.technom.potency_gem": "力量宝石"
+  "item.technom.potency_gem": "力量宝石",
+  "technom.condenser.redstone_mode": "红石：%s",
+  "technom.redstone_mode.none": "忽略红石",
+  "technom.redstone_mode.high": "有信号时运行",
+  "technom.redstone_mode.low": "无信号时运行"
 }
