@@ -34,7 +34,7 @@
 
 | 功能与旧注册字段 | 来源实现 | 依赖、20721 适配与主要风险 | 阶段 | 必须验证 | 状态 |
 |---|---|---|---|---|---|
-| 精华发电机 `essentiaDynamo` | `TileEssentiaDynamo` | `essentia.EssentiaTransport` / `EssentiaSource`；保留不同要素燃料规则；RF 输出改 FE/EU 共用存储 | S1 | 管道与罐取料；模拟不扣料；满电停机；两个端口同 tick 不重复输出；重载燃料进度 | 待迁移 |
+| 精华发电机 `essentiaDynamo` | `TileEssentiaDynamo` | 已实现为 `technom:essentia_dynamo`：`essentia.EssentiaTransport` + `aspect.AspectContainerView`；**刻意不实现 `EssentiaSource`**（它是消费者，不该被注魔祭坛抽走燃料）；燃料值表改为数据驱动 `data/technom/technomancy/essentia_fuel/`；RF 输出改 FE/EU 共用账本 | S1 | 管道与罐取料；模拟不扣料；满电停机；两个端口同 tick 不重复输出；重载燃料进度 | **已实现**。真实 `thaumcraft:warded_jar` 取料、向真实 FE 消费者交付、红石三态双向门控、满缓冲不扣料不烧料、源质与能量守恒、六面旋转、掉落可得、存盘往返，均由 `technom_dynamo` 批次 10 个 GameTest 在有/无 GTCEu 下实测通过。**客户端渲染未验证**（无 BER，静态模型）；节点发电机仍属 S2。刻意偏离清单与实测数值见[验证记录](VALIDATION.zh-CN.md#源质发电机验证2026-09-28) |
 | 节点发电机 `nodeDynamo` | `TileNodeDynamo` | `node.AuraNodeView` / `NodeVis`；核对消耗节点 vis 的语义，不能把节点总容量当可用燃料 | S2 | 节点损耗/恢复、类型和亮度边界；节点卸载；FE/EU 输出守恒 | 待迁移 |
 | 量子精华罐 `essentiaContainer` | `TileEssentiaContainer` / 对应 Block | `EssentiaTransport`、容器视图、标签和显示；旧版内部罐继承改自有 BE | S1 | 容量、吸力、方向、标签筛选、邻罐抽取、破坏掉落和存储恢复 | 待迁移 |
 | 量子玻璃/装饰块 `cosmeticOpaque` | `BlockCosmeticOpaque` | 无独立机器 BE；与量子罐奥术配方一起迁移；不能遗漏无 TE 材料路径 | S1 | 配方可得、碰撞和透光、模型及掉落一致 | 待迁移 |
@@ -83,7 +83,7 @@
 | 16 个仪式 | 下表有效列表 | 原版硬编码 0/256 高度和同步大范围改世界；改实际维度边界、分 tick 任务、区块加载边界 | S3 | 正反向阵列、负 Y、重载恢复、移动 BE 数据、失败回滚、掉落守恒和 tick 预算 | 待迁移 |
 | 仪式手册 | `ItemRitualTome`、GUI 与纹理 | Screen、现代文本/翻译和配方引用 | S3 | 所有已注册仪式可查、翻页/缩放、语言回退、无失效配方引用 | 待迁移 |
 | 物品线圈与连接工具 | `itemTransmitter`、`ItemCoilCoupler`、`ICouplable` | `IItemHandler`、稳定连接数据；1.12 工具实例/配方缺失不能沿用 | S2 | 仓库输入输出、模拟、满库存、标签、断连/卸载、重复点击和无物品复制 | 待迁移 |
-| Potency Gem / 增幅 | `ItemBoost`，机器升级接口 | 统一升级状态、倍率上限和可用机器列表 | S1→S3 | 安装/卸下只结算一次、掉落保存、耗能与产能同时调整 | 待迁移 |
+| Potency Gem / 增幅 | `ItemBoost`，机器升级接口 | 保持"纯吞吐 ×4、效率不变"语义：升级同时把发电速率和每次源质消耗都乘 4。不做多级升级 | S1→S3 | 安装/卸下只结算一次、掉落保存、耗能与产能同时调整 | **源质发电机部分已实现**：`technom:potency_gem` 右键安装、潜行空手右键非输出面取回、破坏时掉落，效率不变已由 JUnit（任意燃料值、任意 `essentiaFuelScale`）与 GameTest（实测 4 点源质 = 64000 Q，与未升级的 16000 Q/点一致）双层验证。其余机器待各自迁移；未做安装/卸下的客户端反馈验证 |
 | Existence 喷泉 | `fountainExistence` / `TileExistenceFountain` | 仪式生成与玩家/实体资源，保留独立 Existence 概念 | S3 | 仪式生成、资源产消、主人离线、多人归属、实体事件一致 | 待迁移 |
 | Existence 燃烧器 | 一个 `existenceBurner` ID，普通/动态 2 变体 | 实体消耗、资源生产；不得简单改成所有行为都消耗 FE | S3 | 目标筛选、产量、红石、重载、动态版本差异 | 待迁移 |
 | Existence 塔 | 一个 `existencePylon` ID，3 种变体 | 原版能力/范围与传输规则迁入新 BE | S3 | 范围、升级、消费者连接、跨区块/维度限制与守恒 | 待迁移 |

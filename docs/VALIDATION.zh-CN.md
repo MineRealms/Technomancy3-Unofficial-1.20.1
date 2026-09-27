@@ -220,3 +220,106 @@ JAR 条目检查结果：`com/gregtechceu` 0 条、`theflogat/technomancy/gamete
 - 没有执行 `runClient`、联机或专用服务器长期运行；也没有验证存档重载后 EU 读数与 Q 余额的一致性。
 
 下一阶段开始后，每批功能都应更新此记录，写明实际运行命令、观察结果和未覆盖的环境；不要用 `test NO-SOURCE`、启动成功或 GameTest 冒烟结果代替功能验收。
+
+## 源质发电机验证（2026-09-28）
+
+本节只覆盖 `technom:essentia_dynamo`（源质发电机）、其数据驱动燃料表、共享的三态红石控制件，以及效能宝石在发电机上的行为。它不代表凝聚器、研究、配方或客户端渲染已经验证。分支 `s1b/dynamo`，基线 `53141d2`。
+
+### 已执行的命令
+
+以 JDK 17（Temurin 17.0.18+8，`JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot`，与 PATH 上的 JDK 21 不同）在本工作树执行：
+
+```powershell
+.\gradlew.bat build --console=plain --no-daemon --offline
+.\gradlew.bat build -PwithGtceu=true --console=plain --no-daemon --offline
+.\gradlew.bat runGameTestServer --console=plain --no-daemon --offline
+.\gradlew.bat runGameTestServer -PwithGtceu=true --console=plain --no-daemon --offline
+```
+
+### JUnit（无世界层）
+
+`build` 中的 `test` 共 **115 项通过、0 失败**（原有 88 项；新增 27 项：`EssentiaFuelTableTest` 15、`DynamoFuelBankTest` 12）。
+
+`EssentiaFuelTableTest` 从 classpath 读取**实际随包发布的** `data/technom/technomancy/essentia_fuel/default.json`，用真实 codec 解析，因此断言的是玩家会拿到的数据本身，不是它的副本：
+
+| 测试 | 断言内容 |
+|---|---|
+| `shippedTableCoversTheOriginalRowsAndNothingElse` | 44 个 aspect 有行（原表 43 行 + 补写的 `terra`）、兜底 25；`gelum`/`victus`/`lucrum`/`tutamen` 四个原版确实未提及的 aspect 仍走兜底；外部 mod 的未知 aspect 也是兜底 25 而不是 0；`null` aspect 为 0 |
+| `unconditionalRowsMatchTheOriginal` | 800（ignis/potentia）、75（aer/ordo/vitreus/perditio 加 8 个器械类）、30（12 个生物类）、40（5 个植物类）逐条核对 |
+| `terraIsWorthTheSameAsTheOtherNonFirePrimals` | `terra` = 75（A-15） |
+| `aquaFollowsBiomeHumidity` | 50 / 湿润群系 200 |
+| `magicAndEldritchTakeEitherTheEndOrAMagicalForest` | 75 / 末地 300 / 魔法森林 300（两个条件的“或”由有序列表首个命中实现） |
+| `undeadIsWorthMoreInTheEndAndNoLongerFallsThroughOutsideIt` | 非末地 50、末地 100（A-15） |
+| `voidIsWorthMoreBelowSeaLevelWhereverTheFloorIs` | 海平面 63 时 y=63/120 得 50，y=62/-40 得 200；海平面 32 时边界随之移动（A-17） |
+| `flightKeepsItsAbsoluteCeiling` | y=150 得 50，y=151 得 200，y=-60 得 50 |
+| `slimeLightDarknessAuraAndTaintFollowTheirConditions` | 史莱姆区块 200/100、昼夜 300/50 两组、魔法森林 600/100、污染 600/100 |
+| `exchangeRollsInTheCorrectedRangeAndNeverZero` | 4000 次取样全部落在 200..1199，且确实覆盖两端（A-16） |
+| `energyPerUnitIsFuelValueTimesEightyTimesTheScale` | `fuelValue × 80 × scale`：scale=1.0 时 ignis 为 64000 Q；scale=0.25 时 16000 Q（与一块煤直接烧打平）；四舍五入只发生一次 |
+| `firstMatchingConditionWins` | 条件列表有序、首个命中生效 |
+| `laterFilesOverrideRowsAndReplaceClearsThem` | 按资源 ID 顺序合并、逐 aspect 覆盖、`"replace": true` 可清空 |
+| `badFilesAreSkippedWithoutTakingTheTableDown` | 未知条件类型、负数燃料值、缺 `aspects` 的文件整份被拒并写日志，有效文件照常生效 |
+| `anEmptyTableIsTheStartingState` | 数据包加载前表为空，机器必须容忍 0 燃料值 |
+
+`DynamoFuelBankTest` 覆盖 tick 级燃料记账：满缓冲既不买料也不询价（`aFullBufferBuysNoFuelAndDoesNotEvenPriceIt` 用调用计数断言连“定价”都没发生）、满缓冲不烧掉已有燃料、产量不超过剩余空间、被拒能量退回燃料槽、不足一次完整装料时一点都不烧、燃料值为 0 时不扣源质、32 tick 前瞻只买一次料，以及 `thePotencyGemChangesThroughputAndNotEfficiency`：对 7 个燃料值分别跑满 64 点源质，未升级与升级两条路径消耗的源质与产出的总能量**完全相等**，时间约为四分之一。
+
+**为什么燃料表条件用 `ResourceLocation` 而不是 `TagKey`/`ResourceKey`**：注册表型 codec 在 `Bootstrap.bootStrap()` 之前无法构造，而 Forge 的 eventbus 在纯 JUnit 环境下无法完成 bootstrap（实测 `NetworkHooks.init` 抛 `NoSuchMethodException: NetworkEvent.<init>()`）。条件因此只持有 id，由 `FuelEnvironment` 这一层把 id 变成注册表键——这同时是干净的边界划分，也是这一整套条件分支能被单元测试覆盖的前提。
+
+### GameTest（真实世界层）
+
+`runGameTestServer` 与 `runGameTestServer -PwithGtceu=true` 两次均报告 **All 16 required tests passed**（原有 6 项加新增 `technom_dynamo` 批次 10 项），两次的发电机实测数值完全一致。
+
+| GameTest | 日志实测结果 |
+|---|---|
+| `theFuelTableIsLoadedFromTheDataPack` | 运行时表含 44 个 aspect、兜底 25 —— 证明 `AddReloadListenerEvent` 真的挂上了，不只是写了 |
+| `faceRulesAgreeAndTheOutputFaceCarriesOnlyEnergy` | `up-facing dynamo accepts essentia on the other five faces only, canInputFrom == isConnectable on all six, canOutputTo and takeEssentia are 0 everywhere, suction 128/128 and FE extract only on up`（A-7） |
+| `turningTheOutputMovesEveryFaceRule` | 六次无条件旋转回到 `up`，每次源质面与 FE 视图同步跟随（A-19） |
+| `theBlockCanBeMinedForItsItem` | 在 `minecraft:mineable/pickaxe` 内、石镐即为正确工具、剪刀不是；战利品表产出恰好 1 个 `essentia_dynamo` |
+| `savedStateIsRestoredVerbatim` | `6400 Q, 57600 Q of banked fuel, 4 units of thaumcraft:ignis, the potency gem and redstone mode LOW all survived a save and load` |
+| `aWardedJarFeedsTheDynamoWhichPowersARealConsumer` | `in 80 ticks a real warded jar gave up 16 units of ignis (16000 Q each), the dynamo produced 6000 Q and a real Forge Energy receiver took 6000 Q of it` —— 每 5 tick 1 点的节流与 80 Q/t 的速率都符合 |
+| `essentiaAndEnergyAreConservedAcrossTheChain` | `jar 40 + cache 23 + burned 1 = 64 units; burned x 16000 Q = 16000 Q = 9200 Q produced + 6800 Q still banked as fuel` —— 精确等式，不依赖 tick 计数 |
+| `redstoneGatingStopsGenerationAndTheEssentiaPull` | `60 ticks on HIGH with no signal took 0 essentia and produced 0 Q; 60 ticks after a redstone block it had pulled 12 units and delivered 4400 Q`（A-18） |
+| `aFullBufferTakesNoEssentiaAndWastesNoFuel` | `60 ticks at 40000 of 40000 Q burned no fuel (13200 Q banked throughout) and bought no charge (1 units burned throughout)`（A-14） |
+| `thePotencyGemQuadruplesThroughputAndNotEfficiency` | `320 Q/t on 4 units per charge burned 4 units worth 64000 Q and produced exactly 64000 Q, delivering 32000 Q in 120 ticks` —— 每点 16000 Q，与未升级完全一致 |
+
+真实 Forge Energy 消费者由 `GameTestEnergySink` 通过 `AttachCapabilitiesEvent` 挂在普通木桶上：原版与 Thaumcraft 都没有接收 FE 的方块，本模组自己的方块是发电机，所以必须专门造一个接收端。发电机因此是用它对任何第三方机器都会用的那一次 capability 查询找到它的，**发电机代码里没有任何测试钩子**。该监听器只从测试代码注册、只在测试要求的坐标上挂载，且整个 `gametest` 包不进发行 JAR。
+
+### 发行 JAR 卫生
+
+先删除 `build/libs`、`build/classes`、`build/resources`、`build/tmp`，再分别以不带参数和 `-PwithGtceu=true` 重新构建，两次产物逐字节相同（890,186 字节、332 个条目），SHA-256：
+
+```text
+ddd0b3df90b6debbf4faf2bafe4dcf3339c4d8c8b2fe41f24dff6e08ca16fc29
+```
+
+JAR 内 `theflogat/technomancy/gametest/` 0 条、`com/gregtechceu` 0 条；`data/technom/technomancy/essentia_fuel/default.json`、`assets/technom/blockstates/essentia_dynamo.json`、两个模型与战利品表均在。GTCEu 隔离扫描从 12 个类增长到 56 个类，仍然 0 个类在 `compat/gtceu/` 之外链接 GT（发电机确实引用了 `compat.gtceu.EuTier`，但那是不含 GT 类型的电压表，按 `EuTier` 自身文档“机器的 EU 限额必须从 `voltage()` 推导”使用）。
+
+### 本轮采纳的平衡决定（规格书第 10 章）
+
+| 条目 | 采纳值 | 位置 |
+|---|---|---|
+| 1 每点源质能量 | `essentiaFuelScale = 0.25`（上一批已加入配置，本批真正开始使用）。ignis/potentia 因此为 16000 Q/点，一块煤经坩埚的 4 点与直接烧打平 | `TechnomancyConfig.ESSENTIA_FUEL_SCALE` |
+| 3 发电机默认红石模式 | **`NONE`**（原版为 `HIGH`）。三态与三种编程物品全部保留 | `EssentiaDynamoBlockEntity.DEFAULT_REDSTONE_MODE` |
+| 7 `EARTH`/terra 燃料值 | **75** | `essentia_fuel/default.json` |
+| 8 `UNDEAD`/exanimis 非末地 | **50** | 同上 |
+| 9 `EXCHANGE`/permutatio 随机范围 | **200 + `level.random.nextInt(1000)`** | 同上 |
+| 10 燃料表数据驱动 | **是**，`data/<ns>/technomancy/essentia_fuel/*.json` 加 codec 加载器 | `EssentiaFuelLoader` |
+| 12 源质连接面收紧 | 发电机 `canInputFrom == isConnectable == (face != facing)` | `EssentiaDynamoBlockEntity.essentiaPorts` |
+
+发电速率、缓冲、输出上限、源质缓存与吸力全部 1:1 保留（80 / 320 / 40,000 / 320 / 64 / 128）。
+
+### 规格书之外新发现、且未复现的两个缺陷
+
+1. **`fill()` 会销毁源质**。`TileEssentiaDynamo.fill()`（`:180`）取邻居持有的任意 aspect 并交给 `addToContainer`；后者在已有别的 aspect 时拒收，并把这一点作为“未接收量”返回，而调用方**丢弃了返回值** —— 这一点源质已经被 `takeEssentia` 从管道里取出，于是被凭空销毁。本移植只索取自己能存下的 aspect，`EssentiaApi.take` 在邻居持有别的 aspect 时返回 0，安全跳过。
+2. **生物群系采样坐标错误**。`getAspectFuel` 用 `worldObj.getBiomeGenForCoords(xCoord, yCoord)`（`:69,75,138,144`），而 1.7.10 该方法的两个形参是 `(x, z)` —— 把 Y 坐标传进了 Z 的位置。因此原版所有依赖群系的燃料值（aqua/praecantatio/alienis/auram/vitium）读的都是错误的那一列。本移植按方块坐标取群系。
+
+### 本节尚未验证
+
+- **客户端与渲染**：`runClient` 未执行，本环境 headless。发电机只提供**静态 JSON 模型**，没有 `BlockEntityRenderer`。原版 `ModelEssentiaDynamo` 的四个喷口是 **30°**（`0.5235988` rad），而方块模型的旋转只允许 ±22.5/±45，因此喷口按最接近的 **22.5°** 实现，这是**刻意的几何偏离**。64×32 的 `textures/models/essentiadynamo.png` 因此没有被使用；模型六面统一采用同图案的 16×16 `block/essentiadynamo`。模型是否好看、`LIT` 方块状态在客户端的表现、手持与物品栏渲染、贴图 UV 是否对位，**全部未经肉眼验证**。若后续要做 BER，请先在有显示的环境下核对。
+- **`LIT` 目前没有视觉差异**：12 个 variant 指向同一个模型。它是真实同步的状态（比较器、Jade、资源包可用），但没有发光贴图。
+- **扳手 tag 在纯 TC4R 环境下是空的**：`technom:tools/wrench` 只含可选引用 `#forge:tools/wrench` 与 `#c:wrenches`，没有任何 mod 提供时无物品命中。旋转逻辑本身由 GameTest 直接驱动 `cycleFacing()` 验证过，但 `use()` 里的分派路径未在游戏内点击验证。
+- **配方与研究**：发电机与效能宝石都还没有配方或研究条目，生存中不可获得（战利品表已验证，但那只解决“挖了能拿回来”）。这部分属于其他批次。
+- **管道**：只验证了“发电机直接紧贴 `thaumcraft:warded_jar`”。没有验证经过 `thaumcraft:essentia_tube` 的多节链路、吸力衰减距离（推算约 59 节到已贴标签的量子罐）、限流管与过滤管。
+- **原生 EU 输出**：发电机按 `320 / (32 × qPerEu)` 推导出 LV 2 安培（默认 4 Q/EU），但**没有**任何 GameTest 让它向真实 GT 机器推送 EU —— 现有的 EU 交换测试仍然用木桶托管一个独立的 `MachineEnergy`。发电机的 EU 通路目前只有代码审查依据。
+- **多人、跨维度、区块卸载、长时间运行**：均未验证。数据包 `/reload` 在运行中更换燃料表的行为也未验证（代码上是发布一张新的不可变表）。
+- **凝聚器联动**：永动机边界（凝聚器成本必须严格大于发电机烧 potentia 的产出）未加启动期断言，也未联动验证；凝聚器尚未实现。
+- 功能矩阵开头那句“当前工程只有初始化骨架，以下游戏内容全部待迁移”在量子罐落地时就已过时，本批次未改动它以免与其它分支冲突。
