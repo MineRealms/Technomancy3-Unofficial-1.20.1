@@ -8,6 +8,7 @@ import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import theflogat.technomancy.client.render.CreativeJarRenderer;
+import theflogat.technomancy.client.render.EssentiaFusorRenderer;
 import theflogat.technomancy.client.screen.ProcessorScreen;
 import theflogat.technomancy.common.items.PureOreItem;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
@@ -36,6 +37,8 @@ final class S2MachinesClient {
 
     static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(TechnomBlockEntities.CREATIVE_JAR.get(), CreativeJarRenderer::new);
+        // The fusor's whole configuration is invisible without this.
+        event.registerBlockEntityRenderer(TechnomBlockEntities.ESSENTIA_FUSOR.get(), EssentiaFusorRenderer::new);
     }
 
     /**

@@ -18,6 +18,7 @@ import theflogat.technomancy.common.blocks.essentia.CreativeJarBlock;
 import theflogat.technomancy.common.blocks.essentia.EssentiaReservoirBlock;
 import theflogat.technomancy.common.blocks.essentia.QuantumJarBlock;
 import theflogat.technomancy.common.blocks.machines.EnergyCondenserBlock;
+import theflogat.technomancy.common.blocks.machines.EssentiaFusorBlock;
 import theflogat.technomancy.common.blocks.machines.ProcessorBlock;
 import theflogat.technomancy.common.blocks.machines.TcProcessorBlock;
 
@@ -123,6 +124,16 @@ public final class TechnomBlocks {
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(ProcessorBlock.LIT) ? ProcessorBlock.LIT_LIGHT : 0)));
+
+    /** {@code essentiaFusor}: combines two aspects into the compound they make. */
+    public static final RegistryObject<Block> ESSENTIA_FUSOR = register("essentia_fusor",
+            () -> new EssentiaFusorBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .strength(3.0F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)));
 
     private TechnomBlocks() {
     }

@@ -10,6 +10,12 @@
       "vacuos": 8,
       "praecantatio": 6,
       "vitreus": 4
+    },
+    "technom:essentia_fusor": {
+      "machina": 8,
+      "permutatio": 12,
+      "praecantatio": 6,
+      "vitreus": 4
     }
   }
 }

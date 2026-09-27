@@ -10,6 +10,7 @@ import theflogat.technomancy.common.tiles.essentia.CreativeJarBlockEntity;
 import theflogat.technomancy.common.tiles.essentia.EssentiaReservoirBlockEntity;
 import theflogat.technomancy.common.tiles.essentia.QuantumJarBlockEntity;
 import theflogat.technomancy.common.tiles.machines.EnergyCondenserBlockEntity;
+import theflogat.technomancy.common.tiles.machines.EssentiaFusorBlockEntity;
 import theflogat.technomancy.common.tiles.machines.TcProcessorBlockEntity;
 
 /** Block entity types. */
@@ -48,6 +49,11 @@ public final class TechnomBlockEntities {
     public static final RegistryObject<BlockEntityType<TcProcessorBlockEntity>> PROCESSOR_TC =
             TYPES.register("processor_tc", () -> BlockEntityType.Builder
                     .of(TcProcessorBlockEntity::new, TechnomBlocks.PROCESSOR_TC.get())
+                    .build(null));
+
+    public static final RegistryObject<BlockEntityType<EssentiaFusorBlockEntity>> ESSENTIA_FUSOR =
+            TYPES.register("essentia_fusor", () -> BlockEntityType.Builder
+                    .of(EssentiaFusorBlockEntity::new, TechnomBlocks.ESSENTIA_FUSOR.get())
                     .build(null));
 
     private TechnomBlockEntities() {
