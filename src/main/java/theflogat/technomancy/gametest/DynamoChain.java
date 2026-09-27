@@ -54,14 +54,33 @@ final class DynamoChain {
      * @param withSink whether to place a Forge Energy receiver on the dynamo's output face
      */
     static DynamoChain place(GameTestHelper helper, boolean withSink) {
+        return place(helper, withSink, 0);
+    }
+
+    /**
+     * Builds the chain with {@code tubes} lengths of Thaumcraft essentia tube between the jar and
+     * the dynamo, which is how a player would actually wire it.
+     *
+     * <p>Every tube decays the suction it passes upstream by one, and a tube holds a single unit
+     * and moves it once every five ticks, so inserting tubes changes both whether the transfer is
+     * legal at all and how fast it goes.</p>
+     */
+    static DynamoChain place(GameTestHelper helper, boolean withSink, int tubes) {
         ServerLevel level = helper.getLevel();
         BlockPos jarPos = helper.absolutePos(new BlockPos(2, 1, 2));
-        BlockPos dynamoPos = jarPos.above();
+        BlockPos dynamoPos = jarPos.above(1 + tubes);
         BlockPos sinkPos = dynamoPos.above();
 
         Block wardedJar = BuiltInRegistries.BLOCK.get(new ResourceLocation("thaumcraft", "warded_jar"));
         helper.assertTrue(wardedJar != Blocks.AIR, "Thaumcraft has no warded_jar block to feed the dynamo");
         level.setBlockAndUpdate(jarPos, wardedJar.defaultBlockState());
+        if (tubes > 0) {
+            Block tube = BuiltInRegistries.BLOCK.get(new ResourceLocation("thaumcraft", "essentia_tube"));
+            helper.assertTrue(tube != Blocks.AIR, "Thaumcraft has no essentia_tube block");
+            for (int step = 1; step <= tubes; step++) {
+                level.setBlockAndUpdate(jarPos.above(step), tube.defaultBlockState());
+            }
+        }
         level.setBlockAndUpdate(dynamoPos, TechnomBlocks.ESSENTIA_DYNAMO.get().defaultBlockState()
                 .setValue(EssentiaDynamoBlock.FACING, Direction.UP));
 

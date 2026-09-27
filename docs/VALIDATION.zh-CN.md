@@ -266,7 +266,7 @@ JAR 条目检查结果：`com/gregtechceu` 0 条、`theflogat/technomancy/gamete
 
 ### GameTest（真实世界层）
 
-`runGameTestServer` 与 `runGameTestServer -PwithGtceu=true` 两次均报告 **All 16 required tests passed**（原有 6 项加新增 `technom_dynamo` 批次 10 项），两次的发电机实测数值完全一致。
+`runGameTestServer` 与 `runGameTestServer -PwithGtceu=true` 两次均报告 **All 17 required tests passed**（原有 6 项加新增 `technom_dynamo` 批次 11 项），两次的发电机结论一致。
 
 | GameTest | 日志实测结果 |
 |---|---|
@@ -280,6 +280,7 @@ JAR 条目检查结果：`com/gregtechceu` 0 条、`theflogat/technomancy/gamete
 | `redstoneGatingStopsGenerationAndTheEssentiaPull` | `60 ticks on HIGH with no signal took 0 essentia and produced 0 Q; 60 ticks after a redstone block it had pulled 12 units and delivered 4400 Q`（A-18） |
 | `aFullBufferTakesNoEssentiaAndWastesNoFuel` | `60 ticks at 40000 of 40000 Q burned no fuel (13200 Q banked throughout) and bought no charge (1 units burned throughout)`（A-14） |
 | `thePotencyGemQuadruplesThroughputAndNotEfficiency` | `320 Q/t on 4 units per charge burned 4 units worth 64000 Q and produced exactly 64000 Q, delivering 32000 Q in 120 ticks` —— 每点 16000 Q，与未升级完全一致 |
+| `essentiaReachesTheDynamoThroughRealTubes` | 罐 + **2 节真实 `thaumcraft:essentia_tube`** + 发电机：`through 2 essentia tubes in 160 ticks the jar gave up 24 units, 23 are cached, 1 were burned into 16000 Q and 0 are in flight inside the tubes`（含 GTCEu 的那次为 23/22/1/0，管道 tick 抖动所致，守恒等式两次都精确成立）。这条链路才是吸力规则真正管辖的路径：每节管道把 128 的吸力衰减 1、一次只持有 1 点，发电机的吸力或最小吸力写错的话它根本不会流动 |
 
 真实 Forge Energy 消费者由 `GameTestEnergySink` 通过 `AttachCapabilitiesEvent` 挂在普通木桶上：原版与 Thaumcraft 都没有接收 FE 的方块，本模组自己的方块是发电机，所以必须专门造一个接收端。发电机因此是用它对任何第三方机器都会用的那一次 capability 查询找到它的，**发电机代码里没有任何测试钩子**。该监听器只从测试代码注册、只在测试要求的坐标上挂载，且整个 `gametest` 包不进发行 JAR。
 
@@ -318,7 +319,7 @@ JAR 内 `theflogat/technomancy/gametest/` 0 条、`com/gregtechceu` 0 条；`dat
 - **`LIT` 目前没有视觉差异**：12 个 variant 指向同一个模型。它是真实同步的状态（比较器、Jade、资源包可用），但没有发光贴图。
 - **扳手 tag 在纯 TC4R 环境下是空的**：`technom:tools/wrench` 只含可选引用 `#forge:tools/wrench` 与 `#c:wrenches`，没有任何 mod 提供时无物品命中。旋转逻辑本身由 GameTest 直接驱动 `cycleFacing()` 验证过，但 `use()` 里的分派路径未在游戏内点击验证。
 - **配方与研究**：发电机与效能宝石都还没有配方或研究条目，生存中不可获得（战利品表已验证，但那只解决“挖了能拿回来”）。这部分属于其他批次。
-- **管道**：只验证了“发电机直接紧贴 `thaumcraft:warded_jar`”。没有验证经过 `thaumcraft:essentia_tube` 的多节链路、吸力衰减距离（推算约 59 节到已贴标签的量子罐）、限流管与过滤管。
+- **管道**：验证了紧贴 `thaumcraft:warded_jar` 与经过 **2 节** `thaumcraft:essentia_tube`。**没有**验证长链路与吸力衰减的实际极限（按 §8.5 推算约 59 节到已贴标签的量子罐）、`restricted_essentia_tube`（吸力砍半）、`filtered_essentia_tube` 与 `directional_essentia_tube`。
 - **原生 EU 输出**：发电机按 `320 / (32 × qPerEu)` 推导出 LV 2 安培（默认 4 Q/EU），但**没有**任何 GameTest 让它向真实 GT 机器推送 EU —— 现有的 EU 交换测试仍然用木桶托管一个独立的 `MachineEnergy`。发电机的 EU 通路目前只有代码审查依据。
 - **多人、跨维度、区块卸载、长时间运行**：均未验证。数据包 `/reload` 在运行中更换燃料表的行为也未验证（代码上是发布一张新的不可变表）。
 - **凝聚器联动**：永动机边界（凝聚器成本必须严格大于发电机烧 potentia 的产出）未加启动期断言，也未联动验证；凝聚器尚未实现。

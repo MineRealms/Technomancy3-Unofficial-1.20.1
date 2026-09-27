@@ -305,6 +305,44 @@ public final class EssentiaDynamoGameTests {
     }
 
     /**
+     * The realistic wiring: jar, two lengths of Thaumcraft essentia tube, dynamo.
+     *
+     * <p>This is the path the suction rules actually govern. Each tube passes the dynamo's
+     * advertised 128 upstream with one point of decay and holds a single unit at a time, so if
+     * the dynamo's suction or minimum were wrong the chain would simply never move, with nothing
+     * to show for it.</p>
+     */
+    @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH, timeoutTicks = 300)
+    public static void essentiaReachesTheDynamoThroughRealTubes(GameTestHelper helper) {
+        DynamoChain chain = DynamoChain.place(helper, true, 2);
+        long perUnit = chain.energyPerUnit();
+
+        helper.runAfterDelay(160, () -> {
+            int left = chain.jarAmount();
+            int cached = chain.dynamoAmount();
+            int moved = DynamoChain.JAR_CAPACITY - left;
+            helper.assertTrue(moved > 0,
+                    "nothing crossed two tubes in 160 ticks; the dynamo's suction of "
+                            + EssentiaDynamoBlockEntity.SUCTION + " is not winning against them");
+            helper.assertTrue(chain.delivered() > 0, "no energy came out of the tube-fed dynamo");
+
+            // Conservation still holds, but the units in flight inside the tubes are neither in
+            // the jar nor in the dynamo, so they have to be accounted for separately.
+            long energy = chain.dynamoEnergy() + chain.delivered() + chain.dynamo().fuel();
+            int burned = (int) (energy / perUnit);
+            helper.assertTrue(burned * perUnit == energy,
+                    "energy " + energy + " Q is not a whole number of " + perUnit + " Q units");
+            int inFlight = moved - cached - burned;
+            helper.assertTrue(inFlight >= 0 && inFlight <= 2,
+                    "the two tubes are holding " + inFlight + " units, and a tube holds one");
+            Technomancy.LOGGER.info("GameTest dynamo tubes: through 2 essentia tubes in 160 ticks the"
+                    + " jar gave up {} units, {} are cached, {} were burned into {} Q and {} are in"
+                    + " flight inside the tubes", moved, cached, burned, energy, inFlight);
+            helper.succeed();
+        });
+    }
+
+    /**
      * The block can actually be mined for its item.
      *
      * <p>It asks for a correct tool, and a block that asks for one while belonging to no
