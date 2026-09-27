@@ -1,0 +1,7 @@
+{
+  "parent": "technom:block/coil",
+  "textures": {
+    "coil": "technom:block/itemcoil",
+    "particle": "technom:block/teslacoil"
+  }
+}
