@@ -262,7 +262,6 @@ JAR 条目检查结果：`com/gregtechceu` 0 条、`theflogat/technomancy/gamete
 - **发电机与凝聚器**：尚未实现，因此"管道 → 罐 → 发电机 → 耗能设备"闭环只走通了前两段。
 - 只在单机专用服务器、无 GTCEu 的运行时下验证；没有联机、没有与 GT 共存时重跑这组探针。
 
-下一阶段开始后，每批功能都应更新此记录，写明实际运行命令、观察结果和未覆盖的环境；不要用 `test NO-SOURCE`、启动成功或 GameTest 冒烟结果代替功能验收。
 ## S1-B 配方与研究数据验证（2026-09-28）
 
 本节只覆盖 `data/technom/**` 的 S1-B 数据包（8 条配方、4 条研究、要素数据）与 `tools/` 下的两个脚本。它**不代表**任何方块实体、能源或精华行为已迁移；数据加载成功只说明"游戏读到了这些文件并接受了它们的内容"。
@@ -338,3 +337,63 @@ python tools/gen_research_lang.py --check
 - **`pen_core` 没有要素也没有配方**。它已注册但属 S2 书写笔范围，本次刻意没给它编数值。
 - **没有验证含 GTCEu 的组合**。本节两次 `runGameTestServer` 都未加 `-PwithGtceu=true`，因此此前记录的 4 条 `thaumcraft:compat/native_*_cluster_smelting` 空产物报错在本节日志中不出现；那 4 条属 TC4R × GTCEu 的第三方交互，不在本次范围，也没有被本次改动掩盖（本节日志 `/ERROR]` 为 0）。
 - **多人、存档与重载**未验证：没有测过数据包 `/reload`、联机同步研究条目、或玩家知识数据在命名空间化 key 下的持久化。
+
+## 能量凝聚器验证（2026-09-28）
+
+本节只覆盖 `technom:energy_condenser`（方块、BlockEntity、模型、战利品表与测试），分支 `s1b/condenser`。它不代表配方、研究、客户端渲染或存档兼容已完成。
+
+以 JDK 17 作为 `JAVA_HOME`，在本工程执行。两次 `runGameTestServer` 之前都删掉 `run-gametest/`：含 GTCEu 的世界在无 GTCEu 的运行时会产出两万多行"缺失注册项"转储（测试仍全部通过，但记录不干净），这也再次说明同一存档不能在有/无 GTCEu 之间切换。
+
+```powershell
+.\gradlew.bat build --console=plain --no-daemon --offline
+.\gradlew.bat build -PwithGtceu=true --console=plain --no-daemon --offline
+.\gradlew.bat runGameTestServer --console=plain --no-daemon --offline
+.\gradlew.bat runGameTestServer -PwithGtceu=true --console=plain --no-daemon --offline
+```
+
+### 单元测试
+
+`test` 共 120 项通过、0 失败；本轮新增 32 项，原有 88 项不变。
+
+| 测试类 | 项数 | 覆盖内容 |
+|---|---:|---|
+| `CondenserProductionTest` | 10 | 一个完整生产周期**逐 tick 对账**（离开账本的 Q = 进度增量 + 产量 × 成本）；速率上限与最后一 tick 只取余量（200,000 = 24 × 8,192 + 3,392）；空账本与不足一 tick 的供电都不产生部分扣款；源质缓存满时完全不耗电（A-14 的镜像情形）；进度经存档往返后整个周期仍只花一份成本；越界与未知 schema 的存档被夹紧或丢弃并上报 |
+| `EssentiaPushTest` | 10 | A-9 的守恒性质：接收方全收 / 部分收 / 全不收，以及对 0…64 每一种胃口各跑一遍后"仓库 + 接收方"的总量不变；越报与负数报被夹到 `[0, 提供量]`；提供量同时受库存与请求量约束；提供量在调用邻居**之前**已离开仓库（重入的邻居看不到同一批）；邻居抛异常时一分不花；退款放不回去时抛异常而不是静默销毁 |
+| `CondenserBalanceTest` | 8 | 出厂默认（200,000 Q，`essentiaFuelScale=0.25` → 发电机每点产 16,000 Q）判定为 `SAFE` 且保有推荐的 4 倍余量；原版 1,000,000 / 1.0 同样 `SAFE`；`cost == yield` 已经算永动机（边界严格）；1～4 倍为警告带；把 `essentiaFuelScale` 调回 1.0 会把默认成本压进警告带、调到 4.0 就变成永动机；`fuelScale <= 0` 与溢出输入都不会绕出"不安全"判定 |
+| `RedstoneModeTest` | 4 | 三态真值表；`{NONE, HIGH, LOW}` 轮转；存档 id 往返；无法解析时回落到机器自身的默认（原版硬编码回落 `HIGH`，会让默认 `LOW` 的凝聚器悄悄停机）|
+
+### GameTest
+
+两种运行时都报 `All 16 required tests passed`；本轮新增 10 项，批次 `technom_condenser`，模板 `technom:gametest/empty_5x5x5`。位置与方向一律用绝对值，因为能源/源质面掩码是绝对世界方向。
+
+| 测试方法 | 断言内容 |
+|---|---|
+| `condenserTurnsForgeEnergyIntoEssentia` | 唯一一项走游戏自身 tick 循环（`startSequence().thenExecuteFor(150, …)`），因此同时验证注册、`getTicker` 接线与配置成本。每 tick 经 `ForgeCapabilities.ENERGY` 灌入 8,192 Q，结束时要求 `已灌入 == 缓存 + 进度 + 产量 × 成本`。实测 **1,228,800 Q 真实 Forge Energy → 6 点 `thaumcraft:potentia`，缓存 28,800 Q，进度 0 Q**（6 × 200,000 + 28,800 = 1,228,800，逐 Q 平衡） |
+| `condenserFillsARealWardedJar` | 凝聚器位于真实 `thaumcraft:warded_jar` 正上方并开启 DOWN 输出面；20 点 potentia 全部进入真实罐、凝聚器归零、总量不变、罐内 aspect 为 `thaumcraft:potentia` |
+| `aReceiverFillingUpNeitherDuplicatesNorDestroys` | A-9 的世界内版本：罐预装 60、凝聚器持有 20，一次推送后罐 64 / 凝聚器 16 / 总量仍 80；再推一次仍是 64 / 16。原版在这里会复制（全收分支）或销毁（不收分支） |
+| `redstoneGatingStopsAndStartsProduction` | 默认 `LOW`（无信号运行）；未加电时确实在消耗 Q，且 `isWorking()` 为真、`progress()` 落在 (0, 1) 内；放下红石块后 10 tick 内能量与进度完全不变且 `isWorking()` 为假；切到 `HIGH` 后同一个信号又让它工作。最后把源质缓存填到 64 点再跑 10 tick：**能量与进度一个都不动，`isWorking()` 为假**，即功能矩阵要求的「满槽不耗电」 |
+| `noFaceAcceptsEssentiaAndTheClaimMatches` | A-10：六面 `canInputFrom` 全 `false`、`addEssentia` 恒 0、经 `EssentiaApi.add` 也是 0 且缓存不变；`suctionAmount`/`suctionType`/`minimumSuction` 为 `0`/`null`/`0`；未开启的面不可连接且 `essentiaAmount` 为 0；开启后可连接并交出真实量；`takeEssentia` 返回**实际取出量**（请求 100、库存 10 → 10），`SIMULATE` 不改状态，关闭的面返回 0 |
+| `everyFaceTakesEnergyAndNoFaceGivesItBack` | A-11：六面都有 FE 能力、`canReceive` 为真、`canExtract` 为假、`extractEnergy` 恒 0；`null` 面只拿到只读视图；模拟不动余额；5,000 Q 真实灌入成功后无法被抽回 |
+| `interactingWithoutABlockEntityDoesNotThrow` | A-12：在空气与木桶（外来 BE）两个位置，以空手 / 玻璃瓶 / 红石三种手持、潜行与非潜行两种状态，共 12 次调用 `use`，全部返回 `PASS` 且不抛异常。原版正是在"非潜行且手上有东西"这条分支上解引用 null |
+| `sneakClickSwitchesFacesAndProgrammingItemsSetTheMode` | 潜行右键切换 EAST 面开/关；对 `facing` 所在的正面无效；红石粉选 `HIGH` 并消耗 1 个、记录 `modified`；再用火药选 `NONE` 时把上一次的红石粉退回背包 |
+| `theBlockIsMineableAndDropsItself` | 方块在 `minecraft:mineable/pickaxe` 内，`requiresCorrectToolForDrops` 生效（空手判定为不可采集、石镐可以），且战利品表确实被数据包加载并产出 1 个 `technom:energy_condenser`。这一项专门防"需要正确工具却没进任何工具标签"和"战利品表路径写错"这两类不报错的失败 |
+| `condenserAcceptsNativeEuPackets` | 无 GTCEu 时按存在性检查跳过并在日志写明原因；有 GTCEu 时用真实 `IEnergyContainer` 检查面权限、额定 EV(2048 V) × 2 A、无输出额定、容量读数（100,000 Q ÷ 4 = 25,000 EU）、超压整包被整体拒绝且不动余额、5 安培请求被额定 2 安培截断。**实测 2 A × 128 EU = 1,024 Q 原生到账，并在下一 tick 全部变成转换进度**，即 EU 与 FE 用的是同一份余额 |
+
+### 其它实测结果
+
+- 启动期平衡检查在两种运行时都记录：`balance.condenserCostQ=200000 against a dynamo yield of 16000 Q per unit of potentia at balance.essentiaFuelScale=0.25: the condenser is a net energy sink, as intended.`
+- 两次 `build` 的 `build/libs/technom-1.20.1-0.1.0-dev.jar` 逐字节相同：857,360 字节、312 个条目，SHA-256 `7416ec018f2587592889fa247ce9a6746a48d70fe6d14b29869ebc3d77948850`；`com/gregtechceu` 0 条、`gametest` 0 条。`GtceuIsolationGameTests` 扫描 42 个发行类、0 个越界引用。
+- 方块状态与模型的**离线**校验（不是渲染验证）：按原版 multipart 匹配规则枚举全部 4 × 64 = 256 个状态，六个面各**恰好**命中 1 个模型（0 个缺面、0 个重叠），包括被方块逻辑禁止的"正面开输出"组合也不会重叠；`blockstates/energy_condenser.json` 引用的 7 个单面模型、`block/energy_condenser`、`item/energy_condenser` 及其 `parent` 链上引用的全部纹理都存在于磁盘。
+- 中文方块名取自 `reference/legacy-1.12/lang/zh_cn.json` 的 `tile.techno:condenserblock.name`，以程序方式复制并按码位核对（U+80FD U+91CF U+8F6C U+6362 U+7535 U+5BB9）；两个 lang 文件改动后仍是合法 JSON，各 13 个键。
+
+### 本节尚未验证
+
+- **客户端**：`runClient` 未执行。模型、纹理朝向（含 A-13 顶/底交换的修正）、multipart 的贴图反馈、手持与物品栏渲染、破坏粒子、翻译文本全部只有上面的离线校验，没有任何渲染证据。
+- **同步与存档**：`getUpdateTag`/`getUpdatePacket` 以及"只在跨越显示粒度时发包"的节流策略没有在真实客户端上观察过；`saveAdditional`/`load`（能量、源质、进度、红石模式）只有组件级的 JUnit 往返，没有做过区块卸载/重进或服务器重启的实机验证。
+- **可获得性**：没有配方、没有研究，`technom:energy_condenser` 目前只能从创造物品栏取得。扳手物品与 `technom:tools/wrench` 标签未实现，旋转只能经 `rotate()`/`mirror()`（结构方块、`/clone` 等）触发。
+- **与发电机的联动**：永动机约束目前只按配置值与规格书给出的发电机常数（potentia `fuelValue = 800`、80 Q/燃料点）计算，没有和真实的 `TileEssentiaDynamo` 移植对接过。"凝聚器 → 源质管 → 发电机 → 凝聚器"的完整闭环没有在世界里跑过。
+- **管道**：只验证了对 `WardedJarBlockEntity` 的直接推送和逐面协议取值，没有放置真实 `EssentiaTubeBlockEntity` 验证"管道主动从凝聚器取货"这条路径（凝聚器 `minimumSuction = 0`，理论上任意吸力都能抽取）。
+- **性能**：没有测量大规模布置下的 tick 与网络开销。"不再每 tick 发包"目前由代码与 GameTest 的状态断言支持，不是由实际包计数支持。
+- **专用服务器与多人**：本轮未执行；`runServer`、联机、换维度、死亡重生均未涉及。
+
+下一阶段开始后，每批功能都应更新此记录，写明实际运行命令、观察结果和未覆盖的环境；不要用 `test NO-SOURCE`、启动成功或 GameTest 冒烟结果代替功能验收。

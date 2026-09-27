@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "technom:block/condenserblockfront",
+    "down": "technom:block/condenserblockbottom",
+    "up": "technom:block/condenserblocktop",
+    "north": "technom:block/condenserblockfront",
+    "east": "technom:block/condenserblockside",
+    "south": "technom:block/condenserblockside",
+    "west": "technom:block/condenserblockside"
+  }
+}
