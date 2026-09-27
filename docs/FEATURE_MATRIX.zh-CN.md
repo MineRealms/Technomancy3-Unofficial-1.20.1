@@ -37,7 +37,7 @@
 | 精华发电机 `essentiaDynamo` | `TileEssentiaDynamo` | `essentia.EssentiaTransport` / `EssentiaSource`；保留不同要素燃料规则；RF 输出改 FE/EU 共用存储 | S1 | 管道与罐取料；模拟不扣料；满电停机；两个端口同 tick 不重复输出；重载燃料进度 | 待迁移 |
 | 节点发电机 `nodeDynamo` | `TileNodeDynamo` | `node.AuraNodeView` / `NodeVis`；核对消耗节点 vis 的语义，不能把节点总容量当可用燃料 | S2 | 节点损耗/恢复、类型和亮度边界；节点卸载；FE/EU 输出守恒 | 待迁移 |
 | 量子精华罐 `essentiaContainer` | `TileEssentiaContainer` / 对应 Block | `EssentiaTransport`、容器视图、标签和显示；旧版内部罐继承改自有 BE | S1 | 容量、吸力、方向、标签筛选、邻罐抽取、破坏掉落和存储恢复 | 待迁移 |
-| 量子玻璃/装饰块 `cosmeticOpaque` | `BlockCosmeticOpaque` | 无独立机器 BE；与量子罐奥术配方一起迁移；不能遗漏无 TE 材料路径 | S1 | 配方可得、碰撞和透光、模型及掉落一致 | 待迁移 |
+| 量子玻璃/装饰块 `cosmeticOpaque` | `BlockCosmeticOpaque` | 无独立机器 BE；与量子罐奥术配方一起迁移；不能遗漏无 TE 材料路径 | S1 | 配方可得、碰撞和透光、模型及掉落一致 | 奥术配方已完成（数据层）：`technom:arcane/quantized_glass`，4 玻璃 → 4 块，vis `ordo 5 / ignis 5`，已由服务端加载；方块本体见 S1-A。未在游戏内合成过 |
 | 精华储库 `reservoir` | `TileEssentiaReservoir` | `EssentiaTransport`；旧 `takeEssentia` 返回值必须按“实际取出量”复核 | S2 | 单/多次模拟、取放返回量、吸力、无负数和复制 | 待迁移 |
 | 创造精华罐 `creativeJar` | `TileCreativeJar` | 创造工具；与生存存储和燃料规则分离 | S2 | 创造可选要素、管道输出；无生存配方或错误掉落导致可获得 | 待迁移 |
 | 精华线圈 `teslaCoil` | `TileEssentiaTransmitter` | `EssentiaSource` 不等于任意管道；必须一起迁入连接工具、连接记录与适配器；保留原版 Buffer/Arcane Bore 修复 | S2 | 连接/解除、标签/方向、距离、区块卸载、跨端口去重、方块替换后失效 | 待迁移 |
@@ -58,12 +58,12 @@
 
 | 功能 | 来源及原版范围 | 依赖、20721 适配与风险 | 阶段 | 必须验证 | 状态 |
 |---|---|---|---|---|---|
-| TC 材料组 | `ItemTHMaterial`：neutronizedMetal、enchantedCoil、neutronizedGear、penCore；metadata 4 为旧连接工具过渡项 | 坩埚/奥术/注魔/普通配方和 tags；metadata 4 缺独立图标并会在更新时替换为 coilCoupler，不宜保留为独立生存材料 | S1 | 所有材料配方可得；无 TE/RF 物料硬引用；加工链和研究引用一致 | 待迁移 |
+| TC 材料组 | `ItemTHMaterial`：neutronizedMetal、enchantedCoil、neutronizedGear、penCore；metadata 4 为旧连接工具过渡项 | 坩埚/奥术/注魔/普通配方和 tags；metadata 4 缺独立图标并会在更新时替换为 coilCoupler，不宜保留为独立生存材料 | S1 | 所有材料配方可得；无 TE/RF 物料硬引用；加工链和研究引用一致 | 配方已完成（数据层）：`crucible/neutronized_metal`、`enchanted_coil`、`neutronized_gear` 三条已由服务端实际加载；要素数据已写入。penCore 仍无配方与要素（属 S2 书写笔范围）。未在游戏内实际合成过 |
 | 长效书写笔 | `ItemPen` | `item.ScribeTools`；耐久与研究台识别 | S2 | 研究台接受、使用耗损、合成余物、服务端结算 | 待迁移 |
 | Energized 杖芯与充能行为 | `ItemWandCores` / `ElectricWandUpdate`，旧 `electric` WandRod | `wand.WandPartApi`、`wand.behavior.WandBehaviorApi`；物品电力按 FE 能力接入，充电与 vis 转换必须守恒 | S2 | 装配、上限、充电、六原始 vis、物品切换/丢弃/重载、不重复扣款 | 待迁移 |
 | Technoturge 杖芯与权杖 | `ItemTechnoturgeScepter` / `ScepterRecipe`，旧 `technoturge` WandRod | `CustomWandItem` / `CustomWandSpec` / `WandPartApi`；动态帽材质与配方改现代数据 | S2 | 铁/金/神秘金属帽组合、容量/折扣、充能、配方成本和研究门槛 | 待迁移 |
 | 融合核心/焦点 | `ItemFusionFocus` | `focus.action.FocusActionApi` + `NodeApi`；旧 Item 单例存节点状态且放置后未清空，必须改逐 ItemStack 数据与服务端事务 | S2→S4 | 两玩家/两物品隔离，移动节点仅一次，失败不丢节点、成功不复制，卸载和重进保存 | 待迁移 |
-| 研究分类与配方展示 | `TECHNOMANCY` 分类及 16 keys，见下表 | `research.ResearchApi` / 数据定义、配方与展示 API；旧大写 key 需明确映射 | S1→S4 | 每一条前置可达、页面可开、配方 ID 存在、配置关闭不产生悬空依赖、联机同步 | 待迁移 |
+| 研究分类与配方展示 | `TECHNOMANCY` 分类及 16 keys，见下表 | `research.ResearchApi` / 数据定义、配方与展示 API；旧大写 key 需明确映射 | S1→S4 | 每一条前置可达、页面可开、配方 ID 存在、配置关闭不产生悬空依赖、联机同步 | 分类与 S1-B 四条研究已完成（数据层）：`data/technom/thaumcraft/research/technomancy.json`，服务端加载后 TC4R 报告 7 个分类。旧大写 key 映射为 `technom:<KEY>`（见下表注）。页面从未在客户端渲染过 |
 
 | 原版研究 key | 对应功能 | 迁移顺序 |
 |---|---|---|
@@ -72,6 +72,10 @@
 | `NODEGENERATOR`、`ELDRITCHCONSUMER`、`ADVDECONTABLE`、`ESSENTIAFUSOR` | 节点制造与高级机器 | S2→S4 |
 | `PEN`、`ROD_electric`、`TECHNOTURGESCEPTER` | 书写笔、杖芯、权杖 | S2 |
 | `BIOMEMORPHER`、`FLUXLAMP`、`ELECTRICBELLOWS` | 群系改造、稳定灯、电动风箱 | S4 |
+
+**S1-B 研究 key 映射与状态（数据层）**：新注册 key 带命名空间——`technom:TECHNOBASICS`、`technom:QUANTUMJARS`、`technom:DYNAMO`、`technom:CONDENSER`，分类为 `technom:TECHNOMANCY`。这是 TC4R `ResearchKey` 自己的约定（裸 key 归属 `thaumcraft` 命名空间），因此 lang 键形如 `tc.research_name.technom:TECHNOBASICS`。前两条无条件加载并已由 GameTest 按坐标/要素/标志/前置/页面逐项断言；`technom:DYNAMO` 与 `technom:CONDENSER` 带 `forge:item_exists` 条件，等 `technom:essentia_dynamo` / `technom:energy_condenser` 注册后自动生效，无需再改数据。原版把 `CONDENSER` 挂在节点发电机开关上（附录 A-21 的死线缺陷）**未被复刻**：它的前置只有 `DYNAMO`。complexity 由原版的 0 改为 1，因为 TC4R 的取值域是 1..3 且会静默钳制。
+
+**TE 原料剥离（S1-B 范围）已完成**：逐条核对 `RegisterRecipes()` 后确认，S1-B 八条配方里唯一的 TE 原料是凝聚器 TE 分支的 `frameMachineBasic`，而原版自带的兜底分支已经把它换成 `itemMaterial:2`（中子齿轮），因此直接采用兜底分支，没有自创替换；其余七条完全不含 TE/CoFH 原料。
 
 ## 核心仪式、Existence 与加工链
 
@@ -83,7 +87,7 @@
 | 16 个仪式 | 下表有效列表 | 原版硬编码 0/256 高度和同步大范围改世界；改实际维度边界、分 tick 任务、区块加载边界 | S3 | 正反向阵列、负 Y、重载恢复、移动 BE 数据、失败回滚、掉落守恒和 tick 预算 | 待迁移 |
 | 仪式手册 | `ItemRitualTome`、GUI 与纹理 | Screen、现代文本/翻译和配方引用 | S3 | 所有已注册仪式可查、翻页/缩放、语言回退、无失效配方引用 | 待迁移 |
 | 物品线圈与连接工具 | `itemTransmitter`、`ItemCoilCoupler`、`ICouplable` | `IItemHandler`、稳定连接数据；1.12 工具实例/配方缺失不能沿用 | S2 | 仓库输入输出、模拟、满库存、标签、断连/卸载、重复点击和无物品复制 | 待迁移 |
-| Potency Gem / 增幅 | `ItemBoost`，机器升级接口 | 统一升级状态、倍率上限和可用机器列表 | S1→S3 | 安装/卸下只结算一次、掉落保存、耗能与产能同时调整 | 待迁移 |
+| Potency Gem / 增幅 | `ItemBoost`，机器升级接口 | 统一升级状态、倍率上限和可用机器列表 | S1→S3 | 安装/卸下只结算一次、掉落保存、耗能与产能同时调整 | 配方已完成（数据层）：`technom:potency_gem` 已由服务端加载，要素数据已写入；升级行为本身待发电机分支实现 |
 | Existence 喷泉 | `fountainExistence` / `TileExistenceFountain` | 仪式生成与玩家/实体资源，保留独立 Existence 概念 | S3 | 仪式生成、资源产消、主人离线、多人归属、实体事件一致 | 待迁移 |
 | Existence 燃烧器 | 一个 `existenceBurner` ID，普通/动态 2 变体 | 实体消耗、资源生产；不得简单改成所有行为都消耗 FE | S3 | 目标筛选、产量、红石、重载、动态版本差异 | 待迁移 |
 | Existence 塔 | 一个 `existencePylon` ID，3 种变体 | 原版能力/范围与传输规则迁入新 BE | S3 | 范围、升级、消费者连接、跨区块/维度限制与守恒 | 待迁移 |
