@@ -396,7 +396,38 @@ python tools/gen_research_lang.py --check
 - **性能**：没有测量大规模布置下的 tick 与网络开销。"不再每 tick 发包"目前由代码与 GameTest 的状态断言支持，不是由实际包计数支持。
 - **专用服务器与多人**：本轮未执行；`runServer`、联机、换维度、死亡重生均未涉及。
 
-下一阶段开始后，每批功能都应更新此记录，写明实际运行命令、观察结果和未覆盖的环境；不要用 `test NO-SOURCE`、启动成功或 GameTest 冒烟结果代替功能验收。
+## S1 合并后整体 GameTest（有/无 GTCEu，2026-09-28）
+
+前面每条分支都各自跑过自己的 GameTest，但**合并后的整体**此前从未在游戏里跑过。本节是合并树的第一次整体运行，两种运行时都跑了。
+
+```powershell
+Remove-Item -Recurse run-gametest
+.\gradlew.bat runGameTestServer --console=plain --no-daemon
+Remove-Item -Recurse run-gametest
+.\gradlew.bat runGameTestServer -PwithGtceu=true --console=plain --no-daemon
+```
+
+- **无 GTCEu：31/31 通过**；整份日志只有 1 条 ERROR，是测试服务器没有 `server.properties`（`minecraft/Settings`），与本模组无关。
+- **有 GTCEu：31/31 通过**；日志确认 GT 真的加载（`GTCEu common proxy init`），且本模组记录 `Technomancy and GTCEu agree on 4 FE per EU (nativeEUToFE=true, FE converters=true)` 与 `GTCEu native EU integration enabled at 4 FE per EU`。
+- 两种运行时都记录了永动机检查的两次结果（启动时用内置值、燃料表加载后用实际数据）：`balance.condenserCostQ=200000 against a dynamo yield of 16000 Q per unit of potentia (fuel value 800) at balance.essentiaFuelScale=0.25: the condenser is a net energy sink, as intended.`，以及 `Loaded essentia fuel values for 44 aspects (fallback 25)`、`Loaded 198 TC4 research entries in 7 categories`（第 7 个分类是我们的 `technom:TECHNOMANCY`）。
+- 每次运行前都删掉 `run-gametest/`。**不要**在有/无 GT 之间复用同一个世界：那会产生约 29000 行缺失注册项转储（测试仍会通过，但日志被淹没）。
+
+### 带 GT 时那 4 条 ERROR 的定性（已核实，非本模组问题）
+
+有 GTCEu 时日志多出 4 条 `Output item 0 of recipe thaumcraft:compat/native_{copper,tin,lead,silver}_cluster_smelting is empty`。此前两次都被当作"第三方问题"带过而没人验证，这次查清了：
+
+- 配方文件是 TC4R 自己的 `data/thaumcraft/recipes/compat/native_copper_cluster_smelting.json`，类型 `thaumcraft:common_metal_smelting`，**产物写的是一个 tag**（`"result": {"tag": "forge:ingots/copper", "count": 2}`），并且带 `forge:tag_empty` 取反的加载条件。
+- 报错的是 **GregTechCEu**：它扫描熔炼配方来自动生成自己的机器配方，从一个 tag 产物里读不出具体物品，于是报 empty。
+- 配方文件不是我们的，报错代码也不是我们的，且 `src/main/resources/` 里没有任何地方引用该配方或该 tag。
+
+**结论：TC4R × GTCEu 的交互问题，本移植不涉及，也无法在本工程内修。** 记录在此以免再被反复排查；如要修，应向 TC4R 反馈（tag 产物对 GT 的配方扫描不可见）。
+
+### 本节尚未验证
+
+- 客户端：`runClient` 仍未执行。为此新增了 `tools/client_check.py`（见下一批验证），模型、blockstate 与贴图图集只在客户端加载，服务端与探针全部通过也不能说明它们没坏。
+- 合并后的**游戏内玩法链路**：`probes/` 下的探针（含新增的 S1 闭环与重启持久化两轮）尚未对合并树执行。
+
+
 
 ## 源质发电机验证（2026-09-28）
 
@@ -516,3 +547,5 @@ JAR 内 `theflogat/technomancy/gametest/` 0 条、`com/gregtechceu` 0 条；`dat
 - **多人、跨维度、区块卸载、长时间运行**：均未验证。数据包 `/reload` 在运行中更换燃料表的行为也未验证（代码上是发布一张新的不可变表）。
 - **凝聚器联动**：永动机边界（凝聚器成本必须严格大于发电机烧 potentia 的产出）未加启动期断言，也未联动验证；凝聚器尚未实现。
 - 功能矩阵开头那句“当前工程只有初始化骨架，以下游戏内容全部待迁移”在量子罐落地时就已过时，本批次未改动它以免与其它分支冲突。
+
+下一阶段开始后，每批功能都应更新此记录，写明实际运行命令、观察结果和未覆盖的环境；不要用 `test NO-SOURCE`、启动成功或 GameTest 冒烟结果代替功能验收。
