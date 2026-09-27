@@ -47,5 +47,10 @@
   "tc.research_name.technom:TECHNOTURGESCEPTER": "Technoturges Scepter",
   "tc.research_text.technom:TECHNOTURGESCEPTER": "The right tool for every job!",
   "technom.research_page.TECHNOTURGESCEPTER.1": "After struggling with the low storage of the Energized Wand, you have started experimenting with ways to increase this capacity. No matter what you try, you always end up with a rod which is too big for normal use as a wand. But now that you have mastered scepters, you realise these failed experiments would make a perfect scepter core! The Technoturges Scepter holds 150 vis of each primal and recharges from a wand recharge pedestal or from any Forge Energy source, at 100 Q per centivis.",
-  "technom.research_page.TECHNOTURGESCEPTER.2": "Assembly is Thaumcraft's own scepter recipe: three identical wand caps, a thaumic charm and the Technoturges core, which also means it needs the Scepters research. The scepter counts as a wrench on Technomancy machines; the 1.7.10 version's wrench support for other mods and its block-rotation gestures are not part of this port."
+  "technom.research_page.TECHNOTURGESCEPTER.2": "Assembly is Thaumcraft's own scepter recipe: three identical wand caps, a thaumic charm and the Technoturges core, which also means it needs the Scepters research. The scepter counts as a wrench on Technomancy machines; the 1.7.10 version's wrench support for other mods and its block-rotation gestures are not part of this port.",
+  "item.technom.pen": "Pen",
+  "item.technom.pen.tooltip": "It's the 21st century, why are we using quills and ink?",
+  "tc.research_name.technom:PEN": "Advanced Writing",
+  "tc.research_text.technom:PEN": "It's a frickin pen.",
+  "technom.research_page.PEN.1": "Do you realize how stupid you are to use an ink and quill all this time? I mean, you've got frickin' wands that shoot frickin' lightning bolts and machines that make energy out of MAGIC for Pete's sake. Has it seriously taken you this long just to make a pen? The answer is yes, yes it has. But now you have a pen to use instead of that stupid inkwell: 3000 uses of ink, and clicking one of two adjacent tables with it builds the research table."
 }

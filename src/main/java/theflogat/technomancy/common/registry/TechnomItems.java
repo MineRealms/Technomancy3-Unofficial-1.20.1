@@ -50,6 +50,10 @@ public final class TechnomItems {
                 }
             });
 
+    /** {@code itemPen}: a 3000-use scribing tool that also forms the research table. */
+    public static final RegistryObject<Item> PEN = ITEMS.register("pen",
+            () -> new theflogat.technomancy.common.items.PenItem(new Item.Properties()));
+
     // ---- end S2 nodes, wands and fusion ----
 
     private TechnomItems() {

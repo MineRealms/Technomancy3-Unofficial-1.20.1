@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "conditions": [
+    {
+      "type": "forge:item_exists",
+      "item": "technom:pen"
+    }
+  ],
+  "pattern": [
+    " IC",
+    "IPI",
+    "NI "
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "item": "thaumcraft:iron_wand_cap"
+    },
+    "P": {
+      "item": "technom:pen_core"
+    },
+    "N": {
+      "item": "minecraft:gold_nugget"
+    }
+  },
+  "result": {
+    "item": "technom:pen",
+    "count": 1
+  }
+}

@@ -202,6 +202,66 @@
           "recipe_ids": []
         }
       ]
+    },
+    {
+      "key": "technom:PEN",
+      "forge:conditions": [
+        {
+          "type": "forge:item_exists",
+          "item": "technom:pen"
+        }
+      ],
+      "category": "technom:TECHNOMANCY",
+      "aspects": {},
+      "display_column": 4,
+      "display_row": -4,
+      "complexity": 1,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:pen"
+        }
+      },
+      "flags": [
+        "AUTO_UNLOCK"
+      ],
+      "parents": [],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.PEN.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "NORMAL_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:pen_core"
+          ]
+        },
+        {
+          "type": "NORMAL_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:pen"
+          ]
+        }
+      ]
     }
   ]
 }
