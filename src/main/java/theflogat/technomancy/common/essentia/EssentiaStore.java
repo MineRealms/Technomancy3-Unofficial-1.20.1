@@ -215,7 +215,19 @@ public final class EssentiaStore {
         return filters.isEmpty() || filters.contains(aspect);
     }
 
-    /** @return {@code true} if the filter set changed */
+    /**
+     * Replaces the filter set.
+     *
+     * <p>A filter that contradicts what is already stored is refused, because such a store
+     * can never accept anything again while still advertising typed suction for the aspect it
+     * cannot hold - it would sit there outbidding containers that could actually store it and
+     * destroying whatever it pulled. TC4R draws the same line: its
+     * {@code EssentiaContainerApi.withFilter} rejects the pair with "Filter conflicts with
+     * stored essentia".</p>
+     *
+     * @return {@code true} if the filter set changed
+     * @throws IllegalArgumentException if more filters are given than there are aspect slots
+     */
     public boolean setFilters(Collection<AspectId> selected) {
         LinkedHashSet<AspectId> replacement = new LinkedHashSet<>();
         for (AspectId aspect : selected) {
@@ -224,6 +236,9 @@ public final class EssentiaStore {
         if (replacement.size() > limits.maxDistinctAspects()) {
             throw new IllegalArgumentException(
                     "more filters than aspect slots: " + replacement.size() + " > " + limits.maxDistinctAspects());
+        }
+        if (conflictsWithContents(replacement)) {
+            return false;
         }
         if (replacement.equals(filters)) {
             return false;
@@ -243,9 +258,19 @@ public final class EssentiaStore {
         if (filters.size() >= limits.maxDistinctAspects()) {
             return false;
         }
+        LinkedHashSet<AspectId> candidate = new LinkedHashSet<>(filters);
+        candidate.add(aspect);
+        if (conflictsWithContents(candidate)) {
+            return false;
+        }
         filters.add(aspect);
         listener.run();
         return true;
+    }
+
+    /** Whether a non-empty filter set would exclude something this store already holds. */
+    private boolean conflictsWithContents(Set<AspectId> candidate) {
+        return !candidate.isEmpty() && !candidate.containsAll(amounts.keySet());
     }
 
     /** @return {@code true} if there was a filter to clear */
@@ -260,8 +285,18 @@ public final class EssentiaStore {
 
     // ---- persistence ----
 
+    /**
+     * The contents as NBT, or an EMPTY tag when there is nothing to record.
+     *
+     * <p>Returning an empty tag matters for dropped items: a loot table that copies this
+     * would otherwise stamp {@code {v:1,aspects:[]}} onto every empty container, which stops
+     * clean ones from stacking with them for no visible reason.</p>
+     */
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
+        if (amounts.isEmpty() && filters.isEmpty()) {
+            return tag;
+        }
         tag.putInt("v", SCHEMA);
         ListTag stored = new ListTag();
         amounts.forEach((aspect, amount) -> {

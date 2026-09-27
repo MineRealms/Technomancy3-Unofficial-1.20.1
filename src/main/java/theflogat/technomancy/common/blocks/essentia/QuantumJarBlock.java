@@ -5,12 +5,17 @@ import dev.tc4port.thaumcraft.api.essentia.EssentiaContainerApi;
 import dev.tc4port.thaumcraft.api.essentia.EssentiaTransferMode;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.Containers;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -49,6 +54,9 @@ public class QuantumJarBlock extends BaseEntityBlock {
      * persistence code.</p>
      */
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+
+    /** Thaumcraft's blank jar label, handed back when a label is removed. */
+    private static final ResourceLocation LABEL_ITEM = new ResourceLocation("thaumcraft", "jar_label");
 
     /** {@code setBlockBounds(0.1875, 0, 0.1875, 0.8125, 0.75, 0.8125)}. */
     private static final VoxelShape SHAPE = box(3.0, 0.0, 3.0, 13.0, 12.0, 13.0);
@@ -155,6 +163,9 @@ public class QuantumJarBlock extends BaseEntityBlock {
         }
         if (labelled) {
             jar.clearFilter();
+            // The original handed the label back (itemResource:13); labels are crafted, so
+            // swallowing one on every relabel would be a quiet tax the player never sees.
+            returnLabel(level, pos);
             play(level, pos, SoundEvents.ITEM_FRAME_REMOVE_ITEM);
         } else {
             jar.reset();
@@ -163,14 +174,32 @@ public class QuantumJarBlock extends BaseEntityBlock {
         return InteractionResult.CONSUME;
     }
 
+    /** Drops a blank Thaumcraft jar label above the block, if that item exists. */
+    private static void returnLabel(Level level, BlockPos pos) {
+        Item label = BuiltInRegistries.ITEM.get(LABEL_ITEM);
+        if (label == Items.AIR) {
+            return;
+        }
+        Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.9, pos.getZ() + 0.5,
+                new ItemStack(label));
+    }
+
     private static InteractionResult applyLabel(Level level, BlockPos pos, Player player,
             InteractionHand hand, QuantumJarBlockEntity jar, ItemStack label) {
         if (jar.filter() != null) {
             return InteractionResult.PASS;
         }
-        // A blank label adopts whatever the jar already holds, which is how the original let
-        // you label a jar that was already filled.
-        AspectId selected = EssentiaContainerApi.labelAspect(label).orElseGet(jar::aspect);
+        /*
+         * What the jar already holds wins; a printed label only decides the aspect of an empty
+         * jar. Both the 1.7.10 original and TC4R's WardedJarBlock resolve it in this order,
+         * and the inverse lets a player label a full jar with a conflicting aspect, leaving a
+         * container that can never accept anything while still advertising typed suction for
+         * what it cannot hold.
+         */
+        AspectId selected = jar.aspect();
+        if (selected == null) {
+            selected = EssentiaContainerApi.labelAspect(label).orElse(null);
+        }
         if (selected == null) {
             return InteractionResult.PASS;
         }

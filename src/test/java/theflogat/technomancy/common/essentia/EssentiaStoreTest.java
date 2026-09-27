@@ -154,6 +154,46 @@ class EssentiaStoreTest {
     }
 
     @Test
+    void aFilterThatContradictsTheContentsIsRejected() {
+        // Such a store could never accept anything again while still advertising typed suction
+        // for the aspect it cannot hold, so it would sit there outbidding containers that can
+        // and destroying whatever it pulled. TC4R refuses the same pair in withFilter.
+        EssentiaStore jar = new EssentiaStore(EssentiaLimits.jar(640));
+        jar.add(IGNIS, 100, false);
+        assertFalse(jar.setFilters(List.of(AQUA)), "aqua contradicts the stored ignis");
+        assertEquals(Set.of(), jar.filters(), "the rejected filter was not applied");
+        assertFalse(jar.addFilter(AQUA));
+        assertEquals(Set.of(), jar.filters());
+
+        assertTrue(jar.setFilters(List.of(IGNIS)), "the aspect it actually holds is fine");
+        jar.clearContents();
+        assertTrue(jar.setFilters(List.of(AQUA)), "an empty jar may be relabelled freely");
+
+        // A pooled store may be filtered to a superset of what it holds, but not to a set that
+        // would exclude any of it.
+        EssentiaStore pooled = new EssentiaStore(EssentiaLimits.pooled(64, 256, 3));
+        pooled.add(IGNIS, 10, false);
+        pooled.add(AQUA, 10, false);
+        assertTrue(pooled.setFilters(List.of(IGNIS, AQUA, ORDO)), "a superset is allowed");
+        assertFalse(pooled.setFilters(List.of(IGNIS)), "dropping a held aspect is not");
+        assertEquals(Set.of(IGNIS, AQUA, ORDO), pooled.filters());
+    }
+
+    @Test
+    void anEmptyStoreSavesNothingAtAll() {
+        // A loot table that copies this would otherwise stamp {v:1,aspects:[]} onto every empty
+        // container, which quietly stops clean ones from stacking with them.
+        EssentiaStore store = new EssentiaStore(EssentiaLimits.jar(640));
+        assertTrue(store.save().isEmpty(), "a virgin store writes no tag");
+        store.add(IGNIS, 1, false);
+        assertFalse(store.save().isEmpty());
+        store.take(IGNIS, 1, false);
+        assertTrue(store.save().isEmpty(), "emptied again writes no tag");
+        store.setFilters(List.of(IGNIS));
+        assertFalse(store.save().isEmpty(), "a label alone is still worth saving");
+    }
+
+    @Test
     void dominantAspectPrefersTheLargestThenTheOldest() {
         EssentiaStore store = new EssentiaStore(EssentiaLimits.pooled(64, 256, 3));
         assertNull(store.dominantAspect());
@@ -184,15 +224,38 @@ class EssentiaStoreTest {
         EssentiaStore store = new EssentiaStore(EssentiaLimits.pooled(64, 256, 3));
         store.add(IGNIS, 12, false);
         store.add(AQUA, 34, false);
-        store.setFilters(List.of(IGNIS, ORDO));
+        // A superset of what is held: ORDO is wanted but not present yet.
+        store.setFilters(List.of(IGNIS, AQUA, ORDO));
 
         EssentiaStore restored = new EssentiaStore(EssentiaLimits.pooled(64, 256, 3));
         assertFalse(restored.load(store.save()), "a faithful save restores verbatim");
         assertEquals(12, restored.amount(IGNIS));
         assertEquals(34, restored.amount(AQUA));
         assertEquals(46, restored.total());
-        assertEquals(Set.of(IGNIS, ORDO), restored.filters());
+        assertEquals(Set.of(IGNIS, AQUA, ORDO), restored.filters());
         assertEquals(List.of(IGNIS, AQUA, ORDO), restored.visibleAspectOrder());
+    }
+
+    @Test
+    void loadRestoresAContradictoryFilterFromAnOlderSave() {
+        // setFilters now refuses a filter that excludes stored contents, but a world written
+        // before that rule can still hold one. Loading must restore it verbatim rather than
+        // silently dropping essentia or the label; it is the block entity's job to notice the
+        // state and stop advertising suction it cannot satisfy.
+        CompoundTag legacy = new CompoundTag();
+        legacy.putInt("v", 1);
+        ListTag aspects = new ListTag();
+        aspects.add(entry("ignis", 100));
+        legacy.put("aspects", aspects);
+        ListTag filters = new ListTag();
+        filters.add(net.minecraft.nbt.StringTag.valueOf("aqua"));
+        legacy.put("filters", filters);
+
+        EssentiaStore store = new EssentiaStore(EssentiaLimits.jar(640));
+        assertFalse(store.load(legacy), "nothing was dropped or clamped");
+        assertEquals(100, store.amount(IGNIS));
+        assertEquals(Set.of(AQUA), store.filters());
+        assertEquals(0, store.add(AQUA, 1, false), "and it still cannot accept the filtered aspect");
     }
 
     @Test

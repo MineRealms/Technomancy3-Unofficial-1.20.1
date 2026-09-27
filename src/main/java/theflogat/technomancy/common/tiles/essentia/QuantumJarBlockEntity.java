@@ -76,6 +76,18 @@ public final class QuantumJarBlockEntity extends BlockEntity
         }
     }
 
+    /**
+     * Whether the label contradicts the contents.
+     *
+     * <p>Only reachable from a save written by an older build, since the store now refuses
+     * such a filter; a jar in this state can never accept anything again, so it must stop
+     * advertising suction instead of hoarding a demand it cannot satisfy.</p>
+     */
+    private boolean labelContradictsContents() {
+        AspectId label = filter();
+        return label != null && !store.isEmpty() && !label.equals(store.dominantAspect());
+    }
+
     public EssentiaStore store() {
         return store;
     }
@@ -189,9 +201,13 @@ public final class QuantumJarBlockEntity extends BlockEntity
         if (!PORTS.canInputFrom(face)) {
             return 0;
         }
-        // A remembered type that is no longer a registered aspect means this jar cannot
-        // actually accept anything, so it must not outbid containers that can.
+        // A jar that cannot actually accept anything must not outbid containers that can -
+        // either because its remembered type is no longer a registered aspect, or because a
+        // label left over from an older save contradicts what it holds.
         if (suctionType(face) == null && (filter() != null || store.dominantAspect() != null)) {
+            return 0;
+        }
+        if (labelContradictsContents()) {
             return 0;
         }
         return SUCTION.amount(filter() != null, store.total() >= CAPACITY, false, store.total());
@@ -282,11 +298,20 @@ public final class QuantumJarBlockEntity extends BlockEntity
         if (selected == null || !known(selected) || !EssentiaSuction.canTake(mySuction, theirSuction)) {
             return;
         }
+        /*
+         * EssentiaApi.take with EXECUTE is irreversible: once it returns, the unit is gone
+         * from upstream whether or not this store accepts it. So ask the store first. TC4R's
+         * own jar skips this check because its refusing state is unreachable - a filter that
+         * contradicts the contents cannot be set there - but a guard costs nothing and means
+         * a future state we have not thought of cannot silently delete essentia.
+         */
+        if (store.add(selected, 1, true) <= 0) {
+            return;
+        }
         int taken = EssentiaApi.take(level, above, selected, 1, Direction.DOWN, EssentiaTransferMode.EXECUTE);
         if (taken > 0) {
             int accepted = store.add(selected, taken, false);
             if (accepted < taken) {
-                // EssentiaApi.take already removed it upstream, so anything we refuse is gone.
                 Technomancy.LOGGER.warn("Quantum jar at {} lost {} {} it had already pulled",
                         worldPosition, taken - accepted, selected);
             }
