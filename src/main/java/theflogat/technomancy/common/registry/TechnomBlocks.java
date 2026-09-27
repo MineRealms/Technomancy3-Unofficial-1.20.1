@@ -128,6 +128,10 @@ public final class TechnomBlocks {
             () -> new theflogat.technomancy.common.blocks.nodes.NodeFabricatorBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_PURPLE)
                     .strength(5.0F, 12.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)));
 
     // ---- S2 machines and storage ----
 
