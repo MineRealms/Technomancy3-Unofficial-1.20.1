@@ -6,5 +6,20 @@
   "item.technom.enchanted_coil": "Enchanted Coil",
   "item.technom.neutronized_gear": "Neutronized Gear",
   "item.technom.pen_core": "Pen Core",
-  "item.technom.potency_gem": "Potency Gem"
+  "item.technom.potency_gem": "Potency Gem",
+  "tc.research_category.technom:TECHNOMANCY": "Technomancy",
+  "tc.research_name.technom:TECHNOBASICS": "Magic Machinery",
+  "tc.research_text.technom:TECHNOBASICS": "It's auto-magical!",
+  "tc.research_name.technom:QUANTUMJARS": "Quantum jars",
+  "tc.research_text.technom:QUANTUMJARS": "I hear you like essentia...",
+  "tc.research_name.technom:DYNAMO": "Magic Dynamos",
+  "tc.research_text.technom:DYNAMO": "Making magic energy out of magic energy.",
+  "tc.research_name.technom:CONDENSER": "Condensing Energy",
+  "tc.research_text.technom:CONDENSER": "WE NEED MORE POWAH",
+  "technom.research_page.TECHNOBASICS.1": "After a series of scientific discoveries, you've figured out ways to incorporate your pre-existing electronics into your new magical discoveries unlocking some new basic materials.",
+  "technom.research_page.QUANTUMJARS.1": "You have discovered a way to use the power of the almighty science to cram more essentia into a jar. This new jar uses quantum mechanics to increase its maximum storage capacity and therefore can be a bit unstable. The quantum jar is a bit more intelligent and has a higher suction rate than unlabeled warded jars and its suction increases depending on the amount of essentia within it.",
+  "technom.research_page.DYNAMO.1": "After studying the way the Arcane Bore and Infernal Furnace draw essentia for power, you've decided to make your own spinoff using Forge Energy. By hooking the Essentia Dynamo to a series of pipes and wires, you can take essentia and turn it into Forge Energy (Q). Some aspects carry more energy than others and last longer, producing more power. How the Essentia Dynamo answers a redstone signal can be reconfigured in place.",
+  "technom.research_page.DYNAMO.2": "Right clicking on the Dynamo with a Redstone Torch will cause the Dynamo to be disabled by a redstone signal, Gunpowder will make it ignore redstone, and Redstone Dust will return it to its original behavior. The dynamo can be rotated using most wrenches.",
+  "technom.research_page.DYNAMO.4": "You have also discovered that Dynamos can have their power output increased at the cost of fuel consumption. By right clicking on the Dynamo with a Potency Gem, the Dynamo will output four times the power, but will also consume four times the fuel. Shift Right clicking on the Dynamo with an empty hand will remove the Potency Gem.",
+  "technom.research_page.CONDENSER.1": "Too much power is never a bad thing, and now you've got a machine to put it to good use. By hooking up an Energy Condenser to some conduits, you can turn Forge Energy (Q) into some Potentia. The Potentia can then easily be piped out of the condenser into your favorite jar. The energy cost of one Potentia is set by the condenserCostQ config value (200,000 Q by default)."
 }

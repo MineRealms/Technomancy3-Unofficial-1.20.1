@@ -1,0 +1,14 @@
+{
+  "type": "thaumcraft:crucible",
+  "research": "technom:TECHNOBASICS",
+  "catalyst": {
+    "tag": "forge:ingots/thaumium"
+  },
+  "result": {
+    "item": "technom:neutronized_metal"
+  },
+  "aspects": {
+    "ordo": 2,
+    "potentia": 2
+  }
+}

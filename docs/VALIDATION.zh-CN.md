@@ -263,3 +263,78 @@ JAR 条目检查结果：`com/gregtechceu` 0 条、`theflogat/technomancy/gamete
 - 只在单机专用服务器、无 GTCEu 的运行时下验证；没有联机、没有与 GT 共存时重跑这组探针。
 
 下一阶段开始后，每批功能都应更新此记录，写明实际运行命令、观察结果和未覆盖的环境；不要用 `test NO-SOURCE`、启动成功或 GameTest 冒烟结果代替功能验收。
+## S1-B 配方与研究数据验证（2026-09-28）
+
+本节只覆盖 `data/technom/**` 的 S1-B 数据包（8 条配方、4 条研究、要素数据）与 `tools/` 下的两个脚本。它**不代表**任何方块实体、能源或精华行为已迁移；数据加载成功只说明"游戏读到了这些文件并接受了它们的内容"。
+
+以 JDK 17（`C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot`）作为 `JAVA_HOME`，在本 worktree 依次执行：
+
+```powershell
+.\gradlew.bat build --console=plain --no-daemon --offline
+.\gradlew.bat runGameTestServer --console=plain --no-daemon --offline
+python tools/validate_technom_data.py --inventory run-gametest/technom-data-inventory.json
+python tools/gen_research_lang.py --check
+```
+
+### 实际结果
+
+- `build`：BUILD SUCCESSFUL，单元测试通过。发行 JAR 内本次新增 12 个数据文件（8 配方 + 1 研究 + 3 要素；`data/technom/**` 连既有的 2 个战利品表共 14 个 JSON），`theflogat/technomancy/gametest/**` 与 `data/technom/structures/gametest/**` 仍为 0 条，排除规则未被新文件绕过。
+- `runGameTestServer`：**All 10 required tests passed**。批次 `technom_data:1` 4 项为本次新增，`technom_smoke:1` 3 项与 `technom_gtceu:1` 3 项为既有测试。**整份服务器日志 `/ERROR]` 计数为 0**——这一点是关键：配方的坏 id 只会记一行日志然后被丢弃，构建成功证明不了任何事。
+- TC4R 自己的加载日志写明 `Loaded 196 TC4 research entries in 7 categories`。第 7 个分类就是 `technom:TECHNOMANCY`（TC4R 自带 6 个）。
+- `tools/validate_technom_data.py`：14 个文件、309 项检查、0 错误、0 警告。
+- `tools/gen_research_lang.py --check`：两个 lang 文件均为 up to date，退出码 0。
+
+### GameTest 断言了什么
+
+新增 `theflogat.technomancy.gametest.DataPackGameTests`（4 项，批次 `technom_data`）：
+
+| 测试 | 断言内容 |
+|---|---|
+| `s1bRecipesLoadWithTheAuthoredContent` | 8 条配方逐条：在 `RecipeManager` 中按 id 存在、由预期的**序列化器**反序列化（用序列化器而非 recipe type，因为原版 shaped/shapeless 共用 `minecraft:crafting`）、产物 id 与数量、非空原料条数、原料接受的 item id 全集；奥术配方另外断言 `research()` 与 `vis()` |
+| `s1bResearchEntriesLoadIntoTheTc4rCatalog` | 分类存在；4 条研究逐条：分类、网格坐标、complexity、flags、parents、要素成本，以及**每一页**的 type / `value` / `recipe_link_policy` / `recipe_ids`，并要求每个 `recipe_ids` 在 `RecipeManager` 里真的能取到 |
+| `s1bObjectAspectsResolveThroughAspectQueryApi` | 每件物品经 `AspectQueryApi.item()` 解析出的要素等于文件里写的值——即 `direct` 条目确实压过了 TC4R 的配方推断 |
+| `s1bWritesRegistryInventoryForTooling` | 把运行中服务器的物品 / 物品 tag / 要素 / 配方序列化器 / 本模组配方 / 研究条目导出到 `run-gametest/technom-data-inventory.json`，供上面的 Python 检查器使用 |
+
+### 条件门控的两个方向都验证过
+
+`technom:essentia_dynamo` 与 `technom:energy_condenser` 在本分支尚未注册，因此 2 条配方、2 条研究与 2 个要素文件带 `forge:item_exists` 条件（配方用 `conditions`，TC4R 目录用 `forge:conditions`）。
+
+- **否方向（当前状态）**：导出的注册表快照里只有 6 条本模组配方与 2 条本模组研究，被门控的四项全部缺席，且日志里**没有**任何 `Unknown item` 报错。如果条件成员名写错，配方会被照常解析并因产物物品不存在而报错——没有该报错，正说明条件确实生效了。
+- **是方向（临时探针）**：临时加入两份门控在**已存在**物品 `technom:quantum_jar` 上的探针数据后重跑，本模组配方变为 7 条、研究条目变为 197 条，含 `STACK` 图标与指向门控配方的页面全部正常加载。探针文件随后删除，未提交。
+
+### 检查器确实会失败（18 项注入故障）
+
+只有会失败的检查器才算检查器。逐项注入并在之后从 git 恢复工作树，每一项都被捕获且退出码为 1：
+
+配方侧：`research` 写成 `researh`（MapCodec 会静默忽略未知字段，于是研究门控被无声移除）、item id 打错、tag id 打错、`vis` 用了非原初要素、`key` 声明了 pattern 用不到的符号、`components` 写成候选列表（即原版把多个必需原料塌缩进一个 `Ingredient.fromStacks` 的缺陷）、未注册 id 却没有对应条件。
+
+研究侧：页面缺 `aspects`（`ResearchCatalog.aspectMap` 无 null 保护，会 NPE 掉整个文件）、`complexity` 为 0、未知 flag、未知条目字段、`TEXT` 页面带 `recipe_ids`、`recipe_ids` 指向不存在的配方文件、页面文本键不在 lang 文件里。
+
+要素侧：要素名打错、写入只属于同步输出的根字段。
+
+其中"item id 打错""tag id 打错""要素名打错""未注册 id 无条件"四项只有在注册表快照存在时才能捕获；缺少 `--inventory` 时脚本会把这些检查报为 `SKIP` 而不是假装通过，`--require-inventory` 可把缺快照本身变成错误。
+
+### 刻意偏离原版的地方
+
+| 项 | 原版 | 本次 | 理由 |
+|---|---|---|---|
+| 研究 key | 裸 `TECHNOBASICS` 等 | `technom:TECHNOBASICS` 等 | TC4R `ResearchKey` 的文档约定：裸 key 归属 `thaumcraft` 命名空间，插件应使用 `addon_namespace:KEY`。`DYNAMO` / `CONDENSER` 这种通名尤其容易与他人撞车 |
+| `complexity` | TECHNOBASICS / QUANTUMJARS 为 0 | 1 | TC4R 取值域 1..3；`ResearchEntryDefinition` 会静默钳制，写 0 会让文件与游戏实际值不一致 |
+| `CONDENSER` 注册条件 | 需要 `Ids.dynNode`（节点发电机） | 只依赖自身方块与父条目 `DYNAMO` | 附录 A-21 的死线缺陷 |
+| 中子化金属坩埚配方的研究门 | TC4 自带的 `THAUMIUM` | `technom:TECHNOBASICS` | 去掉对 TC4R 内部 key 的耦合（规格书 6.5 建议） |
+| 神秘金属锭原料 | 具体物品 `itemResource:2` | `forge:ingots/thaumium` tag | 让其他模组的神秘金属也能用 |
+| 发电机配方的守护罐 | 普通物品匹配 | TC4R 的 `thaumcraft:empty_warded_jar` 自定义原料 | 1.20.1 的罐内容会随物品 NBT 走，普通物品匹配会吃掉装满或贴了标签的罐 |
+| 研究文案 | "Redstone Flux" / "RF" | "Forge Energy (Q)" / "Q" | TE/CoFH RF 不在移植范围 |
+| `DYNAMO.1` 文案 | 明写"默认需要红石信号" | 只说响应方式可就地重设 | 默认红石模式属规格书 10.3，由发电机分支决定，本分支无法验证 |
+| `CONDENSER.1` 中文文案 | 写死"大概 100W 点 RF 产 1 点 Potentia" | 指向配置项 `condenserCostQ`（默认 200,000 Q） | 成本已是配置项，写死数字就是错的 |
+| 注魔配方的 `blockCosmeticSolid:4` | meta 4，TC4R 源码无注释 | `thaumcraft:thaumium_block` ×2 | 规格书 10.6 的推断，未经游戏内确认；若结论有变只需改这一个 JSON |
+
+### 本节仍未验证
+
+- **客户端一次都没跑过**。`runClient` 未执行，因此 Thaumonomicon 的四个条目页面、`technom:textures/misc/technomancycategory.png` 分类图标、`technomancybasics.png` 条目图标、研究树布局（坐标 (0,0) / (1,-2) / (2,2) / (2,3)）、页面文本换行与中文字形全部**没有被渲染过一次**。文件里的贴图路径只被校验为"磁盘上存在同名文件"。
+- **没有在游戏里合成过任何一件东西**。奥术工作台的 vis 扣费、坩埚的要素消耗、注魔祭坛的 instability 8 与 200 点要素成本、研究解锁后配方是否真的可用，全部只是"数据已按预期加载"，不是"玩家能做出来"。
+- **被门控的四项从未以真实 id 激活过**。`technom:essentia_dynamo` / `technom:energy_condenser` 落地后必须重跑 `runGameTestServer`：届时 GameTest 会自动从"断言缺席"切换为"断言存在并逐项核对"，无需改测试代码。
+- **要素数值是本次拟定的，不是原版行为**。原版 Technomancy 从未给自己的物品注册过任何要素（全树检索 `registerObjectTag` 无命中），所以这 8 组数值是按 TC4R 自身惯例推的设计选择，没有原版依据，也没有做过平衡测试。
+- **`pen_core` 没有要素也没有配方**。它已注册但属 S2 书写笔范围，本次刻意没给它编数值。
+- **没有验证含 GTCEu 的组合**。本节两次 `runGameTestServer` 都未加 `-PwithGtceu=true`，因此此前记录的 4 条 `thaumcraft:compat/native_*_cluster_smelting` 空产物报错在本节日志中不出现；那 4 条属 TC4R × GTCEu 的第三方交互，不在本次范围，也没有被本次改动掩盖（本节日志 `/ERROR]` 为 0）。
+- **多人、存档与重载**未验证：没有测过数据包 `/reload`、联机同步研究条目、或玩家知识数据在命名空间化 key 下的持久化。

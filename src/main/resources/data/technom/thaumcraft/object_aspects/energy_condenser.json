@@ -1,0 +1,16 @@
+{
+  "forge:conditions": [
+    {
+      "type": "forge:item_exists",
+      "item": "technom:energy_condenser"
+    }
+  ],
+  "direct": {
+    "technom:energy_condenser": {
+      "machina": 12,
+      "potentia": 16,
+      "permutatio": 6,
+      "ordo": 6
+    }
+  }
+}

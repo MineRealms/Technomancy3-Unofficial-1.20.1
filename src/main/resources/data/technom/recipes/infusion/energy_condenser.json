@@ -1,0 +1,41 @@
+{
+  "type": "thaumcraft:infusion",
+  "conditions": [
+    {
+      "type": "forge:item_exists",
+      "item": "technom:energy_condenser"
+    }
+  ],
+  "research": "technom:CONDENSER",
+  "central": {
+    "item": "thaumcraft:runic_matrix"
+  },
+  "components": [
+    {
+      "item": "technom:neutronized_gear"
+    },
+    {
+      "item": "technom:enchanted_coil"
+    },
+    {
+      "item": "technom:enchanted_coil"
+    },
+    {
+      "item": "thaumcraft:thaumium_block"
+    },
+    {
+      "item": "thaumcraft:thaumium_block"
+    }
+  ],
+  "instability": 8,
+  "aspects": {
+    "potentia": 100,
+    "machina": 50,
+    "permutatio": 25,
+    "ordo": 25
+  },
+  "result": {
+    "item": "technom:energy_condenser",
+    "count": 1
+  }
+}

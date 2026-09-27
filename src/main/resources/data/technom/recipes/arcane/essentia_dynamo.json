@@ -1,0 +1,39 @@
+{
+  "type": "thaumcraft:arcane_shaped",
+  "conditions": [
+    {
+      "type": "forge:item_exists",
+      "item": "technom:essentia_dynamo"
+    }
+  ],
+  "research": "technom:DYNAMO",
+  "pattern": [
+    " C ",
+    "GIG",
+    "IWI"
+  ],
+  "key": {
+    "C": {
+      "item": "technom:enchanted_coil"
+    },
+    "G": {
+      "item": "technom:neutronized_gear"
+    },
+    "I": {
+      "item": "thaumcraft:essentia_tube"
+    },
+    "W": {
+      "type": "thaumcraft:empty_warded_jar"
+    }
+  },
+  "result": {
+    "item": "technom:essentia_dynamo",
+    "count": 1
+  },
+  "vis": {
+    "aqua": 15,
+    "ordo": 10,
+    "ignis": 5,
+    "perditio": 25
+  }
+}
