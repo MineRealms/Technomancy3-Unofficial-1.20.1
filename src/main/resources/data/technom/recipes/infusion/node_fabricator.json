@@ -1,0 +1,56 @@
+{
+  "type": "thaumcraft:infusion",
+  "conditions": [
+    {
+      "type": "forge:and",
+      "values": [
+        {
+          "type": "forge:item_exists",
+          "item": "technom:node_fabricator"
+        },
+        {
+          "type": "forge:item_exists",
+          "item": "technom:node_dynamo"
+        }
+      ]
+    }
+  ],
+  "research": "technom:NODEFABRICATOR",
+  "central": {
+    "item": "technom:node_dynamo"
+  },
+  "components": [
+    {
+      "item": "technom:enchanted_coil"
+    },
+    {
+      "item": "minecraft:diamond_block"
+    },
+    {
+      "item": "technom:quantum_jar"
+    },
+    {
+      "item": "technom:quantum_jar"
+    },
+    {
+      "item": "thaumcraft:thaumium_block"
+    },
+    {
+      "item": "thaumcraft:thaumium_block"
+    },
+    {
+      "item": "minecraft:redstone_block"
+    }
+  ],
+  "instability": 20,
+  "aspects": {
+    "auram": 75,
+    "potentia": 75,
+    "vitium": 75,
+    "praecantatio": 75
+  },
+  "result": {
+    "item": "technom:node_fabricator",
+    "count": 1
+  }
+}

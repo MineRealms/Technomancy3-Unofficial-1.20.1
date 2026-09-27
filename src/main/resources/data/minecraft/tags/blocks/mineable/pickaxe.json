@@ -2,6 +2,8 @@
   "replace": false,
   "values": [
     "technom:energy_condenser",
-    "technom:essentia_dynamo"
+    "technom:essentia_dynamo",
+    "technom:node_dynamo",
+    "technom:node_fabricator"
   ]
 }

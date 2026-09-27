@@ -1,0 +1,24 @@
+{
+  "focus_profiles": [
+    {
+      "focus": "technom:fusion_focus",
+      "color": 16733525,
+      "per_tick": false,
+      "base_cost": {
+        "aer": 3000,
+        "terra": 3000,
+        "ignis": 3000,
+        "aqua": 3000,
+        "ordo": 3000,
+        "perditio": 3000
+      },
+      "ranks": [
+        [],
+        [],
+        [],
+        [],
+        []
+      ]
+    }
+  ]
+}

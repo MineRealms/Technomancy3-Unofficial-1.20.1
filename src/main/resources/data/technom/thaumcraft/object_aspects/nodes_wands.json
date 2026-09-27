@@ -1,0 +1,64 @@
+{
+  "forge:conditions": [
+    {
+      "type": "forge:and",
+      "values": [
+        {
+          "type": "forge:item_exists",
+          "item": "technom:energized_wand_core"
+        },
+        {
+          "type": "forge:item_exists",
+          "item": "technom:technoturge_core"
+        },
+        {
+          "type": "forge:item_exists",
+          "item": "technom:pen"
+        },
+        {
+          "type": "forge:item_exists",
+          "item": "technom:node_fabricator"
+        },
+        {
+          "type": "forge:item_exists",
+          "item": "technom:fusion_focus"
+        }
+      ]
+    }
+  ],
+  "direct": {
+    "technom:energized_wand_core": {
+      "potentia": 10,
+      "instrumentum": 8,
+      "praecantatio": 8,
+      "machina": 6,
+      "permutatio": 4
+    },
+    "technom:technoturge_core": {
+      "potentia": 20,
+      "instrumentum": 12,
+      "praecantatio": 12,
+      "machina": 10,
+      "permutatio": 8
+    },
+    "technom:pen": {
+      "instrumentum": 6,
+      "cognitio": 6,
+      "metallum": 4,
+      "tenebrae": 2
+    },
+    "technom:node_fabricator": {
+      "machina": 24,
+      "auram": 16,
+      "potentia": 16,
+      "praecantatio": 12,
+      "metallum": 8
+    },
+    "technom:fusion_focus": {
+      "auram": 16,
+      "praecantatio": 12,
+      "permutatio": 12,
+      "vinculum": 8
+    }
+  }
+}

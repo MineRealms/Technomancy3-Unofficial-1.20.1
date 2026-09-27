@@ -100,6 +100,53 @@ public final class TechnomBlocks {
             () -> new theflogat.technomancy.common.blocks.coils.EssentiaCoilBlock(coilProperties()));
     // ---- end S2 coils ----
 
+    // ---- S2 nodes, wands and fusion ----
+
+    /**
+     * {@code nodeDynamo}. Burns Vis drained from nearby aura nodes; see
+     * {@link theflogat.technomancy.common.tiles.nodes.NodeDynamoBlockEntity}.
+     */
+    public static final RegistryObject<Block> NODE_DYNAMO = register("node_dynamo",
+            () -> new theflogat.technomancy.common.blocks.nodes.NodeDynamoBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .strength(3.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)));
+
+    /**
+     * {@code nodeGenerator}. The controller of a 1x3x3 node fabricator; see
+     * {@link theflogat.technomancy.common.tiles.nodes.NodeFabricatorBlockEntity}.
+     */
+    public static final RegistryObject<Block> NODE_FABRICATOR = register("node_fabricator",
+            () -> new theflogat.technomancy.common.blocks.nodes.NodeFabricatorBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .strength(5.0F, 12.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)));
+
+    /**
+     * {@code fakeAirNG}. Registered without a {@link BlockItem} and without a loot table: a
+     * fabricator places these and takes them away again, and nothing else can.
+     */
+    public static final RegistryObject<Block> NODE_FABRICATOR_SHELL = BLOCKS.register("node_fabricator_shell",
+            () -> new theflogat.technomancy.common.blocks.nodes.NodeFabricatorShellBlock(
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.NONE)
+                            .strength(-1.0F, 3_600_000.0F)
+                            .noLootTable()
+                            .noCollission()
+                            .noOcclusion()
+                            .isValidSpawn((state, level, pos, type) -> false)
+                            .isRedstoneConductor((state, level, pos) -> false)
+                            .isSuffocating((state, level, pos) -> false)
+                            .isViewBlocking((state, level, pos) -> false)));
+
+    // ---- end S2 nodes, wands and fusion ----
+
     private TechnomBlocks() {
     }
 

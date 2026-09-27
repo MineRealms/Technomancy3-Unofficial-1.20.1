@@ -36,6 +36,36 @@ public final class TechnomItems {
             () -> new theflogat.technomancy.common.items.coils.CoilCouplerItem(new Item.Properties().stacksTo(1)));
     // ---- end S2 coils ----
 
+    // ---- S2 nodes, wands and fusion ----
+
+    /**
+     * {@code itemWandCores:0}, the energized wand rod. Its wand-part definition is data
+     * ({@code thaumcraft:wand_rods} data map + tag); see
+     * {@link theflogat.technomancy.common.wands.TechnomWandRods}.
+     */
+    public static final RegistryObject<Item> ENERGIZED_WAND_CORE = simple("energized_wand_core");
+    /**
+     * {@code itemWandCores:1}, the technoturge sceptre rod. Glinted, as {@code hasEffect} was for
+     * metadata 1; both cores shared one icon in 1.7.10 and still do.
+     */
+    public static final RegistryObject<Item> TECHNOTURGE_CORE = ITEMS.register("technoturge_core",
+            () -> new Item(new Item.Properties()) {
+                @Override
+                public boolean isFoil(net.minecraft.world.item.ItemStack stack) {
+                    return true;
+                }
+            });
+
+    /** {@code itemPen}: a 3000-use scribing tool that also forms the research table. */
+    public static final RegistryObject<Item> PEN = ITEMS.register("pen",
+            () -> new theflogat.technomancy.common.items.PenItem(new Item.Properties()));
+
+    /** {@code itemFusionFocus}: moves one aura node's vis into another. */
+    public static final RegistryObject<Item> FUSION_FOCUS = ITEMS.register("fusion_focus",
+            () -> new theflogat.technomancy.common.items.FusionFocusItem(new Item.Properties()));
+
+    // ---- end S2 nodes, wands and fusion ----
+
     private TechnomItems() {
     }
 

@@ -1,0 +1,412 @@
+{
+  "entries": [
+    {
+      "key": "technom:NODEDYNAMO",
+      "forge:conditions": [
+        {
+          "type": "forge:and",
+          "values": [
+            {
+              "type": "forge:item_exists",
+              "item": "technom:node_dynamo"
+            },
+            {
+              "type": "forge:item_exists",
+              "item": "technom:essentia_dynamo"
+            }
+          ]
+        }
+      ],
+      "category": "technom:TECHNOMANCY",
+      "aspects": {
+        "auram": 5,
+        "potentia": 5,
+        "machina": 3
+      },
+      "display_column": 3,
+      "display_row": 1,
+      "complexity": 2,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:node_dynamo"
+        }
+      },
+      "flags": [
+        "SECONDARY"
+      ],
+      "parents": [
+        "technom:DYNAMO"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.NODEDYNAMO.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "ARCANE_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:arcane/node_dynamo"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "technom:ROD_electric",
+      "forge:conditions": [
+        {
+          "type": "forge:item_exists",
+          "item": "technom:energized_wand_core"
+        }
+      ],
+      "category": "technom:TECHNOMANCY",
+      "aspects": {
+        "instrumentum": 5,
+        "praecantatio": 5,
+        "potentia": 5,
+        "permutatio": 5
+      },
+      "display_column": -1,
+      "display_row": 2,
+      "complexity": 3,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:energized_wand_core"
+        }
+      },
+      "flags": [
+        "HIDDEN"
+      ],
+      "parents": [
+        "technom:TECHNOBASICS"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [
+        {
+          "item": "thaumcraft:silverwood_wand_rod"
+        }
+      ],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.ROD_electric.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:infusion/energized_wand_core"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "technom:TECHNOTURGESCEPTER",
+      "forge:conditions": [
+        {
+          "type": "forge:item_exists",
+          "item": "technom:technoturge_core"
+        }
+      ],
+      "category": "technom:TECHNOMANCY",
+      "aspects": {
+        "instrumentum": 5,
+        "praecantatio": 5,
+        "potentia": 5,
+        "permutatio": 5
+      },
+      "display_column": -1,
+      "display_row": 3,
+      "complexity": 3,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:technoturge_core"
+        }
+      },
+      "flags": [
+        "HIDDEN"
+      ],
+      "parents": [
+        "technom:ROD_electric"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [
+        {
+          "item": "technom:energized_wand_core"
+        }
+      ],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.TECHNOTURGESCEPTER.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:infusion/technoturge_core"
+          ]
+        },
+        {
+          "type": "SCEPTRE_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.TECHNOTURGESCEPTER.2",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        }
+      ]
+    },
+    {
+      "key": "technom:PEN",
+      "forge:conditions": [
+        {
+          "type": "forge:item_exists",
+          "item": "technom:pen"
+        }
+      ],
+      "category": "technom:TECHNOMANCY",
+      "aspects": {},
+      "display_column": 4,
+      "display_row": -4,
+      "complexity": 1,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:pen"
+        }
+      },
+      "flags": [
+        "AUTO_UNLOCK"
+      ],
+      "parents": [],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.PEN.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "NORMAL_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:pen_core"
+          ]
+        },
+        {
+          "type": "NORMAL_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:pen"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "technom:NODEFABRICATOR",
+      "forge:conditions": [
+        {
+          "type": "forge:and",
+          "values": [
+            {
+              "type": "forge:item_exists",
+              "item": "technom:node_fabricator"
+            },
+            {
+              "type": "forge:item_exists",
+              "item": "technom:node_dynamo"
+            }
+          ]
+        }
+      ],
+      "category": "technom:TECHNOMANCY",
+      "aspects": {
+        "machina": 5,
+        "potentia": 5,
+        "vitium": 5,
+        "auram": 5
+      },
+      "display_column": 4,
+      "display_row": 1,
+      "complexity": 3,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:node_fabricator"
+        }
+      },
+      "flags": [
+        "SPECIAL"
+      ],
+      "parents": [
+        "technom:NODEDYNAMO"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.NODEFABRICATOR.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.NODEFABRICATOR.2",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.NODEFABRICATOR.3",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:infusion/node_fabricator"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "technom:FUSIONFOCUS",
+      "forge:conditions": [
+        {
+          "type": "forge:item_exists",
+          "item": "technom:fusion_focus"
+        }
+      ],
+      "category": "technom:TECHNOMANCY",
+      "aspects": {
+        "auram": 5,
+        "praecantatio": 5,
+        "permutatio": 5,
+        "vinculum": 5
+      },
+      "display_column": 5,
+      "display_row": 0,
+      "complexity": 3,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:fusion_focus"
+        }
+      },
+      "flags": [],
+      "parents": [
+        "technom:NODEFABRICATOR"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 2,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.FUSIONFOCUS.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.FUSIONFOCUS.2",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:infusion/fusion_focus"
+          ]
+        }
+      ]
+    }
+  ]
+}

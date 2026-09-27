@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "technom:block/node_fabricator"
+    },
+    "facing=south": {
+      "model": "technom:block/node_fabricator",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "technom:block/node_fabricator",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "technom:block/node_fabricator",
+      "y": 90
+    }
+  }
+}

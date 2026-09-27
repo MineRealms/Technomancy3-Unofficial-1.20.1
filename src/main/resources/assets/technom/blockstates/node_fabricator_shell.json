@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "technom:block/node_fabricator_shell"
+    }
+  }
+}

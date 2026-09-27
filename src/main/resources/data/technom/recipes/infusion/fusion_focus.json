@@ -1,0 +1,45 @@
+{
+  "type": "thaumcraft:infusion",
+  "conditions": [
+    {
+      "type": "forge:item_exists",
+      "item": "technom:fusion_focus"
+    }
+  ],
+  "research": "technom:FUSIONFOCUS",
+  "central": {
+    "item": "thaumcraft:thaumium_ingot"
+  },
+  "components": [
+    {
+      "item": "technom:neutronized_metal"
+    },
+    {
+      "item": "technom:enchanted_coil"
+    },
+    {
+      "item": "minecraft:ender_eye"
+    },
+    {
+      "item": "technom:enchanted_coil"
+    },
+    {
+      "item": "minecraft:ender_eye"
+    },
+    {
+      "item": "technom:neutronized_metal"
+    }
+  ],
+  "instability": 12,
+  "aspects": {
+    "auram": 64,
+    "praecantatio": 64,
+    "permutatio": 64,
+    "vinculum": 32,
+    "potentia": 32
+  },
+  "result": {
+    "item": "technom:fusion_focus",
+    "count": 1
+  }
+}

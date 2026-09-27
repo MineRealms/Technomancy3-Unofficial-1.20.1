@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "conditions": [
+    {
+      "type": "forge:item_exists",
+      "item": "technom:pen_core"
+    }
+  ],
+  "pattern": [
+    " ND",
+    "NDN",
+    "DN "
+  ],
+  "key": {
+    "N": {
+      "tag": "forge:nuggets/iron"
+    },
+    "D": {
+      "tag": "forge:dyes/black"
+    }
+  },
+  "result": {
+    "item": "technom:pen_core",
+    "count": 1
+  }
+}
