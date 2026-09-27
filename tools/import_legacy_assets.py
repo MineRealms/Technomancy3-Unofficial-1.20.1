@@ -169,9 +169,13 @@ class Importer:
             self.put(target, text.encode("utf-8"))
 
         # Language files: format change only, keys are left exactly as they were.
+        # These land in reference/, NOT in assets/: every legacy key uses the old
+        # "techno:" prefix and the 1.7.10 "tile.X.name" shape, so none of them is a
+        # 1.20 translation key. They are the source text for hand-authored lang
+        # files, which own assets/technom/lang and must not be overwritten here.
         for path in sorted((SOURCE_ASSETS / "lang").glob("*.lang")):
             payload, duplicates = lang_to_json(path.read_text(encoding="utf-8"))
-            target = TARGET_ASSETS / "lang" / f"{path.stem.lower()}.json"
+            target = REFERENCE / "lang" / f"{path.stem.lower()}.json"
             self.put(target, payload.encode("utf-8"))
             if duplicates:
                 self.notes.append(f"{target.name}: dropped duplicate keys {sorted(set(duplicates))}")

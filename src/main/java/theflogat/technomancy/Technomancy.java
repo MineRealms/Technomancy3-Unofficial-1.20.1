@@ -1,13 +1,18 @@
 package theflogat.technomancy;
 
 import com.mojang.logging.LogUtils;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import theflogat.technomancy.common.energy.EnergyUnits;
+import theflogat.technomancy.common.registry.TechnomBlocks;
+import theflogat.technomancy.common.registry.TechnomCreativeTabs;
+import theflogat.technomancy.common.registry.TechnomItems;
 import theflogat.technomancy.config.TechnomancyConfig;
 
 /** Entry point of the modern port. */
@@ -28,7 +33,16 @@ public final class Technomancy {
     public Technomancy(FMLJavaModLoadingContext context) {
         IEventBus modBus = context.getModEventBus();
         context.registerConfig(ModConfig.Type.COMMON, TechnomancyConfig.SPEC);
+
+        // Blocks before items: the block registry populates the item registry with its
+        // BlockItems, and the creative tab enumerates the item registry.
+        TechnomBlocks.BLOCKS.register(modBus);
+        TechnomItems.ITEMS.register(modBus);
+        TechnomCreativeTabs.TABS.register(modBus);
+
         modBus.addListener(this::commonSetup);
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                () -> () -> theflogat.technomancy.client.TechnomancyClient.init(modBus));
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
