@@ -36,5 +36,10 @@
   "block.technom.node_dynamo.per_vis": "每点魔力相当于 %s 点燃料值，按 essentiaFuelScale 缩放",
   "tc.research_name.technom:NODEDYNAMO": "节点能源炉",
   "tc.research_text.technom:NODEDYNAMO": "来自灵气本身的能量。",
-  "technom.research_page.NODEDYNAMO.1": "通过对魔法能量的进一步研究,你意识到节点中的魔力与物品中所含有的源质十分相似。通过消耗节点的能量,你可以让它的魔力流出变为能量。记得将发电机放置在节点下方并连接足够管线。它的红石控制与源质能源炉相同。"
+  "technom.research_page.NODEDYNAMO.1": "通过对魔法能量的进一步研究,你意识到节点中的魔力与物品中所含有的源质十分相似。通过消耗节点的能量,你可以让它的魔力流出变为能量。记得将发电机放置在节点下方并连接足够管线。它的红石控制与源质能源炉相同。",
+  "item.technom.energized_wand_core": "激发能量杖柄",
+  "item.Wand.technom:electric.rod": "激发能量",
+  "tc.research_name.technom:ROD_electric": "激发能量杖柄",
+  "tc.research_text.technom:ROD_electric": "抽尽能量!",
+  "technom.research_page.ROD_electric.1": "通过给普通的银树杖芯注入能量,机械结构赋予它特殊的魔力消耗特性。当你的背包里有激活的RF容器时,法杖会从RF容器中抽取能量来填充它的魔力储存。这个杖柄有25vis魔力储存值，虽然看上去不是非常多但是补充方便。每 100 Q 充入 1 厘魔力，即 1 点魔力需 10000 Q；任意提供 Forge Energy 的电池都可作为能源。"
 }

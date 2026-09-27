@@ -30,6 +30,17 @@ public final class TechnomItems {
     /** {@code itemBoost}: quadruples a dynamo's throughput, not its efficiency. */
     public static final RegistryObject<Item> POTENCY_GEM = simple("potency_gem");
 
+    // ---- S2 nodes, wands and fusion ----
+
+    /**
+     * {@code itemWandCores:0}, the energized wand rod. Its wand-part definition is data
+     * ({@code thaumcraft:wand_rods} data map + tag); see
+     * {@link theflogat.technomancy.common.wands.TechnomWandRods}.
+     */
+    public static final RegistryObject<Item> ENERGIZED_WAND_CORE = simple("energized_wand_core");
+
+    // ---- end S2 nodes, wands and fusion ----
+
     private TechnomItems() {
     }
 

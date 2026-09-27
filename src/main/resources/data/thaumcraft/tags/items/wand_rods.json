@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "technom:energized_wand_core",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "type": "thaumcraft:infusion",
+  "conditions": [
+    {
+      "type": "forge:item_exists",
+      "item": "technom:energized_wand_core"
+    }
+  ],
+  "research": "technom:ROD_electric",
+  "central": {
+    "item": "thaumcraft:silverwood_wand_rod"
+  },
+  "components": [
+    {
+      "item": "technom:enchanted_coil"
+    },
+    {
+      "item": "technom:enchanted_coil"
+    },
+    {
+      "item": "technom:neutronized_metal"
+    },
+    {
+      "item": "minecraft:redstone_block"
+    },
+    {
+      "item": "minecraft:copper_block"
+    }
+  ],
+  "instability": 8,
+  "aspects": {
+    "potentia": 50,
+    "instrumentum": 50,
+    "praecantatio": 50,
+    "machina": 50,
+    "permutatio": 50
+  },
+  "result": {
+    "item": "technom:energized_wand_core",
+    "count": 1
+  }
+}

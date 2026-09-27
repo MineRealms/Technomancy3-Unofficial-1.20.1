@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": {
+    "technom:energized_wand_core": {
+      "forge:conditions": [
+        {
+          "type": "forge:item_exists",
+          "item": "technom:energized_wand_core"
+        }
+      ],
+      "value": {
+        "material": "technom:electric",
+        "capacity": 25,
+        "craft_cost": 10,
+        "research": "technom:ROD_electric",
+        "texture": "technom:textures/models/electricwand.png",
+        "order": 100
+      }
+    }
+  }
+}

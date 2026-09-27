@@ -36,5 +36,10 @@
   "block.technom.node_dynamo.per_vis": "One Vis is worth %s fuel points, scaled by essentiaFuelScale",
   "tc.research_name.technom:NODEDYNAMO": "Node Dynamo",
   "tc.research_text.technom:NODEDYNAMO": "Power from the aura itself.",
-  "technom.research_page.NODEDYNAMO.1": "Continuing your research into magical energy, you have realised that the vis of a node is not unlike the essentia held in items. A Node Dynamo drains one vis at a time from aura nodes and jarred nodes within four blocks, never taking the last point of an aspect, and burns it into Forge Energy through its output face. Its redstone behaviour, potency gem and rotation work exactly as on the Essentia Dynamo."
+  "technom.research_page.NODEDYNAMO.1": "Continuing your research into magical energy, you have realised that the vis of a node is not unlike the essentia held in items. A Node Dynamo drains one vis at a time from aura nodes and jarred nodes within four blocks, never taking the last point of an aspect, and burns it into Forge Energy through its output face. Its redstone behaviour, potency gem and rotation work exactly as on the Essentia Dynamo.",
+  "item.technom.energized_wand_core": "Energized Wand Core",
+  "item.Wand.technom:electric.rod": "Energized",
+  "tc.research_name.technom:ROD_electric": "Energized Wand",
+  "tc.research_text.technom:ROD_electric": "Drain all the energy!",
+  "technom.research_page.ROD_electric.1": "Infusing a normal silverwood wand core with some energy and machines gives it special properties at the cost of its vis storage. With any Forge Energy battery in your inventory, the wand draws energy from it to refill its own vis storage at 100 Q per centivis, that is 10000 Q for one whole vis of a primal aspect. This wand can store 25 vis of each primal."
 }

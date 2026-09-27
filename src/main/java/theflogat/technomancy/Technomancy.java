@@ -50,6 +50,8 @@ public final class Technomancy {
         modBus.addListener(this::commonSetup);
         // Server-side data: the aspect fuel table is a data pack, so it reloads with /reload.
         MinecraftForge.EVENT_BUS.addListener(EssentiaFuelLoader::onAddReloadListener);
+        // S2 nodes, wands and fusion: wand charging (inventory pass + technoturge FE capability).
+        theflogat.technomancy.common.wands.WandChargeEvents.register(MinecraftForge.EVENT_BUS);
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                 () -> () -> theflogat.technomancy.client.TechnomancyClient.init(modBus));
     }
