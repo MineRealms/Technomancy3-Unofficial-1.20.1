@@ -1,0 +1,148 @@
+{
+  "fallback": 25,
+  "entries": [
+    {
+      "aspects": ["ignis", "potentia"],
+      "value": 800
+    },
+    {
+      "aspects": ["aer", "ordo"],
+      "value": 75
+    },
+    {
+      "aspects": ["terra"],
+      "value": 75
+    },
+    {
+      "aspects": ["aqua"],
+      "value": 50,
+      "when": [
+        {
+          "condition": { "type": "technom:biome_tag", "tag": "technom:humid" },
+          "value": 200
+        }
+      ]
+    },
+    {
+      "aspects": ["praecantatio", "alienis"],
+      "value": 75,
+      "when": [
+        {
+          "condition": { "type": "technom:dimension", "dimension": "minecraft:the_end" },
+          "value": 300
+        },
+        {
+          "condition": { "type": "technom:biome_tag", "tag": "technom:magical_forest" },
+          "value": 300
+        }
+      ]
+    },
+    {
+      "aspects": [
+        "machina", "metallum", "motus", "instrumentum",
+        "vinculum", "perfodio", "fabrico", "iter"
+      ],
+      "value": 75
+    },
+    {
+      "aspects": ["vitreus", "perditio"],
+      "value": 75
+    },
+    {
+      "aspects": [
+        "humanus", "sensus", "sano", "meto", "fames", "mortuus",
+        "bestia", "venenum", "cognitio", "spiritus", "telum", "tempestas"
+      ],
+      "value": 30
+    },
+    {
+      "aspects": ["vacuos"],
+      "value": 50,
+      "when": [
+        {
+          "condition": { "type": "technom:height", "anchor": "sea_level", "below": 0 },
+          "value": 200
+        }
+      ]
+    },
+    {
+      "aspects": ["arbor", "herba", "messis", "pannus", "corpus"],
+      "value": 40
+    },
+    {
+      "aspects": ["exanimis"],
+      "value": 50,
+      "when": [
+        {
+          "condition": { "type": "technom:dimension", "dimension": "minecraft:the_end" },
+          "value": 100
+        }
+      ]
+    },
+    {
+      "aspects": ["permutatio"],
+      "value": 200,
+      "random_bonus": 1000
+    },
+    {
+      "aspects": ["volatus"],
+      "value": 50,
+      "when": [
+        {
+          "condition": { "type": "technom:height", "anchor": "absolute", "above": 150 },
+          "value": 200
+        }
+      ]
+    },
+    {
+      "aspects": ["limus"],
+      "value": 100,
+      "when": [
+        {
+          "condition": { "type": "technom:slime_chunk" },
+          "value": 200
+        }
+      ]
+    },
+    {
+      "aspects": ["lux"],
+      "value": 50,
+      "when": [
+        {
+          "condition": { "type": "technom:daytime", "day": true },
+          "value": 300
+        }
+      ]
+    },
+    {
+      "aspects": ["tenebrae"],
+      "value": 50,
+      "when": [
+        {
+          "condition": { "type": "technom:daytime", "day": false },
+          "value": 300
+        }
+      ]
+    },
+    {
+      "aspects": ["auram"],
+      "value": 100,
+      "when": [
+        {
+          "condition": { "type": "technom:biome_tag", "tag": "technom:magical_forest" },
+          "value": 600
+        }
+      ]
+    },
+    {
+      "aspects": ["vitium"],
+      "value": 100,
+      "when": [
+        {
+          "condition": { "type": "technom:biome_tag", "tag": "technom:tainted" },
+          "value": 600
+        }
+      ]
+    }
+  ]
+}

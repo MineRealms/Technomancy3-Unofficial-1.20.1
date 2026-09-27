@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "technom:energy_condenser"
+    "technom:energy_condenser",
+    "technom:essentia_dynamo"
   ]
 }

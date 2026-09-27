@@ -1,6 +1,7 @@
 package theflogat.technomancy.common.machines;
 
 import javax.annotation.Nullable;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
@@ -15,8 +16,12 @@ import net.minecraft.world.item.Items;
  * it could not parse it, which would silently switch off any machine whose own default is
  * {@code LOW}. The saved form here is a stable lowercase id and an unreadable value falls back
  * to the caller's default instead.</p>
+ *
+ * <p>This is the only redstone mode type in the mod. The dynamo and the condenser were written
+ * in parallel and each grew its own copy; they agreed on every constant, id and item, so they
+ * were merged into this one before a third machine could pick either.</p>
  */
-public enum RedstoneMode {
+public enum RedstoneMode implements StringRepresentable {
 
     /** Redstone is ignored; the machine always runs. */
     NONE("none"),
@@ -35,6 +40,11 @@ public enum RedstoneMode {
 
     /** Stable id used in NBT; never the enum name, so the constants can be renamed. */
     public String id() {
+        return id;
+    }
+
+    @Override
+    public String getSerializedName() {
         return id;
     }
 

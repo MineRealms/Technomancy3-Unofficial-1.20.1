@@ -13,6 +13,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import java.util.function.Supplier;
 import theflogat.technomancy.Technomancy;
+import theflogat.technomancy.common.blocks.dynamo.EssentiaDynamoBlock;
 import theflogat.technomancy.common.blocks.essentia.QuantumJarBlock;
 import theflogat.technomancy.common.blocks.machines.EnergyCondenserBlock;
 
@@ -72,6 +73,19 @@ public final class TechnomBlocks {
                     .strength(3.0F, 6.0F)
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()));
+
+    /**
+     * {@code essentiaDynamo}. Burns essentia into Forge Energy. See
+     * {@link theflogat.technomancy.common.tiles.dynamo.EssentiaDynamoBlockEntity}.
+     */
+    public static final RegistryObject<Block> ESSENTIA_DYNAMO = register("essentia_dynamo",
+            () -> new EssentiaDynamoBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .strength(3.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)));
 
     private TechnomBlocks() {
     }

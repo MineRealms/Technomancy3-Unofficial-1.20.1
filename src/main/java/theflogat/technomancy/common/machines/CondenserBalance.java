@@ -1,5 +1,7 @@
 package theflogat.technomancy.common.machines;
 
+import theflogat.technomancy.common.essentia.fuel.EssentiaFuelTable;
+
 /**
  * The energy condenser's fixed numbers and the one balance rule that must never be broken:
  * making a unit of essentia has to cost more energy than burning that unit gives back.
@@ -10,10 +12,11 @@ package theflogat.technomancy.common.machines;
  * a perpetual motion machine. The 1.7.10 pair was safe by accident (1,000,000 against 64,000,
  * a 15.6x loss); nothing in the code said so, which is why {@link #verdict} exists.</p>
  *
- * <p>The dynamo is not implemented yet, so the yield is computed from the two numbers the
- * behaviour spec pins down for it rather than from its class. Both are documented below with
- * their 1.7.10 source; if the dynamo lands with different ones, this file has to follow, and
- * {@code CondenserBalanceTest} is what will notice.</p>
+ * <p>The yield is the dynamo's own figure, not a copy of it: {@link #dynamoYieldPerUnitQ(int, double)}
+ * goes through {@link EssentiaFuelTable#energyPerUnit(int, double)}, the exact function the dynamo
+ * burns with, so the two cannot drift apart. The fuel value itself is data - a data pack can change
+ * what potentia is worth - which is why the check also runs whenever the fuel table reloads, and
+ * not only at startup where no data pack has been read yet.</p>
  */
 public final class CondenserBalance {
 
@@ -44,16 +47,14 @@ public final class CondenserBalance {
     public static final long MAX_RATE_Q_PER_TICK = 8_192;
 
     /**
-     * {@code TileEssentiaDynamo.getAspectFuel} returns 800 for {@code Aspect.ENERGY}
-     * (1.7.10 {@code TileEssentiaDynamo.java:62-64}).
+     * The fuel value the shipped table gives potentia: {@code TileEssentiaDynamo.getAspectFuel}
+     * returns 800 for {@code Aspect.ENERGY} (1.7.10 {@code TileEssentiaDynamo.java:62-64}).
+     *
+     * <p>Only the startup check uses this, because it runs before any data pack is read. The
+     * live check reads the loaded table instead, and a test pins this constant to the shipped
+     * {@code essentia_fuel/default.json} so the two cannot disagree silently.</p>
      */
-    public static final long POTENTIA_FUEL_VALUE = 800;
-
-    /**
-     * Q one point of dynamo fuel becomes: the dynamo burns one fuel point per tick while
-     * producing 80 RF/t (1.7.10 {@code TileDynamoBase.java:42}), and 1 RF maps to 1 Q.
-     */
-    public static final long Q_PER_FUEL_POINT = 80;
+    public static final int SHIPPED_POTENTIA_FUEL_VALUE = 800;
 
     /** Below this multiple of the dynamo yield the loop is legal but arguably too generous. */
     private static final long COMFORTABLE_MARGIN = 4;
@@ -78,17 +79,35 @@ public final class CondenserBalance {
      *                  total energy of a unit without touching the dynamo's output rate
      */
     public static long dynamoYieldPerUnitQ(double fuelScale) {
-        if (!(fuelScale > 0)) {
+        return dynamoYieldPerUnitQ(SHIPPED_POTENTIA_FUEL_VALUE, fuelScale);
+    }
+
+    /**
+     * Energy a dynamo gives back for one unit whose fuel value is {@code potentiaFuelValue}.
+     *
+     * <p>Delegates to the dynamo's own conversion rather than repeating its arithmetic, which is
+     * how this check is guaranteed to test the machine that actually runs. The only addition is
+     * saturation: the dynamo never has to reason about an absurd config, but this check does,
+     * and a huge scale must read as "unsafe", never wrap into a small number.</p>
+     */
+    public static long dynamoYieldPerUnitQ(int potentiaFuelValue, double fuelScale) {
+        if (potentiaFuelValue <= 0 || !(fuelScale > 0)) {
             return 0;
         }
-        double yield = POTENTIA_FUEL_VALUE * (double) Q_PER_FUEL_POINT * fuelScale;
-        // Floor, because the dynamo cannot hand back a fraction of a Q either.
-        return yield >= Long.MAX_VALUE ? Long.MAX_VALUE : (long) Math.floor(yield);
+        if (potentiaFuelValue * (double) EssentiaFuelTable.Q_PER_FUEL_POINT * fuelScale >= Long.MAX_VALUE) {
+            return Long.MAX_VALUE;
+        }
+        return EssentiaFuelTable.energyPerUnit(potentiaFuelValue, fuelScale);
     }
 
     /** Classifies a condenser cost against the dynamo yield it has to beat. */
     public static Verdict verdict(long condenserCostQ, double fuelScale) {
-        long yield = dynamoYieldPerUnitQ(fuelScale);
+        return verdict(condenserCostQ, SHIPPED_POTENTIA_FUEL_VALUE, fuelScale);
+    }
+
+    /** Classifies a condenser cost against a dynamo burning potentia at the given fuel value. */
+    public static Verdict verdict(long condenserCostQ, int potentiaFuelValue, double fuelScale) {
+        long yield = dynamoYieldPerUnitQ(potentiaFuelValue, fuelScale);
         if (condenserCostQ <= yield) {
             return Verdict.PERPETUAL_MOTION;
         }
@@ -100,10 +119,15 @@ public final class CondenserBalance {
 
     /** One line explaining a verdict, including the value the config would need. */
     public static String describe(long condenserCostQ, double fuelScale) {
-        long yield = dynamoYieldPerUnitQ(fuelScale);
-        Verdict verdict = verdict(condenserCostQ, fuelScale);
+        return describe(condenserCostQ, SHIPPED_POTENTIA_FUEL_VALUE, fuelScale);
+    }
+
+    public static String describe(long condenserCostQ, int potentiaFuelValue, double fuelScale) {
+        long yield = dynamoYieldPerUnitQ(potentiaFuelValue, fuelScale);
+        Verdict verdict = verdict(condenserCostQ, potentiaFuelValue, fuelScale);
         String head = "balance.condenserCostQ=" + condenserCostQ + " against a dynamo yield of " + yield
-                + " Q per unit of " + ASPECT + " at balance.essentiaFuelScale=" + fuelScale;
+                + " Q per unit of " + ASPECT + " (fuel value " + potentiaFuelValue
+                + ") at balance.essentiaFuelScale=" + fuelScale;
         return switch (verdict) {
             case PERPETUAL_MOTION -> head + ": a condenser feeding a dynamo now returns at least what it"
                     + " spends, which is free energy. Raise condenserCostQ above " + yield
