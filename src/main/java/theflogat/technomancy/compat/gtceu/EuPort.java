@@ -33,7 +33,8 @@ public final class EuPort {
      * @param mutable whether committing transfers is allowed right now (false on the client)
      * @param qPerEu  the session's frozen rate; captured here so every reading of this port
      *                agrees with the reservation sizes used while pushing
-     * @param face    the face this port was handed out for, or {@code null} for an unsided query
+     * @param face    the face this port was handed out for, or {@code null} for an unsided query,
+     *                which is read-only no matter what rights the caller passes
      */
     public EuPort(EnergyLedger ledger, LongSupplier clock, BooleanSupplier mutable, long qPerEu,
             @Nullable Direction face, boolean input, boolean output) {
@@ -45,8 +46,10 @@ public final class EuPort {
         this.mutable = mutable;
         this.qPerEu = qPerEu;
         this.face = face;
-        this.input = input;
-        this.output = output;
+        // Structural, not just a convention of the caller: an unsided query bypasses the face
+        // rules by definition, so it can never carry transfer rights.
+        this.input = input && face != null;
+        this.output = output && face != null;
     }
 
     /**

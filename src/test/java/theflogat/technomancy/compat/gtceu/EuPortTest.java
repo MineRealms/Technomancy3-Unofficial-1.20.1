@@ -75,8 +75,9 @@ class EuPortTest {
     void aNullSidePortHasNoTransferRights() {
         EnergyLedger ledger = consumer();
         ledger.generate(1000);
-        // This is how the protocol builds the unsided view: readable, but never a transfer path.
-        EuPort probe = port(ledger, null, false, false);
+        // Rights are asked for on purpose here: an unsided port must drop them anyway, because it
+        // bypasses the face rules by definition.
+        EuPort probe = port(ledger, null, true, true);
         assertFalse(probe.inputs(null));
         assertFalse(probe.inputs(FACE));
         assertFalse(probe.outputs(null));
