@@ -30,7 +30,7 @@ Set-Location 'H:\MinecraftMods\Technomancy-1.20.1'
 .\gradlew.bat runData
 ```
 
-`runGameTestServer` 保留 MDK 运行配置，但目前没有 Technomancy GameTest，不能用空测试集声称通过。`runData` 目前也没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
+`runGameTestServer` 现有 3 个 `technom_smoke` 冒烟测试（TC4R 要素 API 已链接、GTCEu 存在性与类隔离），在有/无 `-PwithGtceu=true` 两种开发运行时均 3/3 通过，结果见[验证记录](docs/VALIDATION.zh-CN.md)；它们只覆盖加载与隔离，不是玩法验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
 
 ## 工程文档
 

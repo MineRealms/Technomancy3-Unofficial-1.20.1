@@ -2,7 +2,6 @@ package theflogat.technomancy;
 
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -17,9 +16,18 @@ public final class Technomancy {
     public static final String MOD_ID = "technom";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public Technomancy() {
-        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, TechnomancyConfig.SPEC);
+    /**
+     * Forge 47.4.23 injects the loading context: {@code FMLModContainer.constructMod()} looks up
+     * {@code getDeclaredConstructor(FMLJavaModLoadingContext.class)} first and only falls back to
+     * the no-arg constructor. Both {@code FMLJavaModLoadingContext.get()} and
+     * {@code ModLoadingContext.get()} are {@code @Deprecated(forRemoval = true, since = "1.21.1")}
+     * in this version, so the injected instance is the supported form. Its inherited
+     * {@code registerConfig} resolves the owner through the overridden {@code getContainer()},
+     * not through the thread-local, so no static accessor is needed.
+     */
+    public Technomancy(FMLJavaModLoadingContext context) {
+        IEventBus modBus = context.getModEventBus();
+        context.registerConfig(ModConfig.Type.COMMON, TechnomancyConfig.SPEC);
         modBus.addListener(this::commonSetup);
     }
 
