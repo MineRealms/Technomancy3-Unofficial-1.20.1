@@ -35,6 +35,10 @@ public final class TechnomBlockEntities {
             TYPES.register("item_coil", () -> BlockEntityType.Builder
                     .of(theflogat.technomancy.common.tiles.coils.ItemCoilBlockEntity::new, TechnomBlocks.ITEM_COIL.get())
                     .build(null));
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.coils.EssentiaCoilBlockEntity>> ESSENTIA_COIL =
+            TYPES.register("essentia_coil", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.coils.EssentiaCoilBlockEntity::new, TechnomBlocks.ESSENTIA_COIL.get())
+                    .build(null));
     // ---- end S2 coils ----
 
     private TechnomBlockEntities() {

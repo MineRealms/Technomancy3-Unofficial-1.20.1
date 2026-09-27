@@ -91,6 +91,13 @@ public final class TechnomBlocks {
     /** {@code itemTransmitter}: pulls from linked inventories into the one it stands on. */
     public static final RegistryObject<Block> ITEM_COIL = register("item_coil",
             () -> new theflogat.technomancy.common.blocks.coils.ItemCoilBlock(coilProperties()));
+    /**
+     * {@code teslaCoil}: wireless essentia from its linked stores into the block it stands on.
+     * Registered upstream as {@code TMBlocks.teslaCoil}, implemented by
+     * {@code BlockEssentiaTransmitter}.
+     */
+    public static final RegistryObject<Block> ESSENTIA_COIL = register("essentia_coil",
+            () -> new theflogat.technomancy.common.blocks.coils.EssentiaCoilBlock(coilProperties()));
     // ---- end S2 coils ----
 
     private TechnomBlocks() {

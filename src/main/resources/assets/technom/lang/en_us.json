@@ -3,6 +3,7 @@
   "block.technom.coil.gem": "With a Potency Gem: emits redstone while its target has room",
   "block.technom.coil.hint": "Draws from its linked blocks into the block it faces",
   "block.technom.energy_condenser": "Energy Condenser",
+  "block.technom.essentia_coil": "Essentia Coil",
   "block.technom.essentia_dynamo": "Essentia Dynamo",
   "block.technom.essentia_dynamo.boost": "With a potency gem: %s Q/t for %s times the essentia",
   "block.technom.essentia_dynamo.per_unit": "One unit of essentia is worth its fuel value x %s Q, scaled by essentiaFuelScale",
@@ -42,10 +43,12 @@
   "tc.research_name.technom:DYNAMO": "Magic Dynamos",
   "tc.research_name.technom:QUANTUMJARS": "Quantum jars",
   "tc.research_name.technom:TECHNOBASICS": "Magic Machinery",
+  "tc.research_name.technom:TESLACOIL": "Wireless Essentia",
   "tc.research_text.technom:CONDENSER": "WE NEED MORE POWAH",
   "tc.research_text.technom:DYNAMO": "Making magic energy out of magic energy.",
   "tc.research_text.technom:QUANTUMJARS": "I hear you like essentia...",
   "tc.research_text.technom:TECHNOBASICS": "It's auto-magical!",
+  "tc.research_text.technom:TESLACOIL": "The only reason you downloaded this mod.",
   "technom.condenser.redstone_mode": "Redstone: %s",
   "technom.redstone_mode.high": "Runs with a redstone signal",
   "technom.redstone_mode.low": "Runs without a redstone signal",
@@ -55,5 +58,8 @@
   "technom.research_page.DYNAMO.2": "Right clicking on the Dynamo with a Redstone Torch will cause the Dynamo to be disabled by a redstone signal, Gunpowder will make it ignore redstone, and Redstone Dust will return it to its original behavior. The dynamo can be rotated using most wrenches.",
   "technom.research_page.DYNAMO.4": "You have also discovered that Dynamos can have their power output increased at the cost of fuel consumption. By right clicking on the Dynamo with a Potency Gem, the Dynamo will output four times the power, but will also consume four times the fuel. Shift Right clicking on the Dynamo with an empty hand will remove the Potency Gem.",
   "technom.research_page.QUANTUMJARS.1": "You have discovered a way to use the power of the almighty science to cram more essentia into a jar. This new jar uses quantum mechanics to increase its maximum storage capacity and therefore can be a bit unstable. The quantum jar is a bit more intelligent and has a higher suction rate than unlabeled warded jars and its suction increases depending on the amount of essentia within it.",
-  "technom.research_page.TECHNOBASICS.1": "After a series of scientific discoveries, you've figured out ways to incorporate your pre-existing electronics into your new magical discoveries unlocking some new basic materials."
+  "technom.research_page.TECHNOBASICS.1": "After a series of scientific discoveries, you've figured out ways to incorporate your pre-existing electronics into your new magical discoveries unlocking some new basic materials.",
+  "technom.research_page.TESLACOIL.1": "After realizing how poorly essentia tubes work, you decide to switch over to a new wireless method that is much more refined. Use a Coil Coupler on an Essentia Coil, then on any jar or other essentia store, to link the coil to it. Once linked, the coil draws from its sources into whatever it is attached to until that is full. A coil holds up to 16 links, each within 32 blocks of it, and a source may feed any number of coils. Click a linked source again to unlink it, or sneak-click the coil with the coupler to clear every link. Apply a printed jar label to filter the coil to one aspect; sneak-click it with an empty hand to take the label back.",
+  "technom.research_page.TESLACOIL.2": "The coil does not only push. Machines that pull essentia for themselves, such as the Thaumatorium, the Arcane Bore or an Arcane Lamp, can draw straight from a coil placed against them as if it were a tube, and the coil fetches whatever they ask for from its linked sources. An Essentia Buffer between coil and machine remains a safe interface for anything that neither accepts pushed essentia nor pulls it on its own.",
+  "technom.research_page.TESLACOIL.3": "A coil only works while it receives no redstone signal; program it with redstone, a redstone torch or gunpowder like other machines. Install a Potency Gem and the coil instead emits a redstone signal while the block it feeds still has room, ignoring redstone itself. Sneak-click it with an empty hand to take the gem back once the label is gone."
 }

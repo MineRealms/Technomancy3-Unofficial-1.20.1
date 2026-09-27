@@ -1,5 +1,7 @@
 package theflogat.technomancy.client.coils;
 
+import dev.tc4port.thaumcraft.api.aspect.AspectApi;
+import dev.tc4port.thaumcraft.api.aspect.AspectDefinition;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
@@ -8,6 +10,7 @@ import net.minecraftforge.fml.common.Mod;
 import theflogat.technomancy.Technomancy;
 import theflogat.technomancy.common.blocks.coils.CoilBlock;
 import theflogat.technomancy.common.registry.TechnomBlocks;
+import theflogat.technomancy.common.tiles.coils.EssentiaCoilBlockEntity;
 
 /**
  * Coil ring colours, replacing the original's {@code TileEssentiaTransmitterRenderer} /
@@ -32,6 +35,19 @@ public final class CoilClient {
     public static void registerBlockColors(RegisterColorHandlersEvent.Block event) {
         event.register((state, level, pos, tint) -> tint == 1 ? gemColor(state) : WHITE,
                 TechnomBlocks.ITEM_COIL.get());
+        // The essentia coil's lower ring takes the colour of its filter aspect, as the original
+        // renderer did (at a fifth of the brightness, which made it nearly black; kept at full).
+        event.register((state, level, pos, tint) -> {
+            if (tint == 1) {
+                return gemColor(state);
+            }
+            if (tint != 0 || level == null || pos == null) {
+                return WHITE;
+            }
+            return level.getBlockEntity(pos) instanceof EssentiaCoilBlockEntity coil && coil.filter() != null
+                    ? AspectApi.registry().get(coil.filter()).map(AspectDefinition::color).orElse(WHITE)
+                    : WHITE;
+        }, TechnomBlocks.ESSENTIA_COIL.get());
     }
 
     static int gemColor(BlockState state) {
