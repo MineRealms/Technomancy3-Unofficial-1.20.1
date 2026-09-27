@@ -24,7 +24,18 @@ minecraft {
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             mods { "${mod_id}" { source sourceSets.main } }
         }
-        client { workingDirectory project.file('run-client') }
+        client {
+            workingDirectory project.file('run-client')
+            // Automated client testing needs a loaded world: the RosettaRemoteDebugBridge only
+            // starts listening on ServerStartedEvent, which on a client means "a world was
+            // joined", not "the title screen appeared". tools/client_probe.py passes this.
+            if (project.hasProperty('quickPlay')) {
+                args '--quickPlaySingleplayer', project.property('quickPlay')
+            }
+            // Its own bridge port, so a client and a dedicated server can be probed at once
+            // without one of them failing to bind. Harmless when the bridge is not installed.
+            property 'rosetta.remote.port', '48791'
+        }
         server {
             workingDirectory project.file('run-server')
             args '--nogui'

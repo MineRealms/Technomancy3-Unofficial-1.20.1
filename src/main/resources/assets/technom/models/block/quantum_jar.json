@@ -1,5 +1,6 @@
 {
   "parent": "minecraft:block/block",
+  "render_type": "minecraft:translucent",
   "ambientocclusion": false,
   "textures": {
     "jar": "technom:block/essentiacontainer",
@@ -8,28 +9,68 @@
   "elements": [
     {
       "name": "Core",
-      "from": [3, 0, 3],
-      "to": [13, 12, 13],
+      "from": [
+        3,
+        0,
+        3
+      ],
+      "to": [
+        13,
+        12,
+        13
+      ],
       "faces": {
-        "north": { "texture": "#jar" },
-        "east":  { "texture": "#jar" },
-        "south": { "texture": "#jar" },
-        "west":  { "texture": "#jar" },
-        "up":    { "texture": "#jar" },
-        "down":  { "texture": "#jar" }
+        "north": {
+          "texture": "#jar"
+        },
+        "east": {
+          "texture": "#jar"
+        },
+        "south": {
+          "texture": "#jar"
+        },
+        "west": {
+          "texture": "#jar"
+        },
+        "up": {
+          "texture": "#jar"
+        },
+        "down": {
+          "texture": "#jar"
+        }
       }
     },
     {
       "name": "Lid",
-      "from": [5, 12, 5],
-      "to": [11, 14, 11],
+      "from": [
+        5,
+        12,
+        5
+      ],
+      "to": [
+        11,
+        14,
+        11
+      ],
       "faces": {
-        "north": { "texture": "#jar" },
-        "east":  { "texture": "#jar" },
-        "south": { "texture": "#jar" },
-        "west":  { "texture": "#jar" },
-        "up":    { "texture": "#jar" },
-        "down":  { "texture": "#jar" }
+        "north": {
+          "texture": "#jar"
+        },
+        "east": {
+          "texture": "#jar"
+        },
+        "south": {
+          "texture": "#jar"
+        },
+        "west": {
+          "texture": "#jar"
+        },
+        "up": {
+          "texture": "#jar"
+        },
+        "down": {
+          "texture": "#jar"
+        }
       }
     }
   ]
