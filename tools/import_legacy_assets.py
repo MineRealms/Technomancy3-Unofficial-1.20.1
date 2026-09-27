@@ -11,7 +11,13 @@ second source. Everything here is mechanical:
   * every file name lowercased, because 1.20 ResourceLocations reject
     uppercase.
   * three vanilla textures that were renamed in 1.13 remapped by hand.
-  * .lang -> .json, and zh_CN -> zh_cn.
+  * .lang -> .json, zh_CN -> zh_cn, and lang KEYS lowercased. The 1.12 pair
+    disagrees on case (en was lowercased, zh was not), so only 78 of the 130
+    Chinese entries match an English key exactly; normalising the case lines
+    up all 130 while keeping the larger 149-key English set.
+  * a sprite whose size is not a whole number of frames and which carries no
+    .mcmeta cannot be stitched into an atlas, so it is not a block/item
+    sprite at all and is filed under textures/models/ instead.
 
 Not mechanical, and therefore NOT imported into the resource path: the 1.12
 blockstates use the Forge "forge_marker" format, which was removed in 1.13.
@@ -26,6 +32,7 @@ from __future__ import annotations
 import argparse
 import re
 import shutil
+import struct
 import sys
 from pathlib import Path
 
@@ -63,7 +70,13 @@ def rewrite_texture_refs(text: str) -> str:
 
 
 def lang_to_json(text: str) -> tuple[str, list[str]]:
-    """Convert a 1.12 key=value .lang file into a 1.20 lang JSON object."""
+    """Convert a 1.12 key=value .lang file into a 1.20 lang JSON object.
+
+    Keys are lowercased. The 1.12 files disagree on case — en_us was
+    lowercased at some point and zh_CN was not — so without this only 78 of
+    the 130 Chinese entries share a key with an English one, and the rest
+    would be dead weight. No key collides once lowercased.
+    """
     entries: dict[str, str] = {}
     duplicates: list[str] = []
     for line in text.splitlines():
@@ -71,13 +84,35 @@ def lang_to_json(text: str) -> tuple[str, list[str]]:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        key = key.strip()
+        key = key.strip().lower()
         if key in entries:
             duplicates.append(key)
             continue
         entries[key] = value
     body = ",\n".join('  %s: %s' % (dump(k), dump(v)) for k, v in entries.items())
     return "{\n%s\n}\n" % body, duplicates
+
+
+def png_size(payload: bytes) -> tuple[int, int]:
+    """Width and height from the IHDR chunk."""
+    return struct.unpack(">II", payload[16:24])
+
+
+def stitchable(payload: bytes, has_mcmeta: bool) -> bool:
+    """
+    Whether a sprite can go into a block/item atlas.
+
+    A sprite without animation metadata is one frame of min(w, h) square, so
+    both dimensions must be whole multiples of it. Legacy trees contain art
+    that was bound directly by a renderer and never stitched, where any size
+    was fine; in 1.20 such a file fails to load and logs an error on every
+    resource reload.
+    """
+    if has_mcmeta:
+        return True
+    width, height = png_size(payload)
+    frame = min(width, height)
+    return width % frame == 0 and height % frame == 0
 
 
 def dump(value: str) -> str:
@@ -113,9 +148,18 @@ class Importer:
             if not path.is_file():
                 continue
             parts = list(path.relative_to(SOURCE_ASSETS / "textures").parts)
+            atlas_root = parts[0] in TEXTURE_DIRS
             parts[0] = TEXTURE_DIRS.get(parts[0], parts[0])
             relative = Path(*[part.lower() for part in parts])
-            self.put(TARGET_ASSETS / "textures" / relative, path.read_bytes())
+            payload = path.read_bytes()
+            if atlas_root and path.suffix == ".png" and not stitchable(
+                    payload, path.with_suffix(".png.mcmeta").is_file()):
+                width, height = png_size(payload)
+                relative = Path("models") / relative.name
+                self.notes.append(
+                    f"{path.name} is {width}x{height} with no animation metadata, so it cannot be "
+                    f"stitched into an atlas; filed as textures/{relative.as_posix()}")
+            self.put(TARGET_ASSETS / "textures" / relative, payload)
 
         # Block and item models: valid 1.20 JSON once the texture ids are flattened.
         for path in sorted((SOURCE_ASSETS / "models").rglob("*.json")):
