@@ -1,5 +1,8 @@
 {
   "variants": {
-    "": { "model": "technom:block/quantum_jar" }
+    "facing=north": { "model": "technom:block/quantum_jar" },
+    "facing=south": { "model": "technom:block/quantum_jar" },
+    "facing=west":  { "model": "technom:block/quantum_jar" },
+    "facing=east":  { "model": "technom:block/quantum_jar" }
   }
 }
