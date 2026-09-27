@@ -14,6 +14,8 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.function.Supplier;
 import theflogat.technomancy.Technomancy;
 import theflogat.technomancy.common.blocks.dynamo.EssentiaDynamoBlock;
+import theflogat.technomancy.common.blocks.essentia.CreativeJarBlock;
+import theflogat.technomancy.common.blocks.essentia.EssentiaReservoirBlock;
 import theflogat.technomancy.common.blocks.essentia.QuantumJarBlock;
 import theflogat.technomancy.common.blocks.machines.EnergyCondenserBlock;
 
@@ -86,6 +88,30 @@ public final class TechnomBlocks {
                     .requiresCorrectToolForDrops()
                     .noOcclusion()
                     .isValidSpawn((state, level, pos, type) -> false)));
+
+    // ---- S2 machines and storage ----
+
+    /** {@code reservoir}. No recipe or research in the original either; creative tab only. */
+    public static final RegistryObject<Block> ESSENTIA_RESERVOIR = register("essentia_reservoir",
+            () -> new EssentiaReservoirBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .strength(2.0F)
+                    .sound(SoundType.STONE)
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)));
+
+    /** {@code creativeJar}. Unbreakable outside creative and no drops: see {@link CreativeJarBlock}. */
+    public static final RegistryObject<Block> CREATIVE_JAR = register("creative_jar",
+            () -> new CreativeJarBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_MAGENTA)
+                    .strength(-1.0F, 3_600_000.0F)
+                    .sound(SoundType.GLASS)
+                    .noLootTable()
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)
+                    .isRedstoneConductor((state, level, pos) -> false)
+                    .isSuffocating((state, level, pos) -> false)
+                    .isViewBlocking((state, level, pos) -> false)));
 
     private TechnomBlocks() {
     }
