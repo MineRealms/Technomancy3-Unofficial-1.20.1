@@ -1,0 +1,136 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'net.minecraftforge.gradle' version '6.0.54'
+}
+
+version = mod_version
+group = mod_group_id
+base { archivesName = "${mod_id}-${minecraft_version}" }
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+def withGtceu = providers.gradleProperty('withGtceu').map { it.toBoolean() }.getOrElse(false)
+def tc4Repository = file(providers.gradleProperty('tc4Repository').getOrElse('local-repo'))
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+    copyIdeResources = true
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'info'
+            // Dependencies carry refmaps compiled with production mappings.
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            mods { "${mod_id}" { source sourceSets.main } }
+        }
+        client { workingDirectory project.file('run-client') }
+        server {
+            workingDirectory project.file('run-server')
+            args '--nogui'
+        }
+        gameTestServer {
+            workingDirectory project.file('run-gametest')
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+        data {
+            workingDirectory project.file('run-data')
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'),
+                    '--existing', file('src/main/resources/')
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// Optional local workaround; the project never sets a machine-specific proxy.
+if (providers.gradleProperty('mavenCentralMirror').isPresent()) {
+    repositories.configureEach { repo ->
+        if (repo instanceof MavenArtifactRepository &&
+                repo.url.toString().startsWith('https://repo.maven.apache.org')) {
+            repo.setUrl(providers.gradleProperty('mavenCentralMirror').get())
+        }
+    }
+}
+
+repositories {
+    maven {
+        name = 'LocalTC4R'
+        url = uri(tc4Repository)
+        content { includeGroup 'dev.tc4port' }
+    }
+    maven { url = 'https://maven.gtceu.com' }
+    maven { url = 'https://maven.firstdark.dev/snapshots' }
+    maven { url = 'https://maven.tterrag.com' }
+    maven { url = 'https://maven.theillusivec4.top' }
+    maven { url = 'https://maven.minecraftforge.net' }
+    maven { url = 'https://modmaven.dev' }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    // Configure the original dependency before ForgeGradle copies it into __obfuscated.
+    implementation(fg.deobf("dev.tc4port:thaumcraft-forge:${thaumcraft_version}", { transitive = false }))
+    runtimeOnly(fg.deobf("top.theillusivec4.curios:curios-forge:${curios_version}", { transitive = false }))
+    runtimeOnly(fg.deobf("com.github.glitchfiend:TerraBlender-forge:${terrablender_version}", { transitive = false }))
+
+    // One compile API for all builds. The flag only changes the development runtime.
+    compileOnly(fg.deobf("com.gregtechceu.gtceu:gtceu-1.20.1:${gtceu_version}", { transitive = false }))
+    compileOnly(fg.deobf("com.lowdragmc.ldlib:ldlib-forge-1.20.1:${ldlib_version}", {
+        transitive = false
+        exclude group: 'appeng', module: 'appliedenergistics2-forge'
+    }))
+    compileOnly(fg.deobf("com.tterrag.registrate:Registrate:${registrate_version}", { transitive = false }))
+
+    if (withGtceu) {
+        runtimeOnly(fg.deobf("com.gregtechceu.gtceu:gtceu-1.20.1:${gtceu_version}", { transitive = false }))
+        // LDLib, Registrate and Configuration are embedded by GTCEu.
+    }
+}
+
+tasks.register('verifyLocalDependencies') {
+    group = 'verification'
+    description = 'Checks supplied TC4R artifacts against the recorded SHA-256 hashes.'
+    doLast {
+        def manifest = new groovy.json.JsonSlurper().parse(file('local-repo/DEPENDENCIES.json'))
+        manifest.artifacts.each { artifact ->
+            def target = new File(tc4Repository, artifact.path)
+            if (!target.isFile()) {
+                throw new GradleException("Missing ${target}. Run tools/bootstrap-local-deps.ps1; see local-repo/README.md.")
+            }
+            def digest = java.security.MessageDigest.getInstance('SHA-256').digest(target.bytes).encodeHex().toString()
+            if (digest != artifact.sha256) {
+                throw new GradleException("TC4R checksum mismatch: ${target.name}. Keep the version and manifest in sync.")
+            }
+        }
+        logger.lifecycle("Verified ${manifest.artifacts.size()} TC4R artifacts in ${tc4Repository}")
+    }
+}
+tasks.named('compileJava').configure { dependsOn 'verifyLocalDependencies' }
+tasks.named('check').configure { dependsOn 'verifyLocalDependencies' }
+
+tasks.named('processResources', ProcessResources).configure {
+    def values = [minecraft_version_range: minecraft_version_range,
+            forge_version_range: forge_version_range, loader_version_range: loader_version_range,
+            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+            mod_authors: mod_authors, mod_description: mod_description,
+            thaumcraft_runtime_version: thaumcraft_runtime_version, gtceu_version: gtceu_version]
+    inputs.properties values
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) { expand values }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes('Specification-Title': mod_name, 'Specification-Vendor': mod_authors,
+                'Specification-Version': '1', 'Implementation-Title': project.name,
+                'Implementation-Version': project.version, 'Implementation-Vendor': mod_authors)
+    }
+    from(['LICENSE', 'NOTICE']) { into 'META-INF' }
+    finalizedBy 'reobfJar'
+}
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }

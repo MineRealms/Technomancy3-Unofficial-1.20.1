@@ -1,0 +1,13 @@
+Technomancy Unofficial for Minecraft 1.20.1
+
+New port implementation and documentation: Apache License 2.0.
+Original Technomancy: Democretes, theflogat, Mordenkainen and contributors.
+Behavior reference: https://github.com/Mordenkainen/Technomancy
+Additional port reference: https://github.com/alothmanmoe/Technomancy-2
+
+This initial scaffold does not contain copied legacy mod source or artwork.
+Record attribution and license provenance when importing those materials.
+
+The build scaffold originates from the official Minecraft Forge
+1.20.1-47.4.23 MDK. Its license and credits are preserved under LICENSES/.
+Third-party dependency jars are not included in this repository or its mod jar.

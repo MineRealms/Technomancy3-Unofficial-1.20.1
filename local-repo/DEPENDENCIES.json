@@ -1,0 +1,23 @@
+{
+  "coordinate": "dev.tc4port:thaumcraft-forge:0.1.0-20721",
+  "runtime_version": "4.2.3.5-1.20.1-port.0.1.0-20721",
+  "source": "User-supplied local TC4R build; not redistributed",
+  "artifacts": [
+    {
+      "path": "dev/tc4port/thaumcraft-forge/0.1.0-20721/thaumcraft-forge-0.1.0-20721-api.jar",
+      "sha256": "21d44e1447cf0d9e06dd730540f25967a28c1b46259181e848abdd874d3e7a39"
+    },
+    {
+      "path": "dev/tc4port/thaumcraft-forge/0.1.0-20721/thaumcraft-forge-0.1.0-20721-sources.jar",
+      "sha256": "baa6f9501842e28bc31d0d0fb56695ff1f45710a865a48b394147ea868cd57de"
+    },
+    {
+      "path": "dev/tc4port/thaumcraft-forge/0.1.0-20721/thaumcraft-forge-0.1.0-20721.jar",
+      "sha256": "c359b82194017beea77c3987bfcd655b76575111d351b2670a99c2d3bdf83b94"
+    },
+    {
+      "path": "dev/tc4port/thaumcraft-forge/0.1.0-20721/thaumcraft-forge-0.1.0-20721.pom",
+      "sha256": "d568dec89b9f6c2342ec8fab39c8d3defe7827d9b84d68f453f313bee356b254"
+    }
+  ]
+}
