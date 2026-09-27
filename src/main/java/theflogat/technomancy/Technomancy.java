@@ -14,6 +14,8 @@ import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.registry.TechnomBlocks;
 import theflogat.technomancy.common.registry.TechnomCreativeTabs;
 import theflogat.technomancy.common.registry.TechnomItems;
+import theflogat.technomancy.compat.gtceu.GtceuEnergyIntegration;
+import theflogat.technomancy.compat.gtceu.GtceuPresence;
 import theflogat.technomancy.config.TechnomancyConfig;
 
 /** Entry point of the modern port. */
@@ -50,5 +52,10 @@ public final class Technomancy {
     private void commonSetup(final FMLCommonSetupEvent event) {
         long rate = EnergyUnits.freeze(TechnomancyConfig.Q_PER_EU.get());
         LOGGER.info("Technomancy energy rate fixed at {} FE per EU for this session", rate);
+        // Gated so no GTCEu class is resolved in a game without it; the isolated bootstrap is the
+        // first class here that may touch the GT API.
+        if (GtceuPresence.isLoaded()) {
+            GtceuEnergyIntegration.install(rate);
+        }
     }
 }
