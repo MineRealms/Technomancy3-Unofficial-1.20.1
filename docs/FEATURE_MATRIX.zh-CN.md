@@ -41,7 +41,7 @@
 | 精华储库 `reservoir` | `TileEssentiaReservoir` | `EssentiaTransport`；旧 `takeEssentia` 返回值必须按“实际取出量”复核 | S2 | 单/多次模拟、取放返回量、吸力、无负数和复制 | 待迁移 |
 | 创造精华罐 `creativeJar` | `TileCreativeJar` | 创造工具；与生存存储和燃料规则分离 | S2 | 创造可选要素、管道输出；无生存配方或错误掉落导致可获得 | 待迁移 |
 | 精华线圈 `teslaCoil` | `TileEssentiaTransmitter` | `EssentiaSource` 不等于任意管道；必须一起迁入连接工具、连接记录与适配器；保留原版 Buffer/Arcane Bore 修复 | S2 | 连接/解除、标签/方向、距离、区块卸载、跨端口去重、方块替换后失效 | 待迁移 |
-| 冷凝器 `condenserBlock` | `TileCondenser` | 精华存储/转换与 FE/EU；逐项核对源要素和副产物规则 | S1→S2 | 可作为耗能闭环候选；满槽不耗电、停机恢复、显示同步、产物守恒 | 待迁移 |
+| 能量凝聚器 `condenserBlock` → `technom:energy_condenser` | `TileCondenser` | 精华存储/转换与 FE/EU；逐项核对源要素和副产物规则 | S1 | 可作为耗能闭环候选；满槽不耗电、停机恢复、显示同步、产物守恒 | 方块与 BlockEntity 已迁移：FE/EU 六面输入且无输出、匀速进度条转换、64 点 potentia 缓存、六面输出开关（blockstate multipart，无 BER）、三态红石、向真实源质罐推送并附守恒断言；A-6/A-9/A-10/A-11/A-12/A-13 均有测试证据，详见[验证记录](VALIDATION.zh-CN.md)。**尚缺配方与研究（只能创造获得）、客户端渲染与存档重载未验证** |
 | 神秘净化器 `processorTC` | `TileTCProcessor` | 精华 API + 共享纯矿加工链；原版消耗 Ignis，不应因替换 RF 而取消此成本 | S2 | 要素消耗、每模块重复加工上限、输出数量/NBT、输入输出自动化 | 待迁移 |
 | 邪术吞噬器 `eldritchConsumer` | `TileEldritchConsumer` | 要素查询、破坏方块和耗能；旧 TC/Minecraft 内部逻辑不能直接复制 | S2→S4 | 每 tick 工作预算、不可破坏方块、方块实体库存、掉落/要素不得双重收益、卸载恢复 | 待迁移 |
 | 高级分解台 `advDeconTable` | `TileAdvDeconTable` | `aspect.AspectQueryApi` / `AspectPoolApi`、玩家研究状态；旧 owner 名称改稳定身份 | S2 | 基础要素拆分、研究点奖励上限、离线/改名玩家、自动化、奖励仅结算一次 | 待迁移 |
