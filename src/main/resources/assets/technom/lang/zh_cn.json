@@ -52,5 +52,15 @@
   "item.technom.pen.tooltip": "都 21 世纪了，为什么还在用羽毛笔和墨水？",
   "tc.research_name.technom:PEN": "高级笔墨",
   "tc.research_text.technom:PEN": "这是根NB的钢笔",
-  "technom.research_page.PEN.1": "你发现你一直以来都在使用墨囊和羽毛笔是多么屌丝的行为么?你花了很长时间来得到这只高端大气上档次的钢笔么?没错！你现在有了一支钢笔而不是笨拙的笔和墨。笔有 3000 次墨水用量，用它右键两张相邻的桌子即可直接搭出研究桌。"
+  "technom.research_page.PEN.1": "你发现你一直以来都在使用墨囊和羽毛笔是多么屌丝的行为么?你花了很长时间来得到这只高端大气上档次的钢笔么?没错！你现在有了一支钢笔而不是笨拙的笔和墨。笔有 3000 次墨水用量，用它右键两张相邻的桌子即可直接搭出研究桌。",
+  "block.technom.node_fabricator": "节点生成装置",
+  "block.technom.node_fabricator_shell": "节点制造器框架",
+  "block.technom.node_fabricator.structure": "两台相对而立、相距 %s 格，节点位于正中上方一格",
+  "block.technom.node_fabricator.work": "回充 1 点魔力耗 %s Q；装效能宝石后每提高 1 点上限耗 %s Q",
+  "block.technom.node_fabricator.no_creation": "本版本不能创建新节点",
+  "tc.research_name.technom:NODEFABRICATOR": "节点创造",
+  "tc.research_text.technom:NODEFABRICATOR": "简直OP.",
+  "technom.research_page.NODEFABRICATOR.1": "把魔法转变成能量已经变得足够简单,但这个过程反过来就变得非常困难而且昂贵。<LINE>结构: 两个制造器间需要5个方块的间距并且需要面对面。如果结构放置正确，制造器将会放出闪电球而且它们正中间将会出现核心并且旋转。<LINE>源质: 制造器将会从没有标签的罐子里吸取源质，但是不会吸取带有标签的罐子。如果有不需要的源质进入了制造器，可以用对应标签的罐子将源质取出来。",
+  "technom.research_page.NODEFABRICATOR.2": "<LINE>充能: 这个节点需要放在生成器正中央(比生成器高一格),生成器就会提取附近所有的源质添加到节点中,但并不会超过其上限。<BR><LINE><BR>再造: 使用能量宝石升级节点制造机后，制造机可以让节点产生新的要素种类甚至可以提升最大魔力上限。但是这比充能会消耗更多能量与源质。",
+  "technom.research_page.NODEFABRICATOR.3": "本版本不提供节点创建。神秘时代的公开节点接口只能修改已存在的节点，因此旧版用法杖发动、以金与污染造节点的仪式及其专用精华吸取一并暂缺，而不是做成半成品。"
 }

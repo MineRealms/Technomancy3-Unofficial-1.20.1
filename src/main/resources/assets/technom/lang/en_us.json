@@ -52,5 +52,15 @@
   "item.technom.pen.tooltip": "It's the 21st century, why are we using quills and ink?",
   "tc.research_name.technom:PEN": "Advanced Writing",
   "tc.research_text.technom:PEN": "It's a frickin pen.",
-  "technom.research_page.PEN.1": "Do you realize how stupid you are to use an ink and quill all this time? I mean, you've got frickin' wands that shoot frickin' lightning bolts and machines that make energy out of MAGIC for Pete's sake. Has it seriously taken you this long just to make a pen? The answer is yes, yes it has. But now you have a pen to use instead of that stupid inkwell: 3000 uses of ink, and clicking one of two adjacent tables with it builds the research table."
+  "technom.research_page.PEN.1": "Do you realize how stupid you are to use an ink and quill all this time? I mean, you've got frickin' wands that shoot frickin' lightning bolts and machines that make energy out of MAGIC for Pete's sake. Has it seriously taken you this long just to make a pen? The answer is yes, yes it has. But now you have a pen to use instead of that stupid inkwell: 3000 uses of ink, and clicking one of two adjacent tables with it builds the research table.",
+  "block.technom.node_fabricator": "Node Fabricator",
+  "block.technom.node_fabricator_shell": "Node Fabricator Frame",
+  "block.technom.node_fabricator.structure": "Two of them facing each other, %s blocks apart, with the node one block up in the middle",
+  "block.technom.node_fabricator.work": "%s Q to put one vis back, %s Q with a potency gem to raise its maximum",
+  "block.technom.node_fabricator.no_creation": "Cannot create new nodes in this version",
+  "tc.research_name.technom:NODEFABRICATOR": "Node Generation",
+  "tc.research_text.technom:NODEFABRICATOR": "Totally OP.",
+  "technom.research_page.NODEFABRICATOR.1": "Converting magic to energy is easy enough, but the other way around is far more difficult and expensive.<LINE>Construction: two Fabricators need five blocks of space between them and must face each other. Each one builds an invisible 1x3x3 frame around itself; anything solid in the way simply leaves the frame unbuilt.<LINE>Essentia: Fabricators draw essentia through any face of that frame except the one they look through, from jars and tubes whose suction is lower than their own - which is why an unlabelled jar gives and a labelled jar of a different aspect does not.",
+  "technom.research_page.NODEFABRICATOR.2": "Recharging a node: the node belongs one block above ground level, centred between the two Fabricators. Each 1000 Q and one unit of essentia puts one vis back into an aspect the node already has, never past its maximum.<LINE>Adding aspects to a node: with a potency gem installed, 10000 Q and ten units raise an aspect's maximum by one and fill that point, which is also how an aspect the node never had is introduced.",
+  "technom.research_page.NODEFABRICATOR.3": "Node creation is not available in this version. Thaumcraft's public node interface can only change a node that already exists, so the wand-triggered ritual that used to build one out of aurum and vitium - and the essentia intake that fed it - are deliberately absent rather than half-working."
 }

@@ -37,6 +37,18 @@ public final class TechnomBlockEntities {
                     .of(theflogat.technomancy.common.tiles.nodes.NodeDynamoBlockEntity::new, TechnomBlocks.NODE_DYNAMO.get())
                     .build(null));
 
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.nodes.NodeFabricatorBlockEntity>> NODE_FABRICATOR =
+            TYPES.register("node_fabricator", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.nodes.NodeFabricatorBlockEntity::new,
+                            TechnomBlocks.NODE_FABRICATOR.get())
+                    .build(null));
+
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.nodes.NodeFabricatorShellBlockEntity>> NODE_FABRICATOR_SHELL =
+            TYPES.register("node_fabricator_shell", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.nodes.NodeFabricatorShellBlockEntity::new,
+                            TechnomBlocks.NODE_FABRICATOR_SHELL.get())
+                    .build(null));
+
     // ---- end S2 nodes, wands and fusion ----
 
     private TechnomBlockEntities() {

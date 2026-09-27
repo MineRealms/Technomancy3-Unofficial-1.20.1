@@ -262,6 +262,88 @@
           ]
         }
       ]
+    },
+    {
+      "key": "technom:NODEFABRICATOR",
+      "forge:conditions": [
+        {
+          "type": "forge:and",
+          "values": [
+            {
+              "type": "forge:item_exists",
+              "item": "technom:node_fabricator"
+            },
+            {
+              "type": "forge:item_exists",
+              "item": "technom:node_dynamo"
+            }
+          ]
+        }
+      ],
+      "category": "technom:TECHNOMANCY",
+      "aspects": {
+        "machina": 5,
+        "potentia": 5,
+        "vitium": 5,
+        "auram": 5
+      },
+      "display_column": 4,
+      "display_row": 1,
+      "complexity": 3,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:node_fabricator"
+        }
+      },
+      "flags": [
+        "SPECIAL"
+      ],
+      "parents": [
+        "technom:NODEDYNAMO"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.NODEFABRICATOR.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.NODEFABRICATOR.2",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.NODEFABRICATOR.3",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:infusion/node_fabricator"
+          ]
+        }
+      ]
     }
   ]
 }

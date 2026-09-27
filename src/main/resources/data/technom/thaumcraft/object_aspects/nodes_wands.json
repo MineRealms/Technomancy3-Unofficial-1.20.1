@@ -14,6 +14,10 @@
         {
           "type": "forge:item_exists",
           "item": "technom:pen"
+        },
+        {
+          "type": "forge:item_exists",
+          "item": "technom:node_fabricator"
         }
       ]
     }
@@ -38,6 +42,13 @@
       "cognitio": 6,
       "metallum": 4,
       "tenebrae": 2
+    },
+    "technom:node_fabricator": {
+      "machina": 24,
+      "auram": 16,
+      "potentia": 16,
+      "praecantatio": 12,
+      "metallum": 8
     }
   }
 }
