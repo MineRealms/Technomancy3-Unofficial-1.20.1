@@ -17,7 +17,10 @@ second source. Everything here is mechanical:
     up all 130 while keeping the larger 149-key English set.
   * a sprite whose size is not a whole number of frames and which carries no
     .mcmeta cannot be stitched into an atlas, so it is not a block/item
-    sprite at all and is filed under textures/models/ instead.
+    sprite at all and is filed under textures/entity/ instead.
+  * legacy renderer skins move from textures/models/ to textures/entity/, because
+    TC4R's atlas additions stitch textures/models/ of every namespace into the
+    shared block atlas.
 
 Not mechanical, and therefore NOT imported into the resource path: the 1.12
 blockstates use the Forge "forge_marker" format, which was removed in 1.13.
@@ -44,6 +47,17 @@ REFERENCE = ROOT / "reference" / "legacy-1.12"
 
 # 1.13 flattening of the texture roots.
 TEXTURE_DIRS = {"blocks": "block", "items": "item"}
+
+# Where renderer skins go. NOT textures/models/, even though that is where 1.7.10 kept
+# them: TC4R ships assets/minecraft/atlases/blocks.json adding
+# {"type": "directory", "source": "models", "prefix": "models/"} to the vanilla block
+# atlas, and an atlas directory source scans every namespace - so with TC4R installed,
+# anything under textures/models/ is stitched into the shared block atlas whether we want
+# it or not. That cost us real quality: our 1x1 sphere.png dropped the whole atlas to mip
+# level 0, i.e. no mipmapping for every block in the game. Nothing stitches
+# textures/entity/, and a renderer binds its texture by ResourceLocation anyway, so it
+# needs no sprite.
+RENDERER_DIR = "entity"
 
 # Vanilla textures the flattening renamed; the legacy models still use the old ids.
 VANILLA_RENAMES = {
@@ -149,13 +163,16 @@ class Importer:
                 continue
             parts = list(path.relative_to(SOURCE_ASSETS / "textures").parts)
             atlas_root = parts[0] in TEXTURE_DIRS
-            parts[0] = TEXTURE_DIRS.get(parts[0], parts[0])
+            if parts[0] == "models":
+                parts[0] = RENDERER_DIR
+            else:
+                parts[0] = TEXTURE_DIRS.get(parts[0], parts[0])
             relative = Path(*[part.lower() for part in parts])
             payload = path.read_bytes()
             if atlas_root and path.suffix == ".png" and not stitchable(
                     payload, path.with_suffix(".png.mcmeta").is_file()):
                 width, height = png_size(payload)
-                relative = Path("models") / relative.name
+                relative = Path(RENDERER_DIR) / relative.name
                 self.notes.append(
                     f"{path.name} is {width}x{height} with no animation metadata, so it cannot be "
                     f"stitched into an atlas; filed as textures/{relative.as_posix()}")
