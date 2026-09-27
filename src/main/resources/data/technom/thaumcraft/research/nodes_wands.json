@@ -344,6 +344,69 @@
           ]
         }
       ]
+    },
+    {
+      "key": "technom:FUSIONFOCUS",
+      "forge:conditions": [
+        {
+          "type": "forge:item_exists",
+          "item": "technom:fusion_focus"
+        }
+      ],
+      "category": "technom:TECHNOMANCY",
+      "aspects": {
+        "auram": 5,
+        "praecantatio": 5,
+        "permutatio": 5,
+        "vinculum": 5
+      },
+      "display_column": 5,
+      "display_row": 0,
+      "complexity": 3,
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "technom:fusion_focus"
+        }
+      },
+      "flags": [],
+      "parents": [
+        "technom:NODEFABRICATOR"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 2,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.FUSIONFOCUS.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "TEXT",
+          "value": "technom.research_page.FUSIONFOCUS.2",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": []
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "technom:infusion/fusion_focus"
+          ]
+        }
+      ]
     }
   ]
 }

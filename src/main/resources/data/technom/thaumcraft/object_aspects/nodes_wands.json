@@ -18,6 +18,10 @@
         {
           "type": "forge:item_exists",
           "item": "technom:node_fabricator"
+        },
+        {
+          "type": "forge:item_exists",
+          "item": "technom:fusion_focus"
         }
       ]
     }
@@ -49,6 +53,12 @@
       "potentia": 16,
       "praecantatio": 12,
       "metallum": 8
+    },
+    "technom:fusion_focus": {
+      "auram": 16,
+      "praecantatio": 12,
+      "permutatio": 12,
+      "vinculum": 8
     }
   }
 }

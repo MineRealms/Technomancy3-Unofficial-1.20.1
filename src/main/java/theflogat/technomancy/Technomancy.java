@@ -60,6 +60,9 @@ public final class Technomancy {
         long rate = EnergyUnits.freeze(TechnomancyConfig.Q_PER_EU.get());
         LOGGER.info("Technomancy energy rate fixed at {} FE per EU for this session", rate);
         checkCondenserBalance();
+        // S2 nodes, wands and fusion: the fusion focus action must be registered before any
+        // player can dispatch it, and the registry is keyed on the focus id, not on the item.
+        event.enqueueWork(theflogat.technomancy.common.nodes.FusionFocusAction::register);
         // Gated so no GTCEu class is resolved in a game without it; the isolated bootstrap is the
         // first class here that may touch the GT API.
         if (GtceuPresence.isLoaded()) {

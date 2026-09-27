@@ -54,6 +54,10 @@ public final class TechnomItems {
     public static final RegistryObject<Item> PEN = ITEMS.register("pen",
             () -> new theflogat.technomancy.common.items.PenItem(new Item.Properties()));
 
+    /** {@code itemFusionFocus}: moves one aura node's vis into another. */
+    public static final RegistryObject<Item> FUSION_FOCUS = ITEMS.register("fusion_focus",
+            () -> new theflogat.technomancy.common.items.FusionFocusItem(new Item.Properties()));
+
     // ---- end S2 nodes, wands and fusion ----
 
     private TechnomItems() {
