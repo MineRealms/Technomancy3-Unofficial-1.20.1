@@ -17,6 +17,7 @@ import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.registry.TechnomBlocks;
 import theflogat.technomancy.common.registry.TechnomCreativeTabs;
 import theflogat.technomancy.common.registry.TechnomItems;
+import theflogat.technomancy.common.registry.TechnomMenus;
 import theflogat.technomancy.compat.gtceu.GtceuEnergyIntegration;
 import theflogat.technomancy.compat.gtceu.GtceuPresence;
 import theflogat.technomancy.config.TechnomancyConfig;
@@ -46,6 +47,8 @@ public final class Technomancy {
         TechnomItems.ITEMS.register(modBus);
         TechnomBlockEntities.TYPES.register(modBus);
         TechnomCreativeTabs.TABS.register(modBus);
+        // S2 machines and storage: the processors have a menu.
+        TechnomMenus.TYPES.register(modBus);
 
         modBus.addListener(this::commonSetup);
         // Server-side data: the aspect fuel table is a data pack, so it reloads with /reload.

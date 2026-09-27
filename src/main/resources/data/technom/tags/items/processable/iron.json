@@ -1,0 +1,16 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#forge:raw_materials/iron",
+      "required": false
+    },
+    {
+      "id": "#forge:ores/iron",
+      "required": false
+    },
+    "minecraft:raw_iron",
+    "minecraft:iron_ore",
+    "minecraft:deepslate_iron_ore"
+  ]
+}

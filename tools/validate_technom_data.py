@@ -77,6 +77,12 @@ RECIPE_SCHEMA = {
         "required": {"ingredients", "result"},
         "optional": {"group", "category"},
     },
+    # SimpleCookingSerializer. Forge patches it to accept an object "result" with a "count",
+    # which is what the purified ores' rising yields per stage need.
+    "minecraft:smelting": {
+        "required": {"ingredient", "result"},
+        "optional": {"group", "category", "experience", "cookingtime"},
+    },
 }
 
 # VisChannel: the six primal channels are the only legal "vis" keys.

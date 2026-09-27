@@ -18,6 +18,8 @@ import theflogat.technomancy.common.blocks.essentia.CreativeJarBlock;
 import theflogat.technomancy.common.blocks.essentia.EssentiaReservoirBlock;
 import theflogat.technomancy.common.blocks.essentia.QuantumJarBlock;
 import theflogat.technomancy.common.blocks.machines.EnergyCondenserBlock;
+import theflogat.technomancy.common.blocks.machines.ProcessorBlock;
+import theflogat.technomancy.common.blocks.machines.TcProcessorBlock;
 
 /**
  * Every block of the mod, plus the {@link BlockItem} that goes with it.
@@ -112,6 +114,15 @@ public final class TechnomBlocks {
                     .isRedstoneConductor((state, level, pos) -> false)
                     .isSuffocating((state, level, pos) -> false)
                     .isViewBlocking((state, level, pos) -> false)));
+
+    /** {@code processorTC}: purifies ores for ignis. Lights up and smokes while working. */
+    public static final RegistryObject<Block> PROCESSOR_TC = register("processor_tc",
+            () -> new TcProcessorBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(3.0F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .lightLevel(state -> state.getValue(ProcessorBlock.LIT) ? ProcessorBlock.LIT_LIGHT : 0)));
 
     private TechnomBlocks() {
     }

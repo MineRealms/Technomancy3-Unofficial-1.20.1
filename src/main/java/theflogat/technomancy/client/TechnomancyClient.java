@@ -24,6 +24,7 @@ public final class TechnomancyClient {
     public static void init(IEventBus modBus) {
         modBus.addListener(TechnomancyClient::clientSetup);
         modBus.addListener(TechnomancyClient::registerRenderers);
+        S2MachinesClient.init(modBus);
     }
 
     private static void clientSetup(final FMLClientSetupEvent event) {

@@ -42,7 +42,7 @@
 | 创造精华罐 `creativeJar` | `TileCreativeJar` | 创造工具；与生存存储和燃料规则分离 | S2 | 创造可选要素、管道输出；无生存配方或错误掉落导致可获得 | **已实现（未实机）**：`technom:creative_jar`，`EssentiaTransport`+`EssentiaSource`，顶面无限输出、all-or-nothing 与 `[0,amount]` 边界由 JUnit 覆盖；无配方、生存不可破坏、无 loot table；设定要素仅创造玩家。刻意偏离：最小吸力 0。GameTest 已写未运行；渲染未验证 |
 | 精华线圈 `teslaCoil` | `TileEssentiaTransmitter` | `EssentiaSource` 不等于任意管道；必须一起迁入连接工具、连接记录与适配器；保留原版 Buffer/Arcane Bore 修复 | S2 | 连接/解除、标签/方向、距离、区块卸载、跨端口去重、方块替换后失效 | 待迁移 |
 | 能量凝聚器 `condenserBlock` → `technom:energy_condenser` | `TileCondenser` | 精华存储/转换与 FE/EU；逐项核对源要素和副产物规则 | S1 | 可作为耗能闭环候选；满槽不耗电、停机恢复、显示同步、产物守恒 | 方块与 BlockEntity 已迁移：FE/EU 六面输入且无输出、匀速进度条转换、64 点 potentia 缓存、六面输出开关（blockstate multipart，无 BER）、三态红石、向真实源质罐推送并附守恒断言；A-6/A-9/A-10/A-11/A-12/A-13 均有测试证据，详见[验证记录](VALIDATION.zh-CN.md)。**尚缺配方与研究（只能创造获得）、客户端渲染与存档重载未验证** |
-| 神秘净化器 `processorTC` | `TileTCProcessor` | 精华 API + 共享纯矿加工链；原版消耗 Ignis，不应因替换 RF 而取消此成本 | S2 | 要素消耗、每模块重复加工上限、输出数量/NBT、输入输出自动化 | 待迁移 |
+| 神秘净化器 `processorTC` | `TileTCProcessor` | 精华 API + 共享纯矿加工链；原版消耗 Ignis，不应因替换 RF 而取消此成本 | S2 | 要素消耗、每模块重复加工上限、输出数量/NBT、输入输出自动化 | **已实现（未实机）**：`technom:processor_tc`，64 点 ignis 缓存、吸力 128/满时 0、六面只进不出、每工作 tick 花 `max(1, 阶段+2×次数)` 点（生矿 2/tick、二次 5/tick）、60 tick 一次加工；**满输出槽零消耗**与**每面 `IItemHandler`（输入只进/输出只出/`null` 面内部）**两项旧缺陷均已修复并有测试；含 GUI（`technom:processor` MenuType）、奥术配方与 `technom:PROCESSOR` 研究。GameTest `technom_s2_processing` 已写未运行；GUI 未实机渲染 |
 | 邪术吞噬器 `eldritchConsumer` | `TileEldritchConsumer` | 要素查询、破坏方块和耗能；旧 TC/Minecraft 内部逻辑不能直接复制 | S2→S4 | 每 tick 工作预算、不可破坏方块、方块实体库存、掉落/要素不得双重收益、卸载恢复 | 待迁移 |
 | 高级分解台 `advDeconTable` | `TileAdvDeconTable` | `aspect.AspectQueryApi` / `AspectPoolApi`、玩家研究状态；旧 owner 名称改稳定身份 | S2 | 基础要素拆分、研究点奖励上限、离线/改名玩家、自动化、奖励仅结算一次 | 待迁移 |
 | 精华融合器 `essentiaFusor` | `TileEssentiaFusor` | `EssentiaTransport`、`AspectApi`，多输入面与输出要素合成；共享耗能层 | S2 | 输入面配置、合成比例、输出堵塞、红石、面配置重载及资源守恒 | 待迁移 |
@@ -94,7 +94,7 @@
 | Existence 使用器 | 一个 `existenceUser` ID：作物加速、收割、封印 3 变体 | 作物 tags/事件、`IItemHandler`、玩家实体状态 | S3 | 成长和收获成本、满库存、掉落、封印持续时间、维度/重生清理 | 待迁移 |
 | 玩家属性/HUD/效果 | `PlayerData`、五 affinity、Existence level/power、drown/slowFall | 两版 Affinity 构造器都有赋值错误；1.12 同步接收被注释；改稳定身份、服务端数据和客户端显示 | S3 | 五属性彼此独立、登录/死亡/换维度同步、两客户端一致、配置关闭 HUD | 待迁移 |
 | 宝物村民与宝物 | `ItemTreasure` 的 fireGem/powerPlate/goldenWing | 默认 `treasures && treasureSafeguard`，后者 false；保留默认关闭及配置说明 | S3 | 默认不激活；开启后事件副作用、掉落次数、封印交互、多人同步 | 待迁移 |
-| 纯矿多阶段加工 | 每材料 1 Item ID、6 metadata 阶段；TC/BO/BM 各有加工记录 | 旧 OreDictionary 动态注册改预定义材料/tags/数据配方；接 GT 材料并明确 2～7 锭默认倍率 | S2 | 各模块至多两轮等原版规则、顺序组合、输出 NBT、矿/粉兼容、每阶段熔炼经验、无重复增殖 | 待迁移 |
+| 纯矿多阶段加工 | 每材料 1 Item ID、6 metadata 阶段；TC/BO/BM 各有加工记录 | 旧 OreDictionary 动态注册改预定义材料/tags/数据配方；接 GT 材料并明确 2～7 锭默认倍率 | S2 | 各模块至多两轮等原版规则、顺序组合、输出 NBT、矿/粉兼容、每阶段熔炼经验、无重复增殖 | **已实现（未实机）**：铁/金/铜 × 6 阶段 = 18 个 `technom:pure_<材料>_<阶段>`，每模块两轮上限与阶段上限都显式检查，加工记录只存"每模块次数"（阶段由物品身份承载），熔炼 2..7 锭、经验 1.0；输入用标签 `technom:processable/<材料>` 收生矿与矿石方块。**刻意偏离**：材料集合固定为三种原版金属（不再按 OreDictionary 动态注册），染色值写死。只装 TC 模块时阶段上限为 1，2..5 的物品与配方已备好待 S3 |
 
 | 已注册仪式 | 数量 | 原版类 |
 |---|---:|---|

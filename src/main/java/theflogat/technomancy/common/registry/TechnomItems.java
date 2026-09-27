@@ -30,6 +30,13 @@ public final class TechnomItems {
     /** {@code itemBoost}: quadruples a dynamo's throughput, not its efficiency. */
     public static final RegistryObject<Item> POTENCY_GEM = simple("potency_gem");
 
+    // ---- S2 machines and storage ----
+
+    static {
+        // One item per material and purity stage; see TechnomPureOres for why the set is fixed.
+        TechnomPureOres.register(ITEMS);
+    }
+
     private TechnomItems() {
     }
 

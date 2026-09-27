@@ -1,0 +1,35 @@
+{
+  "type": "thaumcraft:arcane_shaped",
+  "research": "technom:PROCESSOR",
+  "pattern": [
+    " A ",
+    "BMB",
+    "ICI"
+  ],
+  "key": {
+    "A": {
+      "item": "minecraft:redstone"
+    },
+    "B": {
+      "item": "thaumcraft:tallow_block"
+    },
+    "M": {
+      "item": "technom:neutronized_gear"
+    },
+    "I": {
+      "tag": "forge:ingots/thaumium"
+    },
+    "C": {
+      "item": "technom:enchanted_coil"
+    }
+  },
+  "result": {
+    "item": "technom:processor_tc",
+    "count": 1
+  },
+  "vis": {
+    "ignis": 25,
+    "perditio": 25,
+    "ordo": 25
+  }
+}
