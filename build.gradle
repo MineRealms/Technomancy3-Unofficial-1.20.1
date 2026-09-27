@@ -32,6 +32,8 @@ minecraft {
         gameTestServer {
             workingDirectory project.file('run-gametest')
             property 'forge.enabledGameTestNamespaces', mod_id
+            // Lets GtceuIsolationGameTests assert that the flag really changed the runtime set.
+            property 'technom.gametest.expectGtceu', withGtceu.toString()
         }
         data {
             workingDirectory project.file('run-data')
@@ -130,6 +132,9 @@ tasks.named('processResources', ProcessResources).configure {
 }
 
 tasks.named('jar', Jar).configure {
+    // GameTests and their templates only exist for the dev runs; never ship them.
+    exclude 'theflogat/technomancy/gametest/**'
+    exclude 'data/technom/structures/gametest/**'
     manifest {
         attributes('Specification-Title': mod_name, 'Specification-Vendor': mod_authors,
                 'Specification-Version': '1', 'Implementation-Title': project.name,
