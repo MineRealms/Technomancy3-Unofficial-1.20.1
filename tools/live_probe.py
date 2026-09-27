@@ -8,12 +8,15 @@ gracefully so shutdown-time persistence actually runs.
 
     python tools/live_probe.py probes/essentia          # run a directory
     python tools/live_probe.py probes/essentia/10_jar.java   # or one file
+    python tools/live_probe.py probes/a probes/b        # several, in one server session
     python tools/live_probe.py probes/essentia --keep-alive  # leave it running
 
 Each probe is a Java *method body* that must `return` a value; it is compiled
-and executed on the server thread. Use fully qualified names - imports are not
-available - and note that inner-class return types sometimes fail to resolve,
-so call those reflectively.
+and executed on the server thread. A line `//@include name.frag` is replaced by
+that file, looked up in the probe's directory and then its parents, so several
+probes can share one piece of reading code instead of drifting copies.
+Use fully qualified names - imports are not available - and note that
+inner-class return types sometimes fail to resolve, so call those reflectively.
 
 Two things every probe must account for, both learned the hard way:
   * With no player online NO chunk ticks, so block entities never run. Call
@@ -46,6 +49,7 @@ BRIDGE_PORT = 48790
 READY = re.compile(r"Remote bridge listening on")
 FAILED = re.compile(r"BUILD FAILED|Exception in thread \"main\"|A problem occurred")
 WAIT_DIRECTIVE = re.compile(r"\s*//@wait\s+([0-9]+(?:\.[0-9]+)?)")
+INCLUDE_DIRECTIVE = re.compile(r"^[ \t]*//@include[ \t]+(\S+)[ \t]*$", re.M)
 
 
 def call(cmd: str, args: dict) -> dict:
@@ -77,12 +81,31 @@ def wait_for_bridge(server: subprocess.Popen, timeout: int) -> None:
     raise SystemExit(f"bridge did not come up within {timeout}s; see {LOG}")
 
 
-def probe_files(target: Path) -> list[Path]:
-    if target.is_file():
-        return [target]
-    if not target.is_dir():
-        raise SystemExit(f"no such probe path: {target}")
-    return sorted(target.glob("*.java"))
+def probe_files(targets: list[Path]) -> list[Path]:
+    """Probes in the order given; a directory contributes its *.java files in name order."""
+    files: list[Path] = []
+    for target in targets:
+        if target.is_file():
+            files.append(target)
+        elif target.is_dir():
+            files.extend(sorted(target.glob("*.java")))
+        else:
+            raise SystemExit(f"no such probe path: {target}")
+    return files
+
+
+def expand_includes(path: Path) -> str:
+    """Inline every //@include, searching the probe's directory and then its parents."""
+    def resolve(match: re.Match[str]) -> str:
+        name = match.group(1)
+        for folder in [path.parent, *path.parent.parents]:
+            candidate = folder / name
+            if candidate.is_file():
+                return candidate.read_text(encoding="utf-8")
+            if folder == ROOT:
+                break
+        raise SystemExit(f"{path}: cannot find included {name}")
+    return INCLUDE_DIRECTIVE.sub(resolve, path.read_text(encoding="utf-8"))
 
 
 def stop_server(server: subprocess.Popen) -> None:
@@ -99,7 +122,8 @@ def stop_server(server: subprocess.Popen) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("probes", type=Path, help="probe file or directory of *.java probes")
+    parser.add_argument("probes", type=Path, nargs="+",
+                        help="probe files or directories of *.java probes, run in the order given")
     parser.add_argument("--timeout", type=int, default=300, help="seconds to wait for the bridge")
     parser.add_argument("--keep-alive", action="store_true", help="leave the server running afterwards")
     args = parser.parse_args()
@@ -123,7 +147,7 @@ def main() -> int:
 
             failures = 0
             for path in files:
-                source = path.read_text(encoding="utf-8")
+                source = expand_includes(path)
                 # Probes run back to back, but anything tick-driven needs real time to
                 # happen, so a probe may ask to be delayed with a leading `//@wait <seconds>`.
                 delay = WAIT_DIRECTIVE.match(source)

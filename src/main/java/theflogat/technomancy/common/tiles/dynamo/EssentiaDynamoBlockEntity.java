@@ -288,6 +288,12 @@ public final class EssentiaDynamoBlockEntity extends BlockEntity implements Esse
             if (held == null && neighbour.essentiaAmount(theirFace) <= 0) {
                 continue;
             }
+            // take(EXECUTE) is irreversible, so confirm the store will keep the unit first. The
+            // selection above already makes a refusal unreachable today; this keeps it that way
+            // if the store ever gains a filter or a second aspect slot.
+            if (store.add(selected, 1, true) <= 0) {
+                continue;
+            }
             int taken = EssentiaApi.take(level, neighbour, selected, 1, theirFace, EssentiaTransferMode.EXECUTE);
             if (taken <= 0) {
                 continue;
