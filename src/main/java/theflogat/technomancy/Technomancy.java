@@ -10,6 +10,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import theflogat.technomancy.common.energy.EnergyUnits;
+import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.registry.TechnomBlocks;
 import theflogat.technomancy.common.registry.TechnomCreativeTabs;
 import theflogat.technomancy.common.registry.TechnomItems;
@@ -38,6 +39,7 @@ public final class Technomancy {
         // BlockItems, and the creative tab enumerates the item registry.
         TechnomBlocks.BLOCKS.register(modBus);
         TechnomItems.ITEMS.register(modBus);
+        TechnomBlockEntities.TYPES.register(modBus);
         TechnomCreativeTabs.TABS.register(modBus);
 
         modBus.addListener(this::commonSetup);

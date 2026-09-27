@@ -80,5 +80,38 @@ class EssentiaSuctionTest {
     void negativeSuctionIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> new EssentiaSuction(-1, 0));
         assertThrows(IllegalArgumentException.class, () -> new EssentiaSuction(0, -1));
+        assertThrows(IllegalArgumentException.class, () -> new EssentiaSuction(1, 1, -1));
+    }
+
+    @Test
+    void storedContentsRaiseSuctionOnlyWhenScalingIsOn() {
+        assertEquals(64, EssentiaSuction.JAR.amount(true, false, false, 640), "TC4's jars do not scale");
+        EssentiaSuction quantum = new EssentiaSuction(64, 48, 50);
+        assertEquals(48, quantum.amount(false, false, false, 0));
+        assertEquals(49, quantum.amount(false, false, false, 50), "one point per 50 units");
+        assertEquals(48, quantum.amount(false, false, false, 49), "integer division, not rounding");
+        assertEquals(64, quantum.amount(true, false, false, 0));
+        assertEquals(76, quantum.amount(true, false, false, 639), "nearly full and labelled");
+        assertEquals(0, quantum.amount(true, true, false, 640), "full still stops pulling");
+        assertEquals(76, quantum.minimum(true, 640), "but is still hard to take from when full");
+    }
+
+    @Test
+    void theQuantumJarOutbidsTheReferenceJarInBothTiers() {
+        // The whole point of the deviation: the original's labelled base of 56 lost to TC4R's
+        // 64, which contradicted the block's own research text.
+        EssentiaSuction quantum = new EssentiaSuction(64, 48, 50);
+        for (int stored : new int[] {0, 1, 50, 320, 639}) {
+            int unlabelled = quantum.amount(false, false, false, stored);
+            int labelled = quantum.amount(true, false, false, stored);
+            assertTrue(unlabelled > EssentiaSuction.JAR.amount(false, false, false),
+                    "unlabelled quantum jar must beat an unlabelled warded jar at " + stored);
+            assertTrue(labelled >= EssentiaSuction.JAR.amount(true, false, false),
+                    "labelled quantum jar must not lose to a labelled warded jar at " + stored);
+            assertTrue(EssentiaSuction.canTake(unlabelled, EssentiaSuction.JAR.amount(false, false, false)),
+                    "and must actually be able to take from it at " + stored);
+        }
+        assertTrue(quantum.amount(true, false, false, 50) > EssentiaSuction.JAR.amount(true, false, false),
+                "once it holds 50 units it is strictly stronger, so it can pull from a labelled jar");
     }
 }

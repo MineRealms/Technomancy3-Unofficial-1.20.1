@@ -1,8 +1,7 @@
 {
   "itemGroup.technom": "Technomancy",
-
   "block.technom.quantized_glass": "Quantized Glass",
-
+  "block.technom.quantum_jar": "Quantum Jar",
   "item.technom.neutronized_metal": "Neutronized Metal",
   "item.technom.enchanted_coil": "Enchanted Coil",
   "item.technom.neutronized_gear": "Neutronized Gear",

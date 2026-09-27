@@ -7,18 +7,29 @@ package theflogat.technomancy.common.essentia;
  * unlabelled one for the aspect it wants. The same pair of numbers is also the minimum
  * suction the store demands before it will give essentia away, which is what stops two
  * equal containers from passing the same unit back and forth forever.</p>
+ *
+ * <p>{@code perUnit} adds one point of suction per that many stored units. TC4's own jars do
+ * not scale ({@code perUnit == 0}); Technomancy's quantum jar does, which is how a nearly
+ * full one outbids everything else for the aspect it is already hoarding.</p>
  */
-public record EssentiaSuction(int labelled, int unlabelled) {
+public record EssentiaSuction(int labelled, int unlabelled, int perUnit) {
 
-    /** TC4's warded jar: 64 labelled, 32 unlabelled. */
-    public static final EssentiaSuction JAR = new EssentiaSuction(64, 32);
+    /** TC4's warded jar: 64 labelled, 32 unlabelled, no scaling. */
+    public static final EssentiaSuction JAR = new EssentiaSuction(64, 32, 0);
     /** TC4's void jar, which deliberately outbids an unlabelled jar but not a labelled one. */
-    public static final EssentiaSuction VOID_JAR = new EssentiaSuction(48, 32);
+    public static final EssentiaSuction VOID_JAR = new EssentiaSuction(48, 32, 0);
 
     public EssentiaSuction {
         if (labelled < 0 || unlabelled < 0) {
             throw new IllegalArgumentException("suction cannot be negative");
         }
+        if (perUnit < 0) {
+            throw new IllegalArgumentException("suction scaling divisor cannot be negative");
+        }
+    }
+
+    public EssentiaSuction(int labelled, int unlabelled) {
+        this(labelled, unlabelled, 0);
     }
 
     /**
@@ -27,17 +38,42 @@ public record EssentiaSuction(int labelled, int unlabelled) {
      * <p>A full store stops pulling, except a void store, which keeps pulling in order to
      * destroy what it takes — that is the whole point of the void variant. A full void store
      * drops to its unlabelled figure, exactly as TC4R's warded jar does.</p>
+     *
+     * @param stored current contents, which only matters when {@link #perUnit} scaling is on
      */
-    public int amount(boolean labelled, boolean full, boolean voidOverflow) {
+    public int amount(boolean labelled, boolean full, boolean voidOverflow, int stored) {
         if (full && !voidOverflow) {
             return 0;
         }
-        return labelled && !full ? this.labelled : unlabelled;
+        return base(labelled && !full) + bonus(stored);
     }
 
-    /** The suction a taker must reach before this store will give essentia away. */
+    /** Convenience for the unscaled stores, where the contents make no difference. */
+    public int amount(boolean labelled, boolean full, boolean voidOverflow) {
+        return amount(labelled, full, voidOverflow, 0);
+    }
+
+    /**
+     * The suction a taker must reach before this store will give essentia away.
+     *
+     * <p>Deliberately without the full-store check that {@link #amount} applies: "how much do
+     * I want" and "how hard is it to take from me" are different questions, and TC4R's
+     * {@code WardedJarBlockEntity} keeps them apart the same way.</p>
+     */
+    public int minimum(boolean labelled, int stored) {
+        return base(labelled) + bonus(stored);
+    }
+
     public int minimum(boolean labelled) {
+        return minimum(labelled, 0);
+    }
+
+    private int base(boolean labelled) {
         return labelled ? this.labelled : unlabelled;
+    }
+
+    private int bonus(int stored) {
+        return perUnit > 0 && stored > 0 ? stored / perUnit : 0;
     }
 
     /**

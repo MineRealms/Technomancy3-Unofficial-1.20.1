@@ -13,6 +13,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import java.util.function.Supplier;
 import theflogat.technomancy.Technomancy;
+import theflogat.technomancy.common.blocks.essentia.QuantumJarBlock;
 
 /**
  * Every block of the mod, plus the {@link BlockItem} that goes with it.
@@ -38,6 +39,21 @@ public final class TechnomBlocks {
             () -> new GlassBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_LIGHT_BLUE)
                     .strength(0.3F)
+                    .sound(SoundType.GLASS)
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)
+                    .isRedstoneConductor((state, level, pos) -> false)
+                    .isSuffocating((state, level, pos) -> false)
+                    .isViewBlocking((state, level, pos) -> false)));
+
+    /**
+     * {@code essentiaContainer}. Ten warded jars' worth of one aspect, with suction that
+     * grows as it fills. See {@link theflogat.technomancy.common.tiles.essentia.QuantumJarBlockEntity}.
+     */
+    public static final RegistryObject<Block> QUANTUM_JAR = register("quantum_jar",
+            () -> new QuantumJarBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_LIGHT_BLUE)
+                    .strength(0.5F)
                     .sound(SoundType.GLASS)
                     .noOcclusion()
                     .isValidSpawn((state, level, pos, type) -> false)
