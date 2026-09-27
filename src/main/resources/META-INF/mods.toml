@@ -7,6 +7,7 @@ modId="${mod_id}"
 version="${mod_version}"
 displayName="${mod_name}"
 authors="${mod_authors}"
+logoFile="technomancy.png"
 credits="Original Technomancy by Democretes, theflogat and Mordenkainen. Unofficial modern port."
 description='''${mod_description}'''
 
