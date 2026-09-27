@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "technom:block/essentia_coil"
+    },
+    "facing=up": {
+      "model": "technom:block/essentia_coil",
+      "x": 180
+    },
+    "facing=south": {
+      "model": "technom:block/essentia_coil",
+      "x": 90
+    },
+    "facing=west": {
+      "model": "technom:block/essentia_coil",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north": {
+      "model": "technom:block/essentia_coil",
+      "x": 90,
+      "y": 180
+    },
+    "facing=east": {
+      "model": "technom:block/essentia_coil",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

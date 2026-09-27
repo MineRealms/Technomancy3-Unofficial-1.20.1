@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "III",
+    "ISI",
+    "ERE"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "E": {
+      "item": "minecraft:redstone"
+    },
+    "R": {
+      "item": "minecraft:ender_pearl"
+    }
+  },
+  "result": {
+    "item": "technom:item_coil",
+    "count": 1
+  }
+}

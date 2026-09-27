@@ -1,0 +1,22 @@
+{
+  "direct": {
+    "technom:coil_coupler": {
+      "instrumentum": 4,
+      "permutatio": 3,
+      "potentia": 2
+    },
+    "technom:item_coil": {
+      "machina": 6,
+      "iter": 4,
+      "metallum": 4,
+      "alienis": 2
+    },
+    "technom:essentia_coil": {
+      "machina": 6,
+      "praecantatio": 5,
+      "iter": 4,
+      "metallum": 4,
+      "auram": 3
+    }
+  }
+}

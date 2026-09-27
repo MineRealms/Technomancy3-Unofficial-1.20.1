@@ -87,6 +87,19 @@ public final class TechnomBlocks {
                     .noOcclusion()
                     .isValidSpawn((state, level, pos, type) -> false)));
 
+    // ---- S2 coils ----
+    /** {@code itemTransmitter}: pulls from linked inventories into the one it stands on. */
+    public static final RegistryObject<Block> ITEM_COIL = register("item_coil",
+            () -> new theflogat.technomancy.common.blocks.coils.ItemCoilBlock(coilProperties()));
+    /**
+     * {@code teslaCoil}: wireless essentia from its linked stores into the block it stands on.
+     * Registered upstream as {@code TMBlocks.teslaCoil}, implemented by
+     * {@code BlockEssentiaTransmitter}.
+     */
+    public static final RegistryObject<Block> ESSENTIA_COIL = register("essentia_coil",
+            () -> new theflogat.technomancy.common.blocks.coils.EssentiaCoilBlock(coilProperties()));
+    // ---- end S2 coils ----
+
     private TechnomBlocks() {
     }
 
@@ -94,6 +107,17 @@ public final class TechnomBlocks {
         RegistryObject<Block> registered = BLOCKS.register(name, block);
         TechnomItems.ITEMS.register(name, () -> new BlockItem(registered.get(), new Item.Properties()));
         return registered;
+    }
+
+    /** Shared by both coils (S2 coils group). */
+    private static BlockBehaviour.Properties coilProperties() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(2.0F)
+                .sound(SoundType.METAL)
+                .noOcclusion()
+                .isValidSpawn((state, level, pos, type) -> false)
+                .isRedstoneConductor((state, level, pos) -> false);
     }
 
     public static ResourceLocation id(String name) {
