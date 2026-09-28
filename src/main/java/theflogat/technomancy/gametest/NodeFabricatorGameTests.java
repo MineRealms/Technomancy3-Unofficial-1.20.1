@@ -22,6 +22,7 @@ import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import theflogat.technomancy.Technomancy;
 import theflogat.technomancy.common.blocks.nodes.NodeFabricatorBlock;
+import theflogat.technomancy.common.nodes.NodeCreationRules;
 import theflogat.technomancy.common.nodes.NodeFabricatorWork;
 import theflogat.technomancy.common.registry.TechnomBlocks;
 import theflogat.technomancy.common.tiles.nodes.NodeFabricatorBlockEntity;
@@ -179,6 +180,60 @@ public final class NodeFabricatorGameTests {
             helper.assertTrue(
                     machine.nodePosition().equals(helper.absolutePos(pos).north(NodeFabricatorBlockEntity.NODE_DISTANCE).above()),
                     "the node is looked for at " + machine.nodePosition());
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A facing pair with no node between it builds one: the north controller takes auram, the
+     * south one vitium, and the 200-tick ritual turns 200 + 200 into a hungry, pale node with 200
+     * Vis of one biome aspect.
+     */
+    @GameTest(template = GameTestTemplates.EMPTY_7X5X9, batch = BATCH, timeoutTicks = 400)
+    public static void thePairBuildsANodeOutOfAuramAndVitium(GameTestHelper helper) {
+        BlockPos north = new BlockPos(3, 2, 7);
+        BlockPos south = new BlockPos(3, 2, 1);
+        NodeFabricatorBlockEntity first = place(helper, north, Direction.NORTH);
+        NodeFabricatorBlockEntity second = place(helper, south, Direction.SOUTH);
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(first.isActive() && second.isActive(), "the pair did not form");
+            first.store().add(NodeCreationRules.AURAM, 200, false);
+            second.store().add(NodeCreationRules.VITIUM, 200, false);
+            first.energy().ledger().generate(NodeCreationRules.energyCost(200, 200));
+            helper.assertTrue(first.startCreation(helper.getLevel()), "the ritual did not start");
+            helper.runAfterDelay(NodeCreationRules.RITUAL_TICKS + 20, () -> {
+                BlockPos nodePos = first.nodePosition();
+                AuraNodeBlockEntity node = (AuraNodeBlockEntity) helper.getLevel().getBlockEntity(nodePos);
+                helper.assertTrue(node != null, "no node was created at " + nodePos);
+                AuraNodeState state = node.nodeState();
+                helper.assertTrue(NodeTypeId.HUNGRY.equals(state.type()), "type is " + state.type());
+                helper.assertTrue(NodeModifierId.PALE.equals(state.modifier()),
+                        "modifier is " + state.modifier());
+                helper.assertTrue(state.currentVis().amounts().size() == 1
+                                && state.currentVis().amounts().values().iterator().next() == 200,
+                        "node vis is " + state.currentVis().amounts());
+                helper.assertTrue(first.store().total() == 0 && second.store().total() == 0,
+                        "the buffers were not drained");
+                helper.succeed();
+            });
+        });
+    }
+
+    /** The buffers that feed a node must not accept anything but the dedicated aspect. */
+    @GameTest(template = GameTestTemplates.EMPTY_7X5X9, batch = BATCH, timeoutTicks = 100)
+    public static void creationModeOnlyWantsItsDedicatedAspect(GameTestHelper helper) {
+        NodeFabricatorBlockEntity first = place(helper, new BlockPos(3, 2, 7), Direction.NORTH);
+        place(helper, new BlockPos(3, 2, 1), Direction.SOUTH);
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(first.isActive(), "the pair did not form");
+            helper.assertTrue(first.suctionType(Direction.UP).equals(NodeCreationRules.AURAM),
+                    "the north controller sucks " + first.suctionType(Direction.UP));
+            helper.assertTrue(first.addEssentia(AER, 4, Direction.UP,
+                    dev.tc4port.thaumcraft.api.essentia.EssentiaTransferMode.EXECUTE) == 0,
+                    "the north controller accepted aer while building");
+            helper.assertTrue(first.addEssentia(NodeCreationRules.AURAM, 4, Direction.UP,
+                    dev.tc4port.thaumcraft.api.essentia.EssentiaTransferMode.EXECUTE) == 4,
+                    "the north controller refused auram while building");
             helper.succeed();
         });
     }

@@ -47,7 +47,7 @@
   "block.technom.node_dynamo.per_vis": "One Vis is worth %s fuel points, scaled by essentiaFuelScale",
   "block.technom.node_dynamo.rate": "%s Q/t from Vis drained out of aura nodes within %s blocks",
   "block.technom.node_fabricator": "Node Fabricator",
-  "block.technom.node_fabricator.no_creation": "Cannot create new nodes in this version",
+  "block.technom.node_fabricator.creation": "A wand click with no node between the pair builds one from %s auram + vitium over %s ticks",
   "block.technom.node_fabricator.structure": "Two of them facing each other, %s blocks apart, with the node one block up in the middle",
   "block.technom.node_fabricator.work": "%s Q to put one vis back, %s Q with a potency gem to raise its maximum",
   "block.technom.node_fabricator_shell": "Node Fabricator Frame",

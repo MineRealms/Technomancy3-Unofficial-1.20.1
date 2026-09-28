@@ -31,6 +31,8 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import dev.tc4port.thaumcraft.api.wand.WandApi;
+import dev.tc4port.thaumcraft.common.WandInteractionTarget;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.registry.TechnomItems;
 import theflogat.technomancy.common.tiles.base.RedstoneControl;
@@ -44,8 +46,12 @@ import theflogat.technomancy.common.wands.TechnomWrench;
  * node position between them. A wrench turns it - which takes the old shells down and puts new
  * ones up - and the potency gem and the three redstone programming items work as on the
  * dynamos.</p>
+ *
+ * <p>It is a {@link WandInteractionTarget}, so a wand right-click reaches {@link #use} before the
+ * installed focus does, exactly as the original's {@code IWandable} dispatch did: that click is
+ * what starts building a node between the pair when there is none.</p>
  */
-public class NodeFabricatorBlock extends BaseEntityBlock {
+public class NodeFabricatorBlock extends BaseEntityBlock implements WandInteractionTarget {
 
     /** Horizontal only: the slab is built across it and the node sits along it. */
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -126,6 +132,21 @@ public class NodeFabricatorBlock extends BaseEntityBlock {
             return InteractionResult.PASS;
         }
         ItemStack held = player.getItemInHand(hand);
+        if (WandApi.view(held).isPresent()) {
+            // The original's onWandRightClick: a wand click builds a node, but a crouching one
+            // is left to the installed focus.
+            if (player.isSecondaryUseActive()) {
+                return InteractionResult.PASS;
+            }
+            if (level.isClientSide) {
+                return InteractionResult.SUCCESS;
+            }
+            boolean started = machine.startCreation((net.minecraft.server.level.ServerLevel) level);
+            if (started) {
+                level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 0.8F, 1.0F);
+            }
+            return started ? InteractionResult.CONSUME : InteractionResult.PASS;
+        }
         if (held.is(TechnomItems.POTENCY_GEM.get())) {
             if (machine.isBoosted()) {
                 return InteractionResult.PASS;
@@ -193,12 +214,18 @@ public class NodeFabricatorBlock extends BaseEntityBlock {
                 NodeFabricatorBlockEntity.PARTNER_DISTANCE).withStyle(ChatFormatting.GRAY));
         lines.add(Component.translatable("block.technom.node_fabricator.work",
                 NodeFabricatorWorkText.RECHARGE, NodeFabricatorWorkText.EXPAND).withStyle(ChatFormatting.DARK_GRAY));
-        lines.add(Component.translatable("block.technom.node_fabricator.no_creation").withStyle(ChatFormatting.DARK_RED));
+        lines.add(Component.translatable("block.technom.node_fabricator.creation",
+                NodeFabricatorWorkText.CREATION_MIN, NodeFabricatorWorkText.RITUAL_TICKS)
+                .withStyle(ChatFormatting.DARK_AQUA));
     }
 
     /** Tooltip numbers, kept beside the block so the strings and the rules cannot drift apart. */
     private static final class NodeFabricatorWorkText {
         private static final long RECHARGE = theflogat.technomancy.common.nodes.NodeFabricatorWork.RECHARGE_ENERGY;
         private static final long EXPAND = theflogat.technomancy.common.nodes.NodeFabricatorWork.EXPAND_ENERGY;
+        private static final int CREATION_MIN =
+                theflogat.technomancy.common.nodes.NodeCreationRules.MIN_TOTAL_ESSENTIA;
+        private static final int RITUAL_TICKS =
+                theflogat.technomancy.common.nodes.NodeCreationRules.RITUAL_TICKS;
     }
 }

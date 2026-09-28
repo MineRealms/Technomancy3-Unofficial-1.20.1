@@ -689,3 +689,54 @@ python tools\validate_technom_data.py                                        # O
 - **与 GTCEu 同 tick 的 EU 侧**：83 项含 GT 运行时通过，但交换器没有 EU 面（上游也只在 FE 上），未测 EU 包与流体转换同 tick 的交互。
 
 [botania]: https://github.com/Mordenkainen/Technomancy/blob/37bf9a56fe1f713258f298d7ef392b104ccae88f/src/main/java/theflogat/technomancy/lib/compat/Botania.java
+
+## 节点创建（S4，2026-09-28）
+
+本节完成 [BOTANIA][botania] 之后的下一个 S4 缺口：`TileNodeGenerator` 的“以金与污染造节点”仪式。之前的结论是 TC4R 公开 `NodeApi` 只能改已有节点、创建需要 Mixin；这次读 TC4R 源码后确认**不需要 Mixin**。
+
+### 创建原语怎么找到的
+
+`dev.tc4port.thaumcraft.block.AuraNodeBlock.setPlacedBy` 自己就是创建路径：玩家放置 `TCBlocks.AURA_NODE` 时它调用 `AuraNodeFactory.create(...)` 得到 `AuraNodeState`，再 `AuraNodeBlockEntity#setNodeState(...)`。`AuraNodeFactory` 是 `worldgen` 包的 public 类，但真正需要的只是“放方块 + 设状态”这两步。`NodeCreation.create(...)` 就做这两步（带空地判定），因此没有新增任何 Mixin/accessor。
+
+### 行为（对照 `TileNodeGenerator`）
+
+- **专属要素**：北/西侧制造器只吸 auram，南/东侧只吸 vitium（`NodeCreationRules.dedicatedAspect`），`suctionType`/`addEssentia`/主动吸取三处都按此门控。
+- **启动**：法杖右键（`NodeFabricatorBlock implements WandInteractionTarget`，TC4R 的 `WandItem.onItemUseFirst` 在焦点之前调用 `Block#use`）；要求成对、未加电、之间无节点、空地、两缓冲合计 > 64、能量 ≥ `round(((a+t)/2)^2 * 762.939453125)`。潜行右键留给焦点（`player.isSecondaryUseActive()`）。
+- **仪式**：200 刻；只有被点击的一侧为 initiator 并在第 200 刻结算。
+- **结算**：类型/修正按 `generateNode` 级联，Vis = 半总量，随机生态群系要素（`BiomeAuraProfile.randomAspect`，无则随机原初）；**只有节点真的建成才扣**两侧精华与能量，位置被占则退款并取消。
+- **状态**：`running`/`step`/`initiator` 进 NBT；节点出现即取消仪式并转回回充。
+
+### 命令与结果
+
+```powershell
+.\gradlew.bat build --console=plain --no-daemon                              # JUnit 238 通过 0 失败（新增 NodeCreationRulesTest 5）
+.\gradlew.bat runGameTestServer --console=plain --no-daemon                  # All 85 required tests passed
+.\gradlew.bat runGameTestServer -PwithGtceu=true --console=plain --no-daemon # All 85 required tests passed
+python tools\validate_technom_data.py                                        # OK: no errors
+python tools\gen_gametest_structures.py --check                              # 两个模板 up to date
+```
+
+新增 `gametest/empty_7x5x9` 模板（7×5×9，地板 y=0），是能容下“相距 6 格的一对 + 两侧 3×3×3 壳层 + 节点”的最小房间；由 `tools/gen_gametest_structures.py` 生成。
+
+### GameTest / JUnit 断言
+
+| 测试 | 断言 |
+|---|---|
+| `NodeFabricatorGameTests.thePairBuildsANodeOutOfAuramAndVitium` | 一对成型的制造器、北侧 200 auram、南侧 200 vitium、能量 = 成本：`startCreation` 成功，210 刻后节点位置出现真实 `AuraNodeBlockEntity`，类型 `HUNGRY`、修正 `PALE`、单一生态要素 200 Vis，两侧缓冲清零 |
+| `NodeFabricatorGameTests.creationModeOnlyWantsItsDedicatedAspect` | 建节点模式下北侧 `suctionType` 为 auram，`addEssentia(aer)` 返回 0，`addEssentia(auram)` 返回 4 |
+| `NodeCreationRulesTest`（5 项） | 朝向→专属要素；能量 = `((a+b)/2)^2 × 762.939453125`（含 200+200=30,517,578）；Vis = 半总量；类型级联（PURE/HUNGRY/UNSTABLE/TAINTED/DARK/NORMAL）；修正级联（FADING/BRIGHT/PALE/NONE）|
+
+### 刻意偏离上游
+
+| 项 | 上游 | 本次 | 理由 |
+|---|---|---|---|
+| 创建入口 | `ThaumcraftWorldGenerator.createNodeAt`（1.7 内部） | 放 `TCBlocks.AURA_NODE` + `setNodeState`（TC4R 自带 block 的同一路径） | TC4R 没有对应公开 API；这就是它自己放节点时做的事 |
+| 建节点前的消耗 | 先 `generateNode` 再无条件扣精华/能量 | 先建成，成功才扣；失败退款 | 上游在位置被占时仍扣费且可能出问题；本版按本工程既有“提交后才付费”口径 |
+| 制造器姿势/音效 | 无 | 启动时 `amethyst_block_resonate` | 纯反馈，无玩法影响 |
+
+### 本节尚未验证
+
+- **客户端实机**：仪式没有光效/雷击/旋转渲染（旧版有 TESR 闪电），法杖右键的左右手、副手盾牌、创造模式等交互分支没有实机点击；只有 `startCreation` 的服务端逻辑与 `WandInteractionTarget` 的编译期接线。
+- **吸收节点再创建**：`ItemFusionFocus` 的“吸收一个节点、右键空地造节点”旧手势没有恢复，本焦点仍只合并两节点。
+- **节点类型分布的长期行为**：HUNGRY/PURE/TAINTED 等建出后的生态生命周期（饿节点吃方块、腐化扩散）只由 TC4R 自身负责，本节只断言建出时的瞬时状态。
+- **音效/周边**：`amethyst_block_resonate` 是否合适、外壳与节点的清理在真实存档中的表现未验证。

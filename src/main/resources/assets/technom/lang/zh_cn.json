@@ -47,7 +47,7 @@
   "block.technom.node_dynamo.per_vis": "每点魔力相当于 %s 点燃料值，按 essentiaFuelScale 缩放",
   "block.technom.node_dynamo.rate": "从 %2$s 格内的灵气节点抽取魔力，输出 %1$s Q/t",
   "block.technom.node_fabricator": "节点生成装置",
-  "block.technom.node_fabricator.no_creation": "本版本不能创建新节点",
+  "block.technom.node_fabricator.creation": "两台之间没有节点时，用法杖右键即可在 %s 点金/污染要素之上经 %s 刻造出节点",
   "block.technom.node_fabricator.structure": "两台相对而立、相距 %s 格，节点位于正中上方一格",
   "block.technom.node_fabricator.work": "回充 1 点魔力耗 %s Q；装效能宝石后每提高 1 点上限耗 %s Q",
   "block.technom.node_fabricator_shell": "节点制造器框架",

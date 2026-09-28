@@ -110,6 +110,10 @@ TEMPLATES = {
     # so tests never depend on the terrain the GameTest server places them on.
     "gametest/empty_5x5x5": box_template(
         (5, 5, 5), lambda x, y, z: "minecraft:smooth_stone" if y == 0 else "minecraft:air"),
+    # 7x5x9 room: the smallest that fits a facing node-fabricator pair (six
+    # blocks apart, node three blocks along and one up) plus both 3x3x3 slabs.
+    "gametest/empty_7x5x9": box_template(
+        (7, 5, 9), lambda x, y, z: "minecraft:smooth_stone" if y == 0 else "minecraft:air"),
 }
 
 

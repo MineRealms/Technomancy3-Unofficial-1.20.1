@@ -14,6 +14,7 @@ import dev.tc4port.thaumcraft.api.node.AuraNodeView;
 import dev.tc4port.thaumcraft.api.node.NodeApi;
 import dev.tc4port.thaumcraft.api.node.NodeStateChangeResult;
 import dev.tc4port.thaumcraft.api.node.NodeVis;
+import dev.tc4port.thaumcraft.worldgen.BiomeAuraProfile;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,6 +43,8 @@ import theflogat.technomancy.common.essentia.EssentiaPorts;
 import theflogat.technomancy.common.essentia.EssentiaStore;
 import theflogat.technomancy.common.essentia.EssentiaSuction;
 import theflogat.technomancy.common.machines.RedstoneMode;
+import theflogat.technomancy.common.nodes.NodeCreation;
+import theflogat.technomancy.common.nodes.NodeCreationRules;
 import theflogat.technomancy.common.nodes.NodeFabricatorWork;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.tiles.base.RedstoneControl;
@@ -52,16 +55,19 @@ import theflogat.technomancy.common.tiles.base.RedstoneControl;
  *
  * <p>Ported from {@code TileNodeGenerator}. The structure, the distances, the 256-unit single
  * aspect buffer, the 50,000,000 buffer, the suction of 48 over a minimum of 32 and both operation
- * prices are the 1.7.10 numbers. What is deliberately <em>not</em> here is node creation: it
- * needed {@code ThaumcraftWorldGenerator.createNodeAt}, and TC4R's {@code NodeApi} exposes only
- * compare-and-set on nodes that already exist (engineering guide 9.3, matrix row S2 to S4). The
- * fabricator therefore recharges and expands existing nodes and jarred nodes, and does nothing at
- * all when there is no node between the pair.</p>
+ * prices are the 1.7.10 numbers.</p>
  *
- * <p>Both operations commit through {@link NodeApi#replaceLoadedState} against a state read in
- * the same tick, and essentia and energy are only debited once the node has actually changed. The
- * original called {@code node.addToContainer} and then {@code takeFromContainer} as two
- * unconnected steps, with no check that the first had done anything.</p>
+ * <p>Creation is present too: with no node between the pair the two controllers suck their
+ * dedicated aspects (auram to the north/west controller, vitium to the other) and a wand
+ * right-click on one of them starts the original's 200-tick ritual, which builds a node whose
+ * type, modifier and Vis come from the two totals. The original needed
+ * {@code ThaumcraftWorldGenerator.createNodeAt}; {@link NodeCreation} shows how a node is built on
+ * TC4R without a Mixin.</p>
+ *
+ * <p>Both the recharge/expand operations and the creation commit only after the node has actually
+ * changed. The original called {@code node.addToContainer} and then {@code takeFromContainer} as
+ * two unconnected steps, with no check that the first had done anything, and it created a node
+ * before charging for it.</p>
  */
 public final class NodeFabricatorBlockEntity extends BlockEntity implements EssentiaTransport, AspectContainerView {
 
@@ -86,6 +92,9 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_ESSENTIA = "Essentia";
     private static final String TAG_BOOST = "Boost";
+    private static final String TAG_RUNNING = "Running";
+    private static final String TAG_STEP = "Step";
+    private static final String TAG_INITIATOR = "Initiator";
     private static final int SCHEMA_VERSION = 1;
 
     private final EssentiaStore store = new EssentiaStore(EssentiaLimits.jar(ESSENTIA_CAPACITY));
@@ -95,6 +104,12 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
     private int ticks;
     /** Whether the pair is formed; display state, recomputed on the server. */
     private boolean active;
+    /** Whether the 200-tick node-creation ritual is running between the pair. */
+    private boolean running;
+    /** Ticks into the ritual; only the initiator acts at {@link NodeCreationRules#RITUAL_TICKS}. */
+    private int step;
+    /** Whether this controller was the one a wand clicked, so only it builds the node. */
+    private boolean initiator;
     private boolean syncedActive;
     private int syncedAmount = -1;
     @Nullable
@@ -158,7 +173,7 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
         machine.setActive(formed && machine.partnerReady(level));
         if (machine.active && machine.canRun(level)) {
             if (level instanceof ServerLevel server) {
-                machine.work(server);
+                machine.tickWork(server);
             }
             if (machine.ticks % PULL_INTERVAL == 0) {
                 machine.pullEssentia(level);
@@ -304,6 +319,163 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
         return plan.operation();
     }
 
+    // ---- node creation ----
+
+    /** The aspect this controller sucks for creation: auram north/west, vitium south/east. */
+    public AspectId creationAspect() {
+        return NodeCreationRules.dedicatedAspect(facing());
+    }
+
+    /** Whether the pair is formed, has no node between it, and may build one. */
+    public boolean creationMode(Level level) {
+        return active && node(level) == null;
+    }
+
+    /** The free, replaceable space the new node needs. */
+    public boolean creationSpace(Level level) {
+        BlockPos nodePos = nodePosition();
+        if (!level.isLoaded(nodePos)) {
+            return false;
+        }
+        BlockState state = level.getBlockState(nodePos);
+        return state.isAir() || state.canBeReplaced();
+    }
+
+    /**
+     * The original's {@code onWandRightClick}: a wand click on one of the pair starts the ritual,
+     * provided the pair is formed and unpowered, there is no node yet, and the two buffers hold
+     * more than {@value NodeCreationRules#MIN_TOTAL_ESSENTIA} units together and the energy for
+     * the whole ritual is already banked.
+     *
+     * @return whether the ritual started
+     */
+    public boolean startCreation(ServerLevel level) {
+        if (!active || running || !canRun(level) || !creationMode(level) || !creationSpace(level)) {
+            return false;
+        }
+        NodeFabricatorBlockEntity partner = partner(level);
+        if (partner == null || !partner.partnerReady(level) || partner.running) {
+            return false;
+        }
+        int own = store.amount(creationAspect());
+        int theirs = partner.store.amount(partner.creationAspect());
+        if (own + theirs <= NodeCreationRules.MIN_TOTAL_ESSENTIA) {
+            return false;
+        }
+        if (energy.ledger().stored() < NodeCreationRules.energyCost(own, theirs)) {
+            return false;
+        }
+        initiator = true;
+        partner.initiator = false;
+        running = true;
+        partner.running = true;
+        step = 0;
+        partner.step = 0;
+        setChanged();
+        partner.setChanged();
+        return true;
+    }
+
+    /**
+     * One tick of work: recharge or expand a node that is there, otherwise drive the ritual.
+     *
+     * <p>A node appearing under the pair - built by the ritual or placed by hand - cancels any
+     * ritual and switches to recharging. Losing the partner also cancels it.</p>
+     */
+    public void tickWork(ServerLevel level) {
+        if (node(level) != null) {
+            cancelRitual();
+            work(level);
+            return;
+        }
+        if (!running) {
+            return;
+        }
+        NodeFabricatorBlockEntity partner = partner(level);
+        if (partner == null || !partner.running) {
+            cancelRitual();
+            return;
+        }
+        step++;
+        if (step >= NodeCreationRules.RITUAL_TICKS && initiator) {
+            finishCreation(level);
+        }
+    }
+
+    /**
+     * Builds the node once the ritual has run its course. It is paid only if the node was really
+     * created, so a position that filled up during the ritual costs nothing.
+     */
+    private void finishCreation(ServerLevel level) {
+        NodeFabricatorBlockEntity partner = partner(level);
+        if (partner == null || !creationSpace(level)) {
+            cancelRitual();
+            if (partner != null) {
+                partner.cancelRitual();
+            }
+            return;
+        }
+        int own = store.amount(creationAspect());
+        int theirs = partner.store.amount(partner.creationAspect());
+        long cost = NodeCreationRules.energyCost(own, theirs);
+        if (!energy.ledger().tryConsume(cost)) {
+            cancelRitual();
+            partner.cancelRitual();
+            return;
+        }
+        int aurum = creationAspect().equals(NodeCreationRules.AURAM) ? own : theirs;
+        int vitium = creationAspect().equals(NodeCreationRules.VITIUM) ? own : theirs;
+        AspectId aspect = pickAspect(level);
+        boolean created = NodeCreation.create(level, nodePosition(), aspect,
+                NodeCreationRules.nodeVis(aurum, vitium),
+                NodeCreationRules.type(aurum, vitium),
+                NodeCreationRules.modifier(aurum, vitium));
+        if (created) {
+            store.takeExact(creationAspect(), own, false);
+            partner.store.takeExact(partner.creationAspect(), theirs, false);
+        } else {
+            // The energy was already spent; refund it rather than lose the work.
+            energy.ledger().generate(cost);
+        }
+        cancelRitual();
+        partner.cancelRitual();
+    }
+
+    /** {@code BiomeHandler.getRandomBiomeTag}, with the original's random-primal fallback. */
+    private AspectId pickAspect(ServerLevel level) {
+        AspectId biome = BiomeAuraProfile.randomAspect(level.getBiome(nodePosition()), level.getRandom());
+        if (biome != null) {
+            return biome;
+        }
+        java.util.List<AspectId> primals = new ArrayList<>(AspectApi.primals());
+        return primals.get(level.getRandom().nextInt(primals.size()));
+    }
+
+    private void cancelRitual() {
+        if (running || step != 0 || initiator) {
+            running = false;
+            step = 0;
+            initiator = false;
+            setChanged();
+        }
+    }
+
+    @Nullable
+    private NodeFabricatorBlockEntity partner(Level level) {
+        BlockPos partnerPos = partnerPosition();
+        return level.isLoaded(partnerPos)
+                && level.getBlockEntity(partnerPos) instanceof NodeFabricatorBlockEntity partner
+                        ? partner : null;
+    }
+
+    public boolean isCreating() {
+        return running;
+    }
+
+    public int creationStep() {
+        return step;
+    }
+
     // ---- essentia intake ----
 
     /**
@@ -320,6 +492,7 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
             return;
         }
         AspectId held = store.dominantAspect();
+        AspectId dedicated = creationMode(level) ? creationAspect() : null;
         Direction facing = facing();
         for (BlockPos pos : structurePositions()) {
             if (!level.isLoaded(pos)) {
@@ -347,8 +520,10 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
                         || SUCTION < neighbour.minimumSuction()) {
                     continue;
                 }
-                AspectId selected = held != null ? held : neighbour.essentiaType(theirFace);
-                if (selected == null || !known(selected) || neighbour.essentiaAmount(theirFace) <= 0) {
+                AspectId selected = dedicated != null ? dedicated
+                        : held != null ? held : neighbour.essentiaType(theirFace);
+                if (selected == null || !known(selected) || neighbour.essentiaAmount(theirFace) <= 0
+                        || !store.accepts(selected) || store.space(selected) <= 0) {
                     continue;
                 }
                 int taken = EssentiaApi.take(level, neighbour, selected, 1, theirFace, EssentiaTransferMode.EXECUTE);
@@ -464,6 +639,12 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
     @Nullable
     @Override
     public AspectId suctionType(Direction face) {
+        if (level != null && creationMode(level)) {
+            // The original's dedicated-aspect branch: only auram (or vitium) is wanted while the
+            // pair is building a node.
+            AspectId dedicated = creationAspect();
+            return known(dedicated) && store.accepts(dedicated) ? dedicated : null;
+        }
         AspectId held = store.dominantAspect();
         return known(held) ? held : null;
     }
@@ -486,6 +667,9 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
     @Override
     public int addEssentia(AspectId aspect, int amount, Direction face, EssentiaTransferMode mode) {
         if (!canInputFrom(face) || !known(aspect)) {
+            return 0;
+        }
+        if (level != null && creationMode(level) && !aspect.equals(creationAspect())) {
             return 0;
         }
         return store.add(aspect, amount, !mode.executes());
@@ -574,6 +758,9 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
             Technomancy.LOGGER.warn("Node fabricator at {} could not restore its contents verbatim", worldPosition);
         }
         boost = tag.getBoolean(TAG_BOOST);
+        running = tag.getBoolean(TAG_RUNNING);
+        step = tag.getInt(TAG_STEP);
+        initiator = tag.getBoolean(TAG_INITIATOR);
         redstone.load(tag);
     }
 
@@ -584,6 +771,9 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
         tag.put(TAG_ENERGY, energy.save());
         tag.put(TAG_ESSENTIA, store.save());
         tag.putBoolean(TAG_BOOST, boost);
+        tag.putBoolean(TAG_RUNNING, running);
+        tag.putInt(TAG_STEP, step);
+        tag.putBoolean(TAG_INITIATOR, initiator);
         redstone.save(tag);
     }
 
