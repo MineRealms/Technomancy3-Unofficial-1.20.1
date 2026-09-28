@@ -109,6 +109,8 @@
   "technom.fusor.recipe": "输出：%s，每次 %s 能量",
   "technom.fusor.refused": "不能融合",
   "technom.processing.module.thaumcraft": "Thaumcraft",
+  "block.technom.processor_bo": "植物净化器",
+  "technom.processing.module.botania": "Botania",
   "technom.processor.fuel": "燃料 %s/%s",
   "technom.redstone_mode.high": "有红石信号时运行",
   "technom.redstone_mode.low": "无红石信号时运行",

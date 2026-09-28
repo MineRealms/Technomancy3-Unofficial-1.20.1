@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "technom:block/processor_bo"
+    },
+    "lit=true": {
+      "model": "technom:block/processor_bo"
+    }
+  }
+}

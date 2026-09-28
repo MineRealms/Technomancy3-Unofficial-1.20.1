@@ -109,6 +109,8 @@
   "technom.fusor.recipe": "Output: %s (%s FE per fusion)",
   "technom.fusor.refused": "Those aspects do not combine",
   "technom.processing.module.thaumcraft": "Thaumcraft",
+  "block.technom.processor_bo": "Mana Purifier",
+  "technom.processing.module.botania": "Botania",
   "technom.processor.fuel": "Fuel: %s/%s",
   "technom.redstone_mode.high": "Runs with a redstone signal",
   "technom.redstone_mode.low": "Runs without a redstone signal",

@@ -371,6 +371,13 @@ public final class TechnomBlocks {
 
     // ---- end S3 Botania ----
 
+    /** {@code processorBO}: purifies ores for mana. */
+    public static final RegistryObject<Block> PROCESSOR_BO = register("processor_bo",
+            () -> new theflogat.technomancy.common.blocks.machines.BoProcessorBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(3.0F, 6.0F)
+                            .sound(SoundType.METAL).requiresCorrectToolForDrops()
+                            .lightLevel(state -> state.getValue(ProcessorBlock.LIT) ? ProcessorBlock.LIT_LIGHT : 0)));
+
     private TechnomBlocks() {
     }
 

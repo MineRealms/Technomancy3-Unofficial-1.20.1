@@ -77,7 +77,8 @@ class OreProgressTest {
     void theModuleIdIsAStableKey() {
         assertEquals("thaumcraft", TC.id());
         assertEquals(TC, ProcessingModule.byId("thaumcraft"));
-        assertEquals(null, ProcessingModule.byId("botania"), "not in this build yet");
+        assertEquals(ProcessingModule.BOTANIA, ProcessingModule.byId("botania"));
+        assertEquals(null, ProcessingModule.byId("bloodmagic"), "Blood Magic is not in this build");
         assertThrows(IllegalArgumentException.class, () -> new ProcessingModule("Thaumcraft", 2));
         assertThrows(IllegalArgumentException.class, () -> new ProcessingModule("tc", 0));
     }

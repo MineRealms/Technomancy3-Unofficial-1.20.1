@@ -26,7 +26,10 @@ public record ProcessingModule(String id, int maxPasses) {
     public static final ProcessingModule THAUMCRAFT = new ProcessingModule("thaumcraft", 2);
 
     /** Every module this build knows; used to render a pass record. */
-    public static final List<ProcessingModule> ALL = List.of(THAUMCRAFT);
+    public static final ProcessingModule BOTANIA = new ProcessingModule("botania", 2);
+
+    /** Every module this build knows; used to render a pass record. */
+    public static final List<ProcessingModule> ALL = List.of(THAUMCRAFT, BOTANIA);
 
     public ProcessingModule {
         Objects.requireNonNull(id, "id");

@@ -155,6 +155,12 @@ public final class TechnomBlockEntities {
                             TechnomBlocks.MANA_FABRICATOR.get())
                     .build(null));
 
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.machines.BoProcessorBlockEntity>> PROCESSOR_BO =
+            TYPES.register("processor_bo", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.machines.BoProcessorBlockEntity::new,
+                            TechnomBlocks.PROCESSOR_BO.get())
+                    .build(null));
+
     private TechnomBlockEntities() {
     }
 }
