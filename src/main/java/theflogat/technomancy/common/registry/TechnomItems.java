@@ -92,6 +92,14 @@ public final class TechnomItems {
     public static final RegistryObject<Item> RITUAL_TOME = ITEMS.register("ritual_tome",
             () -> new theflogat.technomancy.common.items.RitualTomeItem(new Item.Properties()));
 
+    // ---- S3 Botania materials ----
+
+    /** {@code ItemBOMaterial:0} mana coil, :1 manasteel gear. */
+    public static final RegistryObject<Item> MANA_COIL = simple("mana_coil");
+    public static final RegistryObject<Item> MANASTEEL_GEAR = simple("manasteel_gear");
+
+    // ---- end S3 Botania materials ----
+
     private TechnomItems() {
     }
 
