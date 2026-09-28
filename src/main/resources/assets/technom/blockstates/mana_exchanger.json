@@ -1,7 +1,8 @@
 {
   "variants": {
-    "": {
-      "model": "technom:block/mana_exchanger"
-    }
+    "out=false,active=false": { "model": "technom:block/mana_exchanger_in" },
+    "out=false,active=true": { "model": "technom:block/mana_exchanger_in" },
+    "out=true,active=false": { "model": "technom:block/mana_exchanger_out" },
+    "out=true,active=true": { "model": "technom:block/mana_exchanger_out" }
   }
 }

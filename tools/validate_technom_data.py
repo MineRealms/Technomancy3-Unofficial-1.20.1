@@ -83,6 +83,12 @@ RECIPE_SCHEMA = {
         "required": {"ingredient", "result"},
         "optional": {"group", "category", "experience", "cookingtime"},
     },
+    # Botania's Mana Infusion (botania:mana_infusion), used by the S3 Botania module while the
+    # optional mod is present. "catalyst" is optional; "group" mirrors the vanilla field.
+    "botania:mana_infusion": {
+        "required": {"input", "mana", "output"},
+        "optional": {"catalyst", "group"},
+    },
 }
 
 # VisChannel: the six primal channels are the only legal "vis" keys.
@@ -322,6 +328,8 @@ def check_recipe(report: Report, refs: Refs, path: pathlib.Path, doc: object) ->
                 read_ingredient(report, refs, "%s key[%s]" % (where, symbol), ingredient)
     if "ingredients" in doc:
         read_ingredient(report, refs, where + " ingredients", doc["ingredients"])
+    if "input" in doc:
+        read_ingredient(report, refs, where + " input", doc["input"])
     if "catalyst" in doc:
         read_ingredient(report, refs, where + " catalyst", doc["catalyst"])
     if "central" in doc:
@@ -340,6 +348,12 @@ def check_recipe(report: Report, refs: Refs, path: pathlib.Path, doc: object) ->
                 read_ingredient(report, refs, "%s components[%d]" % (where, index), component)
     if "result" in doc:
         read_result(report, refs, where + " result", doc["result"])
+    if "output" in doc:
+        read_result(report, refs, where + " output", doc["output"])
+    if "mana" in doc:
+        mana = doc["mana"]
+        if not isinstance(mana, int) or mana < 0:
+            report.error(where, "mana %r must be a non-negative integer" % mana)
     if "vis" in doc:
         read_aspect_map(report, refs, where + " vis", doc["vis"], primal_only=True)
     if "aspects" in doc:

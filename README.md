@@ -59,7 +59,7 @@ python .\tools\client_probe.py probes\client --attach                        # P
 - [功能迁移矩阵](docs/FEATURE_MATRIX.zh-CN.md)：实际功能范围、依赖组、迁移状态和验证条件。
 - [源码基线与取舍](docs/SOURCE_BASELINE.zh-CN.md)：原版/1.12 分支关系、可吸收改动和旧代码问题。
 - [兼容与联动分析](docs/COMPAT.zh-CN.md)：原版 compat 清单、目标整合包环境、TC4R 20711/20721 API 差异与 Thaumic Energistics 的自动兼容结论。
-- [Botania 规格与对齐清单](docs/BOTANIA.zh-CN.md)：四台 Botania 机器的上游精确数值与剩余对齐项（下一步任务）。
+- [Botania 规格与对齐清单](docs/BOTANIA.zh-CN.md)：四台 Botania 机器的上游精确数值、已知偏差与未验证项（已实施，保留作复核依据）。
 - [Claude/agent 交接入口](CLAUDE.md)：当前进度、下一步、读文件顺序与不可改动方向。
 - [初始化验证记录](docs/VALIDATION.zh-CN.md)：本次实际执行的检查与尚未验证的边界。
 - [官方 MDK 来源与校验](docs/MDK_PROVENANCE.json)。

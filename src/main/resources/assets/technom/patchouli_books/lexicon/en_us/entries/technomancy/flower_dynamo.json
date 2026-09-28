@@ -1,0 +1,21 @@
+{
+  "name": "technom.lexicon.entry.flower_dynamo",
+  "category": "technom:technomancy",
+  "icon": "technom:flower_dynamo",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "text",
+      "text": "technom.lexicon.flower_dynamo.1"
+    },
+    {
+      "type": "text",
+      "text": "technom.lexicon.flower_dynamo.2"
+    },
+    {
+      "type": "crafting",
+      "text": "technom.lexicon.flower_dynamo.3",
+      "recipe": "technom:botania/flower_dynamo"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "technom.lexicon.entry.techno_basics",
+  "category": "technom:technomancy",
+  "icon": "technom:mana_coil",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "text",
+      "text": "technom.lexicon.techno_basics.1"
+    },
+    {
+      "type": "botania:mana_infusion",
+      "text": "technom.lexicon.techno_basics.2",
+      "recipes": "technom:botania/mana_coil"
+    },
+    {
+      "type": "crafting",
+      "text": "technom.lexicon.techno_basics.3",
+      "recipe": "technom:botania/manasteel_gear"
+    }
+  ]
+}

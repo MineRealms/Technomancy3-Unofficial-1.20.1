@@ -2,7 +2,7 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "technom:block/processorboside",
-    "face": "technom:block/processorboinactive",
+    "face": "technom:block/processorboactive",
     "side": "technom:block/processorboside",
     "top": "technom:block/processorbotop"
   },

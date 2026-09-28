@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "botania"
+    },
+    {
+      "type": "forge:item_exists",
+      "item": "technom:flower_dynamo"
+    }
+  ],
+  "pattern": [
+    " C ",
+    "GIG",
+    "IWI"
+  ],
+  "key": {
+    "C": {
+      "item": "technom:mana_coil"
+    },
+    "G": {
+      "item": "technom:manasteel_gear"
+    },
+    "I": {
+      "item": "botania:manasteel_ingot"
+    },
+    "W": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "result": {
+    "item": "technom:flower_dynamo",
+    "count": 1
+  }
+}

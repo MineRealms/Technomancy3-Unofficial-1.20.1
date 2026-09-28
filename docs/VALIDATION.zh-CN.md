@@ -629,3 +629,63 @@ python .\tools\client_probe.py probes\client --attach
 
 - 几何、朝向、颜色与 z-order 的“看起来对不对”仍需人眼；探针只保证有模型、有贴图、在正确的渲染层。
 - 客户端脚本（CRD SCRIPT）与会话未启用；本轮只用 README 描述的进程与桥路径。
+
+## Botania 收尾（ManaExchanger / 魔力流体 / 配方 / Lexicon / 模型，2026-09-28）
+
+本节覆盖 [BOTANIA 规格][botania] 的对齐收尾：`ManaExchanger` 精确版、魔力流体与桶、Botania 配方、Lexicon 词条与机器模型。它不覆盖客户端实机渲染（见下）与 Botania 缺席时的加载安全。
+
+### 依赖变更（必须先说）
+
+Botania 机器此前是**无条件注册**且引用了 Botania API 类，但 Botania 只在 `compileOnly` 上，开发运行时根本没有它——本轮首次在 `runGameTestServer` 中暴露。修复：`build.gradle` 增加 `runtimeOnly` 的 `vazkii.botania:Botania:1.20.1-454-FORGE` 与 `vazkii.patchouli:Patchouli:1.20.1-85-FORGE`（Botania 的 `mods.toml` 把 Patchouli 与 Curios 列为必需；Curios 已作为 TC4R 依赖在运行时）。这两个只进入开发运行时，不打包进发行 JAR。
+
+### 执行的命令与结果
+
+以 JDK 17（`C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot`）在本 worktree 执行：
+
+```powershell
+.\gradlew.bat build --console=plain --no-daemon                              # JUnit 233 通过 0 失败
+.\gradlew.bat runGameTestServer --console=plain --no-daemon                  # All 83 required tests passed
+.\gradlew.bat runGameTestServer -PwithGtceu=true --console=plain --no-daemon # All 83 required tests passed
+python tools\validate_technom_data.py                                        # OK: no errors
+```
+
+`compileJava` 仅有既有的 `ResourceLocation(String,String)` 弃用提示。`runGameTestServer` 日志确认 Botania 与 Patchouli 都真实加载（`Loaded 30 Loonium configurations`、`patchouli/ Sending reload packet to clients`），注册表快照 2579 个物品、2929 条配方，7 条新增的 `technom:botania/*` 配方全部加载。
+
+### 覆盖内容
+
+- **ManaExchanger**（`ManaExchangerBlockEntity`）：`EXCHANGER_COST=1000`、能量容量 10,000、`FluidTank(1000)` 只收魔力流体、默认红石 `LOW`；`mode==false` 池→罐、`mode==true` 罐→池，每 tick 各按 1,000 Mana↔1 mB、1,000 Q 结算；池必须在正上方（`ManaPool` 能力），否则不工作。流体面规则照上游：顶面与无侧面解析都不给读写，`mode` 决定可填/可取。方块状态 `OUT`/`ACTIVE` 同时驱动 in/out 侧面模型与池上覆盖层；`ManaExchangerBlock implements PoolOverlayProvider`（1.20.1 的池渲染器在池下方方块上查这个接口）。
+- **魔力流体与桶**：`ManaFluidType` + `ForgeFlowingFluid.Source/Flowing` + `ManaFluidBlock` + `ManaBucketItem`；贴图 `block/manafluid_still|flow`（已带 `.mcmeta`），客户端经 `IClientFluidTypeExtensions` 提供。`BucketItem` 带 `FluidBucketWrapper` 能力，容器物品为空桶。
+- **配方**（`data/technom/recipes/botania/`，全部带 `forge:mod_loaded=botania` 与 `forge:item_exists` 门控）：魔力灌注 `mana_coil`（红石，3000）与 `mana_bucket`（空桶，50000，1.12 增量）；有序合成 `manasteel_gear`、`flower_dynamo`、`mana_fabricator`、`processor_bo`、`mana_exchanger`，材料映射按无 TE 分支（`ingotManasteel`→`botania:manasteel_ingot`、`manaDiamond`→`botania:mana_diamond`、`livingrock`→`botania:livingrock`、魔力池→`botania:mana_pool`、`powerCoilSilver`→红石、`frameTesseract`→末影之眼）。
+- **Lexicon**：`assets/technom/patchouli_books/lexicon/en_us/` 下 1 个分类 + 5 个词条，挂在 Botania 的 `botania:lexicon`（该书 `use_resource_pack=true`）。灌注页用 `botania:mana_infusion` 页型，普通页用 `crafting`；文本键同时写入 `en_us`/`zh_cn`（键集合一致，校验器通过）。
+- **模型/贴图**：`ManaExchanger` 拆成 `mana_exchanger_in/out`（底/顶/侧逐面，顶恒为 inactive）、`FlowerDynamo` 底座+机头、`ManaFabricator` 花盆、`processor_bo`/`processor_bo_lit` 用 BO 自己的贴图（此前误用 Blood Magic 的 `processorbm*`）。`blockstates/mana_fluid.json` 覆盖 `level=0..15`（`LiquidBlock` 的 `getRenderShape` 是 `INVISIBLE`，模型不会被绘制，只是为了不让客户端模型探针把它判为缺失）。
+- **校验器**：`tools/validate_technom_data.py` 新增 `botania:mana_infusion` schema 与 `input`/`output`/`mana` 读取，因此该数据包不再被误报为未知配方类型。
+
+### GameTest（`technom_botania`，3 项）
+
+| 测试方法 | 断言内容 |
+|---|---|
+| `drawsManaIntoTheTank` | 真实 `botania:mana_pool` 在交换器正上方且 5,000 Mana、能量满：10 tick 后池空、罐 5 mB、能量余 5,000（5 次操作 × 1,000 Q） |
+| `pushesFluidIntoThePool` | 罐预装 5 mB、`mode=true`：10 tick 后池 5,000 Mana、罐空、能量余 5,000 |
+| `needsAPoolOnTop` | 正上方无池时 `ACTIVE=false`，20 tick 不扣能量 |
+
+注：魔力池的容量字段在它自己第一次 tick 后才初始化，所以“池→罐”一项把注水放在第 2 tick，否则 `receiveMana` 会被 `manaCap=0` 夹掉——这是 Botania 侧的行为，不是交换器缺陷。
+
+### 刻意偏离上游
+
+| 项 | 上游 | 本次 | 理由 |
+|---|---|---|---|
+| ManaExchanger 的池判定 | `tile instanceof TilePool` | `ManaPool` 能力 | 1.20.1 不再能按内部类判断，能力是公开契约；副作用是本模组的 ManaFabricator 放在上方也会被接受 |
+| FlowerDynamo/ManaFabricator 扳手 | 转向首个相邻能量方块 | 循环六面 | 与 `EssentiaDynamo` 的移植口径一致（A-19 之后的既有决定） |
+| FlowerDynamo 模型朝向 | 代码模型按 `facing` 旋转 | JSON 按 `facing` 变体旋转 | 等价做法；但花瓣/花盆细节是近似几何，非逐顶点一致 |
+| 魔力流体方块 blockstate | 无（流体由流体渲染器画） | 有（满足客户端模型探针） | `LiquidBlock.getRenderShape=INVISIBLE`，多出的 blockstate 不会被绘制 |
+
+### 本节尚未验证
+
+- **客户端实机**：本轮没有重跑 `probes/client`。模型、blockstate、图集、`IClientFluidTypeExtensions` 的贴图、池覆盖层、Lexicon 在书里的显示，全部只有离线校验（blockstate 组合覆盖、模型/贴图文件存在、JSON 合法性），没有渲染证据。`mana_fluid` 的 blockstate 与 `mana_bucket` 的水桶图标尤其需要人眼确认。
+- **Lexicon 是否真的出现在书里**：Patchouli 的 `use_resource_pack` 跨命名空间加载与 `i18n` 文本只在服务端重载日志里看到 Patchouli 活动；词条被写入 `botania:lexicon` 后是否显示、排序、图标解析均未在客户端确认。
+- **Botania 缺席安全**：机器类仍无条件注册并引用 Botania API，Botania 不在时会 `NoClassDefFoundError`；本轮只是把开发运行时补上了 Botania。`ENGINEERING_GUIDE` 的“缺席时核心可玩”仍是未完成项。
+- **桶的实际灌装/倒出**：`BucketItem` 的右键放液/取液、与交换器罐的交互、`FluidBucketWrapper` 在漏斗等自动化下的行为没有实机验证；只有流体罐 API 层面的 GameTest。
+- **能量守恒的桶级边界**：罐满/池满时的“不扣能量、不丢 mana/流体”只在代码里按 `>= / <=` 边界成立，GameTest 未覆盖边界值与 `SIMULATE` 无副作用。
+- **与 GTCEu 同 tick 的 EU 侧**：83 项含 GT 运行时通过，但交换器没有 EU 面（上游也只在 FE 上），未测 EU 包与流体转换同 tick 的交互。
+
+[botania]: https://github.com/Mordenkainen/Technomancy/blob/37bf9a56fe1f713258f298d7ef392b104ccae88f/src/main/java/theflogat/technomancy/lib/compat/Botania.java

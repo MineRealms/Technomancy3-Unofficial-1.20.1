@@ -16,6 +16,7 @@ import theflogat.technomancy.common.essentia.fuel.EssentiaFuelLoader;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.registry.TechnomBlocks;
 import theflogat.technomancy.common.registry.TechnomCreativeTabs;
+import theflogat.technomancy.common.registry.TechnomFluids;
 import theflogat.technomancy.common.registry.TechnomItems;
 import theflogat.technomancy.common.registry.TechnomMenus;
 import theflogat.technomancy.compat.gtceu.GtceuEnergyIntegration;
@@ -46,6 +47,10 @@ public final class Technomancy {
         TechnomBlocks.BLOCKS.register(modBus);
         TechnomItems.ITEMS.register(modBus);
         TechnomBlockEntities.TYPES.register(modBus);
+        // The mana fluid (S3 Botania): its type and both fluid instances; the block and bucket are
+        // part of the two registries above.
+        TechnomFluids.FLUID_TYPES.register(modBus);
+        TechnomFluids.FLUIDS.register(modBus);
         TechnomCreativeTabs.TABS.register(modBus);
         // S2 machines and storage: the processors have a menu.
         TechnomMenus.TYPES.register(modBus);

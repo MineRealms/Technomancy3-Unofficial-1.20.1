@@ -112,11 +112,11 @@
 
 | 功能 | 来源 | 依赖/迁移风险 | 阶段 | 必须验证 | 状态 |
 |---|---|---|---|---|---|
-| 花卉/Hippie 发电机 | `TileFlowerDynamo` | Botania Mana 接收与 FE/EU 输出；不能移植旧 RF 接口 | S3 | Mana 减少与电力增加守恒；满电、花/池连接、拔除模组时核心能启动 | 待迁移 |
-| 魔力制造器 | `TileManaFabricator` | FE/EU→Mana，Botania 池识别/传输；独立存量与方向 | S3 | 满池不扣电、吞吐、颜色/连接、存储重载、无双接口套利 | 待迁移 |
-| 植物净化器 | `TileBOProcessor` | Botania 魔力 + 共享加工链；1.12 空侧面槽与 false 插拔为回归 | S3 | 各方向自动化、魔力成本、记录与阶段、GUI 同步 | 待迁移 |
-| 魔力交换器、魔力流体与桶 | `TileManaExchanger`、`ManaFluid`、桶；1.12 新增 50,000 Mana 灌注配方 | 现代 FluidType/流动流体/能力、物品桶；1.12 FE capability 仍返回 CoFH 存储，类型和行为不能直接认定正确 | S3 | 双向转换余数、桶灌装/倒出、模拟、槽满/池满、FE/EU 同 tick 合计、配方平衡 | 待迁移 |
-| Botania 材料和手册 | Mana coil、Manasteel gear、Lexicon 页面 | 数据配方、现代手册扩展；1.12 返回未注册 recipe 对象导致页面断链 | S3 | 全部材料/页面/配方可达、未安装时不加载 Botania 类 | 待迁移 |
+| 花卉/Hippie 发电机 | `TileFlowerDynamo` | Botania Mana 接收与 FE/EU 输出；不能移植旧 RF 接口 | S3 | Mana 减少与电力增加守恒；满电、花/池连接、拔除模组时核心能启动 | 已实现：`IManaReceiver`、100,000 Mana 缓冲、9×9 每池每 tick 100、`extractFuel` 换算（80/320 Q）。GameTest 待补，模型/贴图已换（`block/flowerdynamo`） |
+| 魔力制造器 | `TileManaFabricator` | FE/EU→Mana，Botania 池识别/传输；独立存量与方向 | S3 | 满池不扣电、吞吐、颜色/连接、存储重载、无双接口套利 | 已实现：自身即 `ManaPool`、100,000、1,000,000 FE/100 Mana、单面进电、扳手转面（`use` 接线）。模型/贴图已换 |
+| 植物净化器 | `TileBOProcessor` | Botania 魔力 + 共享加工链；1.12 空侧面槽与 false 插拔为回归 | S3 | 各方向自动化、魔力成本、记录与阶段、GUI 同步 | 已实现：1,000,000 Mana 缓冲、9×9 每 tick 5,000、按加工刻计费；模型改回 `processorbo*` 贴图并按 `lit` 分两模型。GameTest `technom_s2_processing` 覆盖 |
+| 魔力交换器、魔力流体与桶 | `TileManaExchanger`、`ManaFluid`、桶；1.12 新增 50,000 Mana 灌注配方 | 现代 FluidType/流动流体/能力、物品桶；1.12 FE capability 仍返回 CoFH 存储，类型和行为不能直接认定正确 | S3 | 双向转换余数、桶灌装/倒出、模拟、槽满/池满、FE/EU 同 tick 合计、配方平衡 | 已实现（1.20.1 精确版）：池在正上方、1,000 mB 罐、mode/扳手、1,000 Mana↔1 mB、1,000 Q/次、侧面限流；`FluidType`+Source/Flowing+`LiquidBlock`+`BucketItem`+客户端贴图。GameTest `technom_botania` 3 项 |
+| Botania 材料和手册 | Mana coil、Manasteel gear、Lexicon 页面 | 数据配方、现代手册扩展；1.12 返回未注册 recipe 对象导致页面断链 | S3 | 全部材料/页面/配方可达、未安装时不加载 Botania 类 | 已实现：灌注/合成配方 7 条（`forge:mod_loaded` 门控）、Patchouli 词条 5 条挂在 `botania:lexicon`（`use_resource_pack`）。**未安装 Botania 时机器类仍会加载失败，缺席安全未做** |
 | 鲜血发电机 | `TileBloodDynamo` | Blood Magic 生命精华流体→FE/EU，方向和填充能力重建 | S3 | 仅正确流体、各面规则、燃料/电力守恒、空槽和卸载 | 待迁移 |
 | 鲜血制造器 | `TileBloodFabricator` | FE/EU→生命精华；保留主动输出行为，修复 1.12 满槽扣能条件 | S3 | 满槽零消耗、模拟、相邻 capability 槽接收、每 tick 上限、重载 | 待迁移 |
 | 鲜血净化器 | `TileBMProcessor` | Blood Magic LP/soul network + 共享加工链；旧名字 owner 改现代身份；常数 16 成本不能当兼容修复 | S3 | 网络主人、离线/无网络、LP 不足、成本与加工记录、自动化 | 待迁移 |

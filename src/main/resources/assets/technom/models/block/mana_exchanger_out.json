@@ -1,19 +1,19 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "technom:block/processorboside",
-    "face": "technom:block/processorboinactive",
-    "side": "technom:block/processorboside",
-    "top": "technom:block/processorbotop"
+    "particle": "technom:block/manaexchangertopinactive",
+    "bottom": "technom:block/manaexchangerbottom",
+    "side": "technom:block/manaexchangerout",
+    "top": "technom:block/manaexchangertopinactive"
   },
   "elements": [
     {
       "from": [0, 0, 0],
       "to": [16, 16, 16],
       "faces": {
-        "down": { "texture": "#side", "cullface": "down" },
+        "down": { "texture": "#bottom", "cullface": "down" },
         "up": { "texture": "#top", "cullface": "up" },
-        "north": { "texture": "#face", "cullface": "north" },
+        "north": { "texture": "#side", "cullface": "north" },
         "south": { "texture": "#side", "cullface": "south" },
         "west": { "texture": "#side", "cullface": "west" },
         "east": { "texture": "#side", "cullface": "east" }

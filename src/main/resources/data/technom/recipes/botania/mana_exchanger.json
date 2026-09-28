@@ -1,0 +1,40 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "botania"
+    },
+    {
+      "type": "forge:item_exists",
+      "item": "technom:mana_exchanger"
+    }
+  ],
+  "pattern": [
+    "IAI",
+    "BMB",
+    "ICI"
+  ],
+  "key": {
+    "I": {
+      "item": "botania:manasteel_ingot"
+    },
+    "A": {
+      "item": "botania:mana_pool"
+    },
+    "B": {
+      "item": "botania:livingrock"
+    },
+    "M": {
+      "item": "minecraft:glass"
+    },
+    "C": {
+      "item": "technom:mana_coil"
+    }
+  },
+  "result": {
+    "item": "technom:mana_exchanger",
+    "count": 1
+  }
+}

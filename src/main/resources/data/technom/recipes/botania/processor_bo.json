@@ -1,0 +1,40 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "botania"
+    },
+    {
+      "type": "forge:item_exists",
+      "item": "technom:processor_bo"
+    }
+  ],
+  "pattern": [
+    " A ",
+    "BMB",
+    "ICI"
+  ],
+  "key": {
+    "A": {
+      "item": "minecraft:redstone"
+    },
+    "M": {
+      "item": "minecraft:redstone"
+    },
+    "B": {
+      "item": "botania:livingrock"
+    },
+    "I": {
+      "item": "botania:manasteel_ingot"
+    },
+    "C": {
+      "item": "technom:mana_coil"
+    }
+  },
+  "result": {
+    "item": "technom:processor_bo",
+    "count": 1
+  }
+}

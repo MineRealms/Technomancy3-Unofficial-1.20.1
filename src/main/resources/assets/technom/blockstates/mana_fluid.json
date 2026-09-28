@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "level=0": {
+      "model": "technom:block/mana"
+    },
+    "level=1": {
+      "model": "technom:block/mana"
+    },
+    "level=2": {
+      "model": "technom:block/mana"
+    },
+    "level=3": {
+      "model": "technom:block/mana"
+    },
+    "level=4": {
+      "model": "technom:block/mana"
+    },
+    "level=5": {
+      "model": "technom:block/mana"
+    },
+    "level=6": {
+      "model": "technom:block/mana"
+    },
+    "level=7": {
+      "model": "technom:block/mana"
+    },
+    "level=8": {
+      "model": "technom:block/mana"
+    },
+    "level=9": {
+      "model": "technom:block/mana"
+    },
+    "level=10": {
+      "model": "technom:block/mana"
+    },
+    "level=11": {
+      "model": "technom:block/mana"
+    },
+    "level=12": {
+      "model": "technom:block/mana"
+    },
+    "level=13": {
+      "model": "technom:block/mana"
+    },
+    "level=14": {
+      "model": "technom:block/mana"
+    },
+    "level=15": {
+      "model": "technom:block/mana"
+    }
+  }
+}

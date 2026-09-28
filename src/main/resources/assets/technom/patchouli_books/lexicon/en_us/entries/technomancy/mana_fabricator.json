@@ -1,0 +1,17 @@
+{
+  "name": "technom.lexicon.entry.mana_fabricator",
+  "category": "technom:technomancy",
+  "icon": "technom:mana_fabricator",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "text",
+      "text": "technom.lexicon.mana_fabricator.1"
+    },
+    {
+      "type": "crafting",
+      "text": "technom.lexicon.mana_fabricator.2",
+      "recipe": "technom:botania/mana_fabricator"
+    }
+  ]
+}

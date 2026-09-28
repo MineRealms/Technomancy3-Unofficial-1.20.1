@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "botania"
+    },
+    {
+      "type": "forge:item_exists",
+      "item": "technom:manasteel_gear"
+    }
+  ],
+  "pattern": [
+    " M ",
+    "MIM",
+    " M "
+  ],
+  "key": {
+    "M": {
+      "item": "botania:manasteel_ingot"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "technom:manasteel_gear",
+    "count": 1
+  }
+}

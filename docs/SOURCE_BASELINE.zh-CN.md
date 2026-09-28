@@ -48,7 +48,7 @@
 |---|---|---|
 | `Technomancy.java` | 配方注册从 postInit 提前到 init | 记录旧问题；现代版使用现代注册与数据配方，不照搬生命周期 |
 | `TileManaExchanger.java` | 新增 FE capability 暴露 | 保留 FE 支持意图；原存储来自 CoFH，类型适配和返回值需重写，不声称旧实现已正确兼容 FE |
-| `Botania.java` | 空桶 + 50,000 Mana → 1,000 mB 魔力桶配方 | 作为明确的配方增量保留候选，独立决定平衡 |
+| `Botania.java` | 空桶 + 50,000 Mana → 1,000 mB 魔力桶配方 | 已采纳为 `technom:botania/mana_bucket`（`botania:mana_infusion`，空桶 + 50,000 Mana，带 `forge:mod_loaded` 门控）；平衡按 1.12 增量保留 |
 | `BlockManaExchanger.java` | 删除已注释 getIcon | 无需迁移 |
 | `CommonProxy.java` | 空白变化 | 无需迁移 |
 
