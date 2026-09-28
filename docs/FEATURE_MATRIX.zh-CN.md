@@ -83,8 +83,8 @@
 
 | 功能 | 原版范围/来源 | 依赖与迁移风险 | 阶段 | 必须验证 | 状态 |
 |---|---|---|---|---|---|
-| 水晶、催化器、假空气光源、玄武岩 | 五属性 metadata 与辅助方块，4 个 Block ID | BlockState/独立物品、照明与模型；辅助空气的放置清理不能吞方块 | S3 | 各属性形状、仪式匹配、破坏清理、照明与同步 | 待迁移 |
-| 16 个仪式 | 下表有效列表 | 原版硬编码 0/256 高度和同步大范围改世界；改实际维度边界、分 tick 任务、区块加载边界 | S3 | 正反向阵列、负 Y、重载恢复、移动 BE 数据、失败回滚、掉落守恒和 tick 预算 | 待迁移 |
+| 水晶、催化器、假空气光源、玄武岩 | 五属性 metadata 与辅助方块，4 个 Block ID | BlockState/独立物品、照明与模型；辅助空气的放置清理不能吞方块 | S3 | 各属性形状、仪式匹配、破坏清理、照明与同步 | **部分实现（未入游戏验证）**：水晶与催化器各五种（`technom:crystal_<earth|fire|water|light|dark>`、`technom:catalyst_<...>`，按 `Ritual.Type` 的 0..4 顺序而不是 metadata）、玄武岩 `technom:basalt` 已注册，模型/blockstate/语言键齐备；催化器持有 `CatalystBlockEntity`，潜行右键或红石上升沿触发，运行中的核心由 `BlockEvent.BreakEvent` 保护不可破坏。水晶的堆叠形状按下方水晶数分三档。**未做**：`fakeAirLight`（假空气光源）及其主机追踪方块实体。 |
+| 16 个仪式 | 下表有效列表 | 原版硬编码 0/256 高度和同步大范围改世界；改实际维度边界、分 tick 任务、区块加载边界 | S3 | 正反向阵列、负 Y、重载恢复、移动 BE 数据、失败回滚、掉落守恒和 tick 预算 | **部分实现（未入游戏验证）**：仪式框架已落地——`Ritual.Type`、`RitualRegistry`、`RitualFrames`（三档 1/3/5 半径的四角水晶柱，含空档校验）、`IRitualEffectHandler` 与亲和奖励（`PlayerAffinity`）。已实现 6/16：净化 T1–T3（按盒清除敌对生物）与流水 T1–T3（消耗框架并放水，T3 灌满整列）。**未做**：塌陷 T1–T3、黑洞 T1–T3、火 T1–T2、Extraction、Existence 喷泉，以及仪式手册 GUI。 |
 | 仪式手册 | `ItemRitualTome`、GUI 与纹理 | Screen、现代文本/翻译和配方引用 | S3 | 所有已注册仪式可查、翻页/缩放、语言回退、无失效配方引用 | 待迁移 |
 | 物品线圈与连接工具 | `itemTransmitter`、`ItemCoilCoupler`、`ICouplable` | `IItemHandler`、稳定连接数据；1.12 工具实例/配方缺失不能沿用 | S2 | 仓库输入输出、模拟、满库存、标签、断连/卸载、重复点击和无物品复制 | **已实现（未实机）**：`technom:item_coil` + `technom:coil_coupler`（普通配方，已注册；旧“未注册”只在 1.12 分支成立，master `TMItems.java:36/42` 是正常的）。搬运走 `IItemHandler` 的侧面视图，先模拟源与目标、再按目标接受量取出，目标少收则依次退回原槽/源任意槽/世界，不复制不销毁。连接模型 `common/coils/`：仅同维度、每轴 ≤32、上限 16、按坐标去重、拒绝自连、未加载区块保留而失效端点剔除、版本化 NBT 且读盘重新校验；轮换代替每 tick 洗牌。谐频器在 `onItemUseFirst` 生效（旧版被箱子界面抢先），再次点击已连接目标即解除，全部结果有本地化提示。红石沿用 `RedstoneMode`/`RedstoneControl`（默认无信号运行），力量宝石装入后改为“目标有空间时输出弱红石”。JUnit 22 项（链接规则 12 + 物品守恒 10，含撒谎目标与掉落兜底）通过。**未验证**：客户端模型/上色；7 项 GameTest（批次 `technom_coils`）已编写未运行 |
 | Potency Gem / 增幅 | `ItemBoost`，机器升级接口 | 保持"纯吞吐 ×4、效率不变"语义：升级同时把发电速率和每次源质消耗都乘 4。不做多级升级 | S1→S3 | 安装/卸下只结算一次、掉落保存、耗能与产能同时调整 | **源质发电机部分已实现**：`technom:potency_gem` 右键安装、潜行空手右键非输出面取回、破坏时掉落，效率不变已由 JUnit（任意燃料值、任意 `essentiaFuelScale`）与 GameTest（实测 4 点源质 = 64000 Q，与未升级的 16000 Q/点一致）双层验证。其余机器待各自迁移；未做安装/卸下的客户端反馈验证。配方已完成（数据层）：`technom:potency_gem` 的坩埚配方已由服务端加载，要素数据已写入 |
@@ -92,7 +92,7 @@
 | Existence 燃烧器 | 一个 `existenceBurner` ID，普通/动态 2 变体 | 实体消耗、资源生产；不得简单改成所有行为都消耗 FE | S3 | 目标筛选、产量、红石、重载、动态版本差异 | 待迁移 |
 | Existence 塔 | 一个 `existencePylon` ID，3 种变体 | 原版能力/范围与传输规则迁入新 BE | S3 | 范围、升级、消费者连接、跨区块/维度限制与守恒 | 待迁移 |
 | Existence 使用器 | 一个 `existenceUser` ID：作物加速、收割、封印 3 变体 | 作物 tags/事件、`IItemHandler`、玩家实体状态 | S3 | 成长和收获成本、满库存、掉落、封印持续时间、维度/重生清理 | 待迁移 |
-| 玩家属性/HUD/效果 | `PlayerData`、五 affinity、Existence level/power、drown/slowFall | 两版 Affinity 构造器都有赋值错误；1.12 同步接收被注释；改稳定身份、服务端数据和客户端显示 | S3 | 五属性彼此独立、登录/死亡/换维度同步、两客户端一致、配置关闭 HUD | 待迁移 |
+| 玩家属性/HUD/效果 | `PlayerData`、五 affinity、Existence level/power、drown/slowFall | 两版 Affinity 构造器都有赋值错误；1.12 同步接收被注释；改稳定身份、服务端数据和客户端显示 | S3 | 五属性彼此独立、登录/死亡/换维度同步、两客户端一致、配置关闭 HUD | **部分实现（未入游戏验证）**：服务端亲和与 Existence 进度已落地（`Affinity`、`PlayerAffinity`）。原版两处缺陷已修：`Affinity` 构造器把 `id` 赋给了参数导致所有常量 id 为 0；`addExistencePower(World, String)` 会对离线玩家空指针。JUnit `AffinityTest` 固定编号与映射。**未做**：HUD 渲染、Existence level/power 的效果与网络同步。 |
 | 宝物村民与宝物 | `ItemTreasure` 的 fireGem/powerPlate/goldenWing | 默认 `treasures && treasureSafeguard`，后者 false；保留默认关闭及配置说明 | S3 | 默认不激活；开启后事件副作用、掉落次数、封印交互、多人同步 | 待迁移 |
 | 纯矿多阶段加工 | 每材料 1 Item ID、6 metadata 阶段；TC/BO/BM 各有加工记录 | 旧 OreDictionary 动态注册改预定义材料/tags/数据配方；接 GT 材料并明确 2～7 锭默认倍率 | S2 | 各模块至多两轮等原版规则、顺序组合、输出 NBT、矿/粉兼容、每阶段熔炼经验、无重复增殖 | **已实现（未实机）**：铁/金/铜 × 6 阶段 = 18 个 `technom:pure_<材料>_<阶段>`，每模块两轮上限与阶段上限都显式检查，加工记录只存"每模块次数"（阶段由物品身份承载），熔炼 2..7 锭、经验 1.0；输入用标签 `technom:processable/<材料>` 收生矿与矿石方块。**刻意偏离**：材料集合固定为三种原版金属（不再按 OreDictionary 动态注册），染色值写死。只装 TC 模块时阶段上限为 1，2..5 的物品与配方已备好待 S3 |
 

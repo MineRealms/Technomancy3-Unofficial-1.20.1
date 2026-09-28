@@ -1,8 +1,8 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "technom:block/basalt",
-    "tex": "technom:block/basalt"
+    "particle": "technom:block/catalyst_0",
+    "tex": "technom:block/catalyst_0"
   },
   "elements": [
     {

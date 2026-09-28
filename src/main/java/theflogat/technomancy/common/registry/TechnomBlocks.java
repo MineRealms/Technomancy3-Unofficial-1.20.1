@@ -23,6 +23,10 @@ import theflogat.technomancy.common.blocks.machines.EnergyCondenserBlock;
 import theflogat.technomancy.common.blocks.machines.EssentiaFusorBlock;
 import theflogat.technomancy.common.blocks.machines.ProcessorBlock;
 import theflogat.technomancy.common.blocks.machines.TcProcessorBlock;
+import theflogat.technomancy.common.blocks.technom.BasaltBlock;
+import theflogat.technomancy.common.blocks.technom.CatalystBlock;
+import theflogat.technomancy.common.blocks.technom.CrystalBlock;
+import theflogat.technomancy.common.rituals.Ritual;
 
 /**
  * Every block of the mod, plus the {@link BlockItem} that goes with it.
@@ -223,6 +227,60 @@ public final class TechnomBlocks {
                             .isViewBlocking((state, level, pos) -> false)));
 
     // ---- end S2 nodes, wands and fusion ----
+
+    // ---- S3 ritual core blocks ----
+
+    /**
+     * {@code crystalBlock}, {@code catalyst}, {@code basalt}: the ritual frame, the core and a
+     * decorative rock. One block per kind rather than metadata; the kind order is
+     * {@link theflogat.technomancy.common.rituals.Ritual.Type}.
+     */
+    public static final RegistryObject<Block> CRYSTAL_EARTH = crystal(Ritual.Type.EARTH);
+    public static final RegistryObject<Block> CRYSTAL_FIRE = crystal(Ritual.Type.FIRE);
+    public static final RegistryObject<Block> CRYSTAL_WATER = crystal(Ritual.Type.WATER);
+    public static final RegistryObject<Block> CRYSTAL_LIGHT = crystal(Ritual.Type.LIGHT);
+    public static final RegistryObject<Block> CRYSTAL_DARK = crystal(Ritual.Type.DARK);
+
+    public static final RegistryObject<Block> CATALYST_EARTH = catalyst(Ritual.Type.EARTH);
+    public static final RegistryObject<Block> CATALYST_FIRE = catalyst(Ritual.Type.FIRE);
+    public static final RegistryObject<Block> CATALYST_WATER = catalyst(Ritual.Type.WATER);
+    public static final RegistryObject<Block> CATALYST_LIGHT = catalyst(Ritual.Type.LIGHT);
+    public static final RegistryObject<Block> CATALYST_DARK = catalyst(Ritual.Type.DARK);
+
+    /** {@code basalt}: a plain block, ore-dictionary {@code basalt} in 1.7.10. */
+    public static final RegistryObject<Block> BASALT = register("basalt",
+            () -> new BasaltBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_BLACK)
+                    .strength(2.5F, 8.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()));
+
+    private static RegistryObject<Block> crystal(Ritual.Type type) {
+        return register("crystal_" + type.name().toLowerCase(java.util.Locale.ROOT),
+                () -> new CrystalBlock(type, BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.COLOR_PURPLE)
+                        .strength(0.3F)
+                        .sound(SoundType.GLASS)
+                        .lightLevel(state -> 1)
+                        .noOcclusion()
+                        .isValidSpawn((state, level, pos, entity) -> false)
+                        .isRedstoneConductor((state, level, pos) -> false)
+                        .isSuffocating((state, level, pos) -> false)
+                        .isViewBlocking((state, level, pos) -> false)));
+    }
+
+    private static RegistryObject<Block> catalyst(Ritual.Type type) {
+        return register("catalyst_" + type.name().toLowerCase(java.util.Locale.ROOT),
+                () -> new CatalystBlock(type, BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.COLOR_BLACK)
+                        .strength(2.0F, 6.0F)
+                        .sound(SoundType.STONE)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion()
+                        .isValidSpawn((state, level, pos, entity) -> false)));
+    }
+
+    // ---- end S3 ritual core blocks ----
 
     private TechnomBlocks() {
     }

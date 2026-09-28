@@ -100,6 +100,19 @@ public final class TechnomBlockEntities {
                             TechnomBlocks.ELDRITCH_CONSUMER.get())
                     .build(null));
 
+    // ---- S3 ritual core blocks ----
+
+    /** One type for the five catalyst blocks; the block itself carries the kind. */
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.technom.CatalystBlockEntity>> CATALYST =
+            TYPES.register("catalyst", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.technom.CatalystBlockEntity::new,
+                            TechnomBlocks.CATALYST_EARTH.get(), TechnomBlocks.CATALYST_FIRE.get(),
+                            TechnomBlocks.CATALYST_WATER.get(), TechnomBlocks.CATALYST_LIGHT.get(),
+                            TechnomBlocks.CATALYST_DARK.get())
+                    .build(null));
+
+    // ---- end S3 ritual core blocks ----
+
     private TechnomBlockEntities() {
     }
 }

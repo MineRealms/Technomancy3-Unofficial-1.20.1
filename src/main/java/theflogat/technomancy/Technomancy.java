@@ -55,14 +55,32 @@ public final class Technomancy {
         MinecraftForge.EVENT_BUS.addListener(EssentiaFuelLoader::onAddReloadListener);
         // S2 nodes, wands and fusion: wand charging (inventory pass + technoturge FE capability).
         theflogat.technomancy.common.wands.WandChargeEvents.register(MinecraftForge.EVENT_BUS);
+        // S3 rituals: the affinity defaults must exist before the first catalyst grants any.
+        MinecraftForge.EVENT_BUS.addListener(Technomancy::onPlayerLogin);
+        // S3 rituals: a catalyst running a ritual is unbreakable, as the original's hardness -1 was.
+        MinecraftForge.EVENT_BUS.addListener(Technomancy::onBlockBreak);
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                 () -> () -> theflogat.technomancy.client.TechnomancyClient.init(modBus));
+    }
+
+    private static void onPlayerLogin(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+        theflogat.technomancy.common.player.PlayerAffinity.prepare(event.getEntity());
+    }
+
+    private static void onBlockBreak(net.minecraftforge.event.level.BlockEvent.BreakEvent event) {
+        if (event.getLevel().getBlockEntity(event.getPos())
+                instanceof theflogat.technomancy.common.tiles.technom.CatalystBlockEntity catalyst
+                && catalyst.isRunning()) {
+            event.setCanceled(true);
+        }
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         long rate = EnergyUnits.freeze(TechnomancyConfig.Q_PER_EU.get());
         LOGGER.info("Technomancy energy rate fixed at {} FE per EU for this session", rate);
         checkCondenserBalance();
+        // S3 rituals: the registry must be filled before a catalyst scans it.
+        event.enqueueWork(theflogat.technomancy.common.rituals.RitualRegistry::bootstrap);
         // S2 nodes, wands and fusion: the fusion focus action must be registered before any
         // player can dispatch it, and the registry is keyed on the focus id, not on the item.
         event.enqueueWork(theflogat.technomancy.common.nodes.FusionFocusAction::register);
