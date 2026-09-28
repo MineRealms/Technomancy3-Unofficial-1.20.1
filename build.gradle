@@ -10,6 +10,7 @@ base { archivesName = "${mod_id}-${minecraft_version}" }
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 def withGtceu = providers.gradleProperty('withGtceu').map { it.toBoolean() }.getOrElse(false)
+def withBotania = providers.gradleProperty('withBotania').map { it.toBoolean() }.getOrElse(true)
 def tc4Repository = file(providers.gradleProperty('tc4Repository').getOrElse('local-repo'))
 
 minecraft {
@@ -108,9 +109,13 @@ dependencies {
     // The Botania machines register unconditionally and reference the API at class load, so the
     // development runtime needs the mod itself. It is not bundled into the jar; players only get
     // it if their pack ships Botania. Botania declares Patchouli (and Curios, already above) as
-    // mandatory, so both must be on the dev runtime or the game refuses to start.
-    runtimeOnly(fg.deobf("vazkii.botania:Botania:${botania_version}", { transitive = false }))
-    runtimeOnly(fg.deobf("vazkii.patchouli:Patchouli:${patchouli_version}", { transitive = false }))
+    // mandatory, so both must be on the dev runtime or the game refuses to start. Set
+    // -PwithBotania=false to run the development game without Botania and exercise the
+    // absent-safety gate.
+    if (withBotania) {
+        runtimeOnly(fg.deobf("vazkii.botania:Botania:${botania_version}", { transitive = false }))
+        runtimeOnly(fg.deobf("vazkii.patchouli:Patchouli:${patchouli_version}", { transitive = false }))
+    }
     // JEI: compileOnly for the plugin, runtimeOnly so dev shows recipes.
     compileOnly(fg.deobf("mezz.jei:jei-1.20.1-forge:${jei_version}"))
     runtimeOnly(fg.deobf("mezz.jei:jei-1.20.1-forge:${jei_version}"))

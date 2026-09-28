@@ -62,7 +62,7 @@ public class ManaFabricatorBlock extends BaseEntityBlock {
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
         return level.isClientSide ? null
-                : createTickerHelper(type, TechnomBlockEntities.MANA_FABRICATOR.get(),
+                : createTickerHelper(type, theflogat.technomancy.compat.botania.BotaniaContent.MANA_FABRICATOR_BE.get(),
                         ManaFabricatorBlockEntity::serverTick);
     }
 

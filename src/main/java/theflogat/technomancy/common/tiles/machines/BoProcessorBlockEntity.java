@@ -38,7 +38,7 @@ public final class BoProcessorBlockEntity extends ProcessorBlockEntity implement
     private int mana;
 
     public BoProcessorBlockEntity(BlockPos pos, BlockState state) {
-        super(TechnomBlockEntities.PROCESSOR_BO.get(), pos, state);
+        super(theflogat.technomancy.compat.botania.BotaniaContent.PROCESSOR_BO_BE.get(), pos, state);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, BoProcessorBlockEntity processor) {

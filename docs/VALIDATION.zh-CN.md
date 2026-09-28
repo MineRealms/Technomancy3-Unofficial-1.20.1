@@ -798,3 +798,33 @@ GTCEu 7.5.3 的 JEI 兼容 Mixin 期望旧版 JEI 的 `List<String>` tooltip 方
 - Botania 手册词条已确认**进了书的分类与词条表**；但“翻开那一页、图标与文字排版是否好看”仍需人眼。
 - 本次仍未验证：魔力流体与桶的手持/倒出；仪式创建节点的光效（旧版有雷电 TESR，本版没有）；节点创建仪式没有客户端渲染。
 - `run-client/logs` 里 `gardenofglass` 的配方警告来自 Botania 自带词条引用了未安装的 Garden of Glass，与本模组无关。
+
+## Botania 缺席安全（2026-09-28）
+
+[总工程指导](ENGINEERING_GUIDE.zh-CN.md) 要求“Botania/Blood Magic 缺席时，基础 TC4R + FE 路线应完整可玩；公共能源、基础 BE、注册对象和入口字段不要出现 Botania 类型”。之前不满足：四台机器的方块或 BlockEntity 在类加载时链接 Botania API，而它们是无条件注册的。
+
+### 做法
+
+- 新增 `compat/botania/BotaniaPresence`（只用 `ModList`，无 Botania 类型）与 `compat/botania/BotaniaContent`：四个方块、四个 BlockEntity 类型、`mana_coil`/`manasteel_gear` 全部在 `install()` 里注册。
+- `Technomancy` 构造函数里 `if (BotaniaPresence.isLoaded()) BotaniaContent.install();`。缺席时这些 `RegistryObject` 保持 null，方块/BE/物品一个都不注册，数据配方本就有 `forge:mod_loaded` 门控。
+- `TechnomBlocks`/`TechnomBlockEntities`/`TechnomItems` 里删掉对应字段，公共注册类不再出现 Botania 类型。魔力流体与桶仍无条件注册：它们不引用 Botania，缺席时只是一个无来源的流体。
+- 四台机器与 BO 处理器的方块/BE 改为经 `BotaniaContent.*_BE` 取自己的注册对象。
+- GameTest：`ManaExchangerGameTests` 变成一个不含 Botania 类型的 `@GameTestHolder`，三个方法在 Botania 缺席时直接 `succeed()`，否则反射调用新类 `ManaExchangerBotaniaTests` 执行真正断言（该类不是 holder，只在有 Botania 时被加载，避免 Forge 注册时 `getDeclaredMethods()` 解析 `ManaPool` 描述符而崩）。
+
+### 命令与结果
+
+```powershell
+.\gradlew.bat build --console=plain --no-daemon                              # JUnit 238 通过 0 失败
+.\gradlew.bat runGameTestServer --console=plain --no-daemon                  # All 85 required tests passed（有 Botania）
+.\gradlew.bat runGameTestServer -PwithGtceu=true --console=plain --no-daemon # All 85 required tests passed（有 Botania + GT）
+.\gradlew.bat runGameTestServer -PwithBotania=false --console=plain --no-daemon  # All 85 required tests passed（无 Botania）
+```
+
+- 新增 Gradle 开关 `-PwithBotania=false`（默认 true）：只影响开发运行时的 `runtimeOnly` Botania/Patchouli，不改变编译（Botania 仍在 `compileOnly` 上）与发行 JAR。
+- 第一次无 Botania 运行**确实崩了**：`NoClassDefFoundError: vazkii/botania/api/mana/ManaPool`，栈顶是 `ForgeGameTestHooks.addGameTestMethods → Class.getDeclaredMethods`——即使主模组已经安全，GameTest holder 的方法描述符里带 `ManaPool` 也会在注册批次时把类解析崩。拆成 holder + 反射后才通过。
+- 无 Botania 时日志出现 `Missing data pack mod:botania` 与 Botania 实体类型的缺失转储，属预期（数据包引用了未安装的模组），测试仍 85/85。
+
+### 本节尚未验证
+
+- 只验证了**专用/GameTest 服务端**在无 Botania 下可启动并跑完测试；没有跑无 Botania 的**客户端**（`-PwithBotania=false` 的 `runClient`）。客户端理论上不需要 Botania（模型/词条只在有 Botania 时才注册），但未实测。
+- 没有验证“存档先有 Botania 内容、再移除 Botania”的场景（那属于跨模组移除，预期会丢内容，不在缺席安全范围内）。

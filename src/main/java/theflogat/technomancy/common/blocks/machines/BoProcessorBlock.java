@@ -28,7 +28,7 @@ public class BoProcessorBlock extends ProcessorBlock {
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
         return level.isClientSide ? null
-                : createTickerHelper(type, TechnomBlockEntities.PROCESSOR_BO.get(),
+                : createTickerHelper(type, theflogat.technomancy.compat.botania.BotaniaContent.PROCESSOR_BO_BE.get(),
                         BoProcessorBlockEntity::serverTick);
     }
 }

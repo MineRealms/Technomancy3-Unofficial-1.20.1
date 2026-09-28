@@ -58,7 +58,7 @@ public final class FlowerDynamoBlockEntity extends BlockEntity implements ManaRe
     private boolean boost;
 
     public FlowerDynamoBlockEntity(BlockPos pos, BlockState state) {
-        super(TechnomBlockEntities.FLOWER_DYNAMO.get(), pos, state);
+        super(theflogat.technomancy.compat.botania.BotaniaContent.FLOWER_DYNAMO_BE.get(), pos, state);
         energy = new MachineEnergy(this, EnergyLimits.fe(ENERGY_CAPACITY, 0, MAX_EXTRACT),
                 EnergyPorts.generator(EnergyPorts.mask(facing())));
     }

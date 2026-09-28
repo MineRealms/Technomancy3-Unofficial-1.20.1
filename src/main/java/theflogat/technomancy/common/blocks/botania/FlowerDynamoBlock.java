@@ -87,7 +87,7 @@ public class FlowerDynamoBlock extends BaseEntityBlock {
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
         return level.isClientSide ? null
-                : createTickerHelper(type, TechnomBlockEntities.FLOWER_DYNAMO.get(),
+                : createTickerHelper(type, theflogat.technomancy.compat.botania.BotaniaContent.FLOWER_DYNAMO_BE.get(),
                         FlowerDynamoBlockEntity::serverTick);
     }
 

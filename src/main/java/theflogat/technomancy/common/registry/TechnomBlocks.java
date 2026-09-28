@@ -357,32 +357,9 @@ public final class TechnomBlocks {
     }
 
     // ---- S3 Botania ----
-
-    public static final RegistryObject<Block> FLOWER_DYNAMO = register("flower_dynamo",
-            () -> new theflogat.technomancy.common.blocks.botania.FlowerDynamoBlock(
-                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(2.0F)
-                            .sound(SoundType.WOOD).requiresCorrectToolForDrops().noOcclusion()
-                            .isValidSpawn((state, level, pos, entity) -> false)));
-    public static final RegistryObject<Block> MANA_FABRICATOR = register("mana_fabricator",
-            () -> new theflogat.technomancy.common.blocks.botania.ManaFabricatorBlock(
-                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(3.0F, 6.0F)
-                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()
-                            .isValidSpawn((state, level, pos, entity) -> false)));
-
-    // ---- end S3 Botania ----
-
-    /** {@code processorBO}: purifies ores for mana. */
-    public static final RegistryObject<Block> PROCESSOR_BO = register("processor_bo",
-            () -> new theflogat.technomancy.common.blocks.machines.BoProcessorBlock(
-                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(3.0F, 6.0F)
-                            .sound(SoundType.METAL).requiresCorrectToolForDrops()
-                            .lightLevel(state -> state.getValue(ProcessorBlock.LIT) ? ProcessorBlock.LIT_LIGHT : 0)));
-
-    public static final RegistryObject<Block> MANA_EXCHANGER = register("mana_exchanger",
-            () -> new theflogat.technomancy.common.blocks.botania.ManaExchangerBlock(
-                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(3.0F, 6.0F)
-                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()
-                            .isValidSpawn((state, level, pos, entity) -> false)));
+    // The four Botania machines and the BO processor are registered from
+    // compat/botania/BotaniaContent, only when Botania is loaded, because their blocks and block
+    // entities link the Botania API at class load.
 
     private TechnomBlocks() {
     }

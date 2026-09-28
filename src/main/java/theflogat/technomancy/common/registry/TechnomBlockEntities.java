@@ -144,28 +144,8 @@ public final class TechnomBlockEntities {
                             TechnomBlocks.EXISTENCE_SEALER.get())
                     .build(null));
 
-    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.botania.FlowerDynamoBlockEntity>> FLOWER_DYNAMO =
-            TYPES.register("flower_dynamo", () -> BlockEntityType.Builder
-                    .of(theflogat.technomancy.common.tiles.botania.FlowerDynamoBlockEntity::new,
-                            TechnomBlocks.FLOWER_DYNAMO.get())
-                    .build(null));
-    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.botania.ManaFabricatorBlockEntity>> MANA_FABRICATOR =
-            TYPES.register("mana_fabricator", () -> BlockEntityType.Builder
-                    .of(theflogat.technomancy.common.tiles.botania.ManaFabricatorBlockEntity::new,
-                            TechnomBlocks.MANA_FABRICATOR.get())
-                    .build(null));
-
-    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.machines.BoProcessorBlockEntity>> PROCESSOR_BO =
-            TYPES.register("processor_bo", () -> BlockEntityType.Builder
-                    .of(theflogat.technomancy.common.tiles.machines.BoProcessorBlockEntity::new,
-                            TechnomBlocks.PROCESSOR_BO.get())
-                    .build(null));
-
-    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.botania.ManaExchangerBlockEntity>> MANA_EXCHANGER =
-            TYPES.register("mana_exchanger", () -> BlockEntityType.Builder
-                    .of(theflogat.technomancy.common.tiles.botania.ManaExchangerBlockEntity::new,
-                            TechnomBlocks.MANA_EXCHANGER.get())
-                    .build(null));
+    // The Botania machines' block entity types are registered from
+    // compat/botania/BotaniaContent, only when Botania is loaded.
 
     private TechnomBlockEntities() {
     }

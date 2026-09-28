@@ -39,7 +39,7 @@ public final class ManaFabricatorBlockEntity extends BlockEntity implements Mana
     private int mana;
 
     public ManaFabricatorBlockEntity(BlockPos pos, BlockState state) {
-        super(TechnomBlockEntities.MANA_FABRICATOR.get(), pos, state);
+        super(theflogat.technomancy.compat.botania.BotaniaContent.MANA_FABRICATOR_BE.get(), pos, state);
         energy = new MachineEnergy(this, EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0),
                 EnergyPorts.consumer(EnergyPorts.mask(facing())));
     }

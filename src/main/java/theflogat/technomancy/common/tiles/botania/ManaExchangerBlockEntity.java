@@ -68,7 +68,7 @@ public final class ManaExchangerBlockEntity extends BlockEntity {
     private final LazyOptional<IFluidHandler>[] fluidViews = new LazyOptional[7];
 
     public ManaExchangerBlockEntity(BlockPos pos, BlockState state) {
-        super(TechnomBlockEntities.MANA_EXCHANGER.get(), pos, state);
+        super(theflogat.technomancy.compat.botania.BotaniaContent.MANA_EXCHANGER_BE.get(), pos, state);
         energy = new MachineEnergy(this,
                 EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0),
                 EnergyPorts.consumer(EnergyPorts.allExcept(Direction.UP)));
