@@ -863,18 +863,18 @@ GTCEu 7.5.3 的 JEI 兼容 Mixin 期望旧版 JEI 的 `List<String>` tooltip 方
 | 命令 | 结果 |
 |---|---|
 | `gradlew.bat build` | BUILD SUCCESSFUL；**JUnit 238 通过 / 0 失败**（28 个测试类） |
-| `gradlew.bat runGameTestServer` | **All 94 required tests passed** |
-| `gradlew.bat runGameTestServer -PwithGtceu=true` | **All 94 required tests passed** |
-| `gradlew.bat runGameTestServer -PwithBotania=false` | **All 94 required tests passed** |
+| `gradlew.bat runGameTestServer` | **All 95 required tests passed** |
+| `gradlew.bat runGameTestServer -PwithGtceu=true` | **All 95 required tests passed** |
+| `gradlew.bat runGameTestServer -PwithBotania=false` | **All 95 required tests passed** |
 | `python tools/validate_technom_data.py` | **OK: no errors**（16 warning / 1 skipped）；本轮开始时为 45 errors |
 | Rosetta 客户端探针（带 GTCEu，quickJoin "New World"） | **3/3 通过**（`00_models_and_sprites`、`10_renderers_and_tab`、`20_patchouli_lexicon`） |
 
-GameTest 由 91 增至 94：新增批次 `technom_s4_deep_tc` 三项（全工程“要求工具的方块必须在 mineable 标签”遍历断言、三台新机器用对工具掉落自身、三条新配方与研究键可达）。新守卫在首轮就抓到了第 3 项里漏掉的 `flower_dynamo`。新增的 `technom_s3_rituals` / `technom_s3_existence`（6 项）在三种运行时下均通过；`technom_s3_existence` 的日志行 `pylon took 5 from a fountain holding 9995` 是喷泉接网成功的直接证据。
+GameTest 由 91 增至 95：新增批次 `technom_s4_deep_tc` 三项（全工程“要求工具的方块必须在 mineable 标签”遍历断言、三台新机器用对工具掉落自身、三条新配方与研究键可达），并在 `technom_dynamo` 增加服务端 `/reload` 后燃料表不可变替换与内容保持测试。新守卫在首轮就抓到了第 3 项里漏掉的 `flower_dynamo`。新增的 `technom_s3_rituals` / `technom_s3_existence`（6 项）在三种运行时下均通过；`technom_s3_existence` 的日志行 `pylon took 5 from a fountain holding 9995` 是喷泉接网成功的直接证据。此次 `/reload` 测试日志确认重载后重新加载 44 个精华燃料条目、fallback 25，并发布了新表实例。
 
 ### 本轮未验证
 
 - 客户端探针**首轮 2/3 失败**：桥在世界加载完成前就已就绪，探针 10/20 把全部 44 个方块报成“放置失败”（放置坐标 10,65,10），Patchouli 词条数为 0。世界真正加载完成后**重跑即 3/3 通过**（放置坐标变为玩家实际位置 214,74,-737）。结论：这是启动时序而非内容缺陷；但“桥就绪 ≠ 世界就绪”，后续探针流程应先确认玩家已进入世界再跑。
 - 没有任何**人工实机点击**：仪式阵列的真实搭建与触发、Existence 网络在真实拓扑下的产消、稳定灯对真实注魔祭坛、风箱对真实炼金炉、生态转换器的客户端群系刷新、融合焦点吸收/再造全流程、宝物村民开关，均只有代码与自动测试证据。
-- 未跑：专用服务器长期运行、多人联机、`/reload`、跨维度与死亡重生、无 Botania 客户端（`-PwithBotania=false runClient`）、JEI/Jade 集成（至今没有代码）。
+- 未跑：专用服务器长期运行、多人联机、跨维度与死亡重生、无 Botania 客户端（`-PwithBotania=false runClient`）、JEI/Jade 集成（至今没有代码）。服务端 `/reload` 已由新增 GameTest 覆盖，但真实专用服务器上的重载流程仍未人工验证。
 - 校验器 16 条 warning 未处理：13 条是“category 未在本文件声明”（分类确实声明在 `technomancy.json`，校验器逐文件检查看不到），2 条是未知目录 schema，属既有噪声。
 - 校验器读取的 `run-gametest/technom-data-inventory.json` 由最后一次 GameTest 运行写入；因此**必须在“有 Botania”的那次运行之后立刻跑校验器**，否则会把 Botania 物品误报为缺失（本轮第一次跑就踩到了这个顺序问题）。

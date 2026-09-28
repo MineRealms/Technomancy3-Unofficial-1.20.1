@@ -7,6 +7,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.ItemStack;
@@ -19,6 +20,7 @@ import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import theflogat.technomancy.Technomancy;
 import theflogat.technomancy.common.essentia.fuel.EssentiaFuelLoader;
+import theflogat.technomancy.common.essentia.fuel.EssentiaFuelTable;
 import theflogat.technomancy.common.registry.TechnomBlocks;
 import theflogat.technomancy.common.machines.RedstoneMode;
 import theflogat.technomancy.common.tiles.dynamo.EssentiaDynamoBlockEntity;
@@ -53,6 +55,27 @@ public final class EssentiaDynamoGameTests {
         helper.assertTrue(EssentiaFuelLoader.table().fallback() == 25,
                 "fallback is " + EssentiaFuelLoader.table().fallback());
         helper.succeed();
+    }
+
+    /** A server reload publishes a fresh immutable fuel table for already-running machines. */
+    @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH, timeoutTicks = 200)
+    public static void theFuelTableIsReplacedOnServerReload(GameTestHelper helper) {
+        EssentiaFuelTable before = EssentiaFuelLoader.table();
+        MinecraftServer server = helper.getLevel().getServer();
+        helper.assertTrue(server != null, "the GameTest level has no server");
+
+        server.getCommands().performPrefixedCommand(
+                server.createCommandSourceStack().withPermission(4), "reload");
+
+        helper.runAfterDelay(60, () -> {
+            EssentiaFuelTable after = EssentiaFuelLoader.table();
+            helper.assertTrue(after != before, "server reload did not publish a new fuel table");
+            helper.assertTrue(after.listedAspects().size() == 44,
+                    "reload produced " + after.listedAspects().size() + " fuel entries instead of 44");
+            helper.assertTrue(after.fallback() == 25,
+                    "reload changed the fuel fallback to " + after.fallback());
+            helper.succeed();
+        });
     }
 
     /** The port's face rules, asserted against the contract rather than against the old code. */

@@ -15,7 +15,7 @@
   - 玩家亲和/Existence 数据、被动效果、HUD + 网络同步。
   - Botania：四台机器按上游精确对齐、`mana_coil`/`manasteel_gear`、魔力流体 + 桶、灌注/合成配方 7 条、Lexicon 词条 5 条、模型/贴图，且缺席安全。
   - **本轮新增**：`technom:existence_gem`（上游 `ItemExistenceGem`，此前整个物品缺失，而它是所有 Existence 机器配方的核心材料）+ 21 条 S3 合成配方（水晶×5、催化器×5、手册、宝石、燃烧器×2、使用器×3、塔×3）+ **喷泉接入 Existence 网络**（此前不是 `IExistenceProducer`，塔抽不到它，网络是断的）+ `technom_s3_rituals` / `technom_s3_existence` 两个 GameTest 批次（此前 S3 零覆盖）。
-- **S3 仍缺（仅剩人眼验收）**：仪式手册的 GUI 缩放；客户端几何/朝向、Lexicon 排版、魔力流体/桶、节点创建光效仍需人眼。
+- **S3 仍缺（仅剩人眼验收）**：客户端几何/朝向、Lexicon 排版、魔力流体/桶、节点创建光效仍需人眼。
 - **S4（深层 TC）**：完成。
   - 节点创建（`technom:node_fabricator` 成对 + 法杖右键 200 刻仪式，复用 `AuraNodeBlock.setPlacedBy` 路径，无 Mixin）。
   - **注魔稳定灯** `technom:flux_lamp`：ordo→不稳定度→淤泥，数值全按上游；写不稳定度是 TC4R 唯一没有公开口的动作，集中在 `compat/thaumcraft/ThaumcraftInternals` 用反射兜底（查不到字段就降级）。
@@ -23,12 +23,12 @@
   - **生态转换器** `technom:biome_morpher`：公开 `TaintSpreadLogic.setSpecialBiomeColumn`，无需 Mixin；右键切换魔法森林/阴森/污染之地。
   - **融合焦点恢复“吸收节点→右键空地再造节点”**（潜行右键吸收、空地右键立起，节点只存在于世界或焦点之一，不会复制或丢失）。
   - 三台机器都有配方、研究（`FLUXLAMP`/`ELECTRICBELLOWS`/`BIOMEMORPHER`）与模型，均**未实机验证**。
-- **S5**：未做（专用服务器/客户端/多人/重载/守恒总验收）。
+- **S5**：部分完成（GameTest 已验证服务端 `/reload` 数据包重载；专用服务器长期运行/客户端/多人/跨维度/死亡重生/守恒总验收仍未做）。
 
 ## 最近一次全量验证（2026-09-29）
 
 - `build`：**JUnit 238 通过 / 0 失败**（28 个测试类）。
-- `runGameTestServer` ×3（默认 / `-PwithGtceu=true` / `-PwithBotania=false`）：**各 94/94 通过**（批次 `technom_s4_deep_tc` 是本轮新增）。
+- `runGameTestServer` ×3（默认 / `-PwithGtceu=true` / `-PwithBotania=false`）：**各 95/95 通过**（批次 `technom_s4_deep_tc` 是本轮新增；另加服务端 `/reload` 燃料表替换测试）。
 - `python tools/validate_technom_data.py`：**OK: no errors**（16 warning / 1 skip；本轮修复前是 45 errors）。
 - Rosetta 客户端探针（带 GTCEu）：**3/3 通过**。注意“桥就绪 ≠ 世界就绪”，世界加载完成前跑会全报放置失败，需重跑。
 - 本轮修复的 10 个缺陷（含 21 个此前就已存在的“要工具却无 mineable 标签”方块）逐条记录在 [VALIDATION](docs/VALIDATION.zh-CN.md) 的 2026-09-29 一节。
@@ -45,7 +45,7 @@
 
 ## 下一步（按优先级）
 
-1. **S5 总验收（现在是唯一剩下的阶段）**：专用服务器长期运行、多人联机、`/reload`、跨维度/死亡重生、持久化往返、守恒总账、研究/配方可达性全链、无 Botania 客户端（`-PwithBotania=false runClient` 未跑）、JEI/Jade 集成（目前没有任何代码）。
+1. **S5 总验收（现在是唯一剩下的阶段）**：专用服务器长期运行、多人联机、跨维度/死亡重生、持久化往返、守恒总账、研究/配方可达性全链、无 Botania 客户端（`-PwithBotania=false runClient` 未跑）、JEI/Jade 集成（目前没有任何代码）；服务端 `/reload` 已由 GameTest 验证。
 2. **人眼验收**：仪式手册缩放、S4 三台机器的实机行为（尤其稳定灯对真实祭坛、风箱对真实炼金炉）、客户端几何/朝向、魔力流体与桶、节点创建光效。
 3. 全部完成后：`build` + `runGameTestServer`（有/无 GTCEu/无 Botania）+ Rosetta 客户端探针，并更新 FEATURE_MATRIX 与 VALIDATION。
 4. 工程卫生：`main` 领先 `origin/main` 的提交需要推送；`s1x/assets`、`s2/coils`、`s2/machines`、`s2/nodes-wands` 四个分支已全部合并（0 ahead），但挂在另一个 worktree 上，不要删。

@@ -1,6 +1,6 @@
 # Technomancy Unofficial — Forge 1.20.1
 
-基于官方 Forge MDK 初始化的现代移植工程。**S0–S4 已落地**：S1 精华闭环、S2 机器/线圈/节点/法杖/工具、S3 仪式 16/16 与 Existence 全套（含合成配方与 Existence 宝石）、S4 注魔稳定灯/电动风箱/生态转换器与节点创建。S4 三台机器有配方、研究与测试，但**尚未人工实机验收**；**S5**（专用服务器、多人、`/reload`、跨维度、守恒总账、JEI/Jade 集成）尚未开始。逐项证据见[功能矩阵](docs/FEATURE_MATRIX.zh-CN.md)与[验证记录](docs/VALIDATION.zh-CN.md)。
+基于官方 Forge MDK 初始化的现代移植工程。**S0–S4 已落地**：S1 精华闭环、S2 机器/线圈/节点/法杖/工具、S3 仪式 16/16 与 Existence 全套（含合成配方与 Existence 宝石）、S4 注魔稳定灯/电动风箱/生态转换器与节点创建。S4 三台机器有配方、研究与测试，但**尚未人工实机验收**；**S5** 已开始，服务端 GameTest 已覆盖 `/reload`，专用服务器长期运行、多人、跨维度、守恒总账、无 Botania 客户端与 JEI/Jade 集成仍未完成。逐项证据见[功能矩阵](docs/FEATURE_MATRIX.zh-CN.md)与[验证记录](docs/VALIDATION.zh-CN.md)。
 
 目标是恢复 Technomancy 的 TC4 玩法，使用 TC4R 20721，移除 Thermal Expansion 和 CoFH RF 依赖，提供 Forge Energy 与 GTCEu EU 兼容。Botania 和 Blood Magic 作为后续可选模块。
 
@@ -30,7 +30,7 @@ Set-Location 'H:\MinecraftMods\Technomancy-1.20.1'
 .\gradlew.bat runData
 ```
 
-`runGameTestServer` 现有 94 个必跑 GameTest（批次见 `src/main/java/theflogat/technomancy/gametest/`），在默认、`-PwithGtceu=true`、`-PwithBotania=false` 三种开发运行时均 94/94 通过；它们覆盖注册、守恒、方向与安全边界，仍不等于人工实机验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
+`runGameTestServer` 现有 95 个必跑 GameTest（批次见 `src/main/java/theflogat/technomancy/gametest/`），在默认、`-PwithGtceu=true`、`-PwithBotania=false` 三种开发运行时均 95/95 通过；它们覆盖注册、守恒、方向、服务端 `/reload` 与安全边界，仍不等于人工实机验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
 
 ## 客户端实机探针
 
