@@ -58,9 +58,11 @@ public abstract class ProcessorBlockEntity extends BlockEntity implements MenuPr
     protected final ItemStackHandler items = new ItemStackHandler(SLOTS) {
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            // The input filter is the processing rule itself, so a pipe cannot park an ore in
-            // the machine that it will never be able to work on.
-            return slot == SLOT_INPUT && OreProcessing.plan(stack, module()).isPresent();
+            // Only the input slot carries the processing rule; the output slot is machine-managed
+            // and the side-less view is the machine's own, so a pipe still cannot park an
+            // unprocessable ore in the machine while the machine may fill either slot itself.
+            return slot == SLOT_OUTPUT
+                    || (slot == SLOT_INPUT && OreProcessing.plan(stack, module()).isPresent());
         }
 
         @Override

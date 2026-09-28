@@ -217,7 +217,10 @@ public final class FusorSides {
 
     /** Room left on one slot, or 0 if it cannot take this aspect. */
     public int space(Direction face, @Nullable AspectId aspect) {
-        if (type(face) != SideType.INPUT || aspect == null || !aspect.equals(aspect(face))) {
+        // Both an input and the output hold exactly one aspect and can be filled with it; only an
+        // unmarked slot has no room. The output is normally filled by fuse(), but its capacity is
+        // real, which is what lets a caller (or a test) inspect the blocked state.
+        if (type(face) == SideType.NONE || aspect == null || !aspect.equals(aspect(face))) {
             return 0;
         }
         return MAX_AMOUNT - amount(face);

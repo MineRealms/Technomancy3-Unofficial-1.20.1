@@ -570,7 +570,8 @@ JAR 内 `theflogat/technomancy/gametest/` 0 条、`com/gregtechceu` 0 条；`dat
 ```powershell
 .\gradlew.bat build --offline --console=plain --no-daemon          # 成功；JUnit 229 项通过 0 失败（新增 5）
 python tools\validate_technom_data.py                              # OK: no errors（13 条 category 警告为既有惯例）
-.\gradlew.bat runGameTestServer --offline --console=plain --no-daemon  # 新增 8 项全过；另有 9 项既有失败见下
+.\gradlew.bat runGameTestServer --offline --console=plain --no-daemon                 # All 80 required tests passed
+.\gradlew.bat runGameTestServer -PwithGtceu=true --offline --console=plain --no-daemon  # All 80 required tests passed
 ```
 
 ### 本节尚未验证
@@ -578,13 +579,15 @@ python tools\validate_technom_data.py                              # OK: no erro
 - 两台机器的客户端渲染、实机点击与 Tooltip；消费者的生物击杀与带方块实体方块的实机行为。
 - 消费者的容器容量：原版 `canFillList` 在已有 4 种要素或任一超过 4 点时停止，本实现取「4 种要素、合计 256、每种 64」，已写在类注释里，是刻意的放宽。
 
-### 合并核对发现的既有 GameTest 失败（非本节两台机器）
+### 合并核对发现的既有 GameTest 失败（已全部修复）
 
-这 9 项来自更早的 S2 分支，其测试当时随提交写入但从未运行，本次是首次执行，均为既有缺口：
+首次运行合并树时另有 9 项来自更早 S2 分支的失败——那些测试随提交写入但从未运行。逐项定位后，其中 8 项是测试自身的问题，1 项是真实缺陷：
 
-- `WandChargeGameTests` 2 项：`makeMockServerPlayerInLevel` 的玩家没有网络连接，`WandChargeEvents` 发同步包时 netty 空指针；属测试环境限制。
-- `NodeFabricatorGameTests` 5 项：`AuraNodeBlockEntity` 为 null（测试期望的节点未生成）、1x3x3 外壳结构不成型。
-- `S2ProcessingGameTests.everyFaceReachesTheRightSlot` 1 项：无侧面 `IItemHandler` 对输出槽的插入被 `isItemValid` 拒绝，与测试期望不符。
-- `S2FusorGameTests.aFullOutputAndTheFaceRulesCostNothing` 1 项：满输出未让机器停机。
+| 失败 | 根因 | 处理 |
+|---|---|---|
+| `S2FusorGameTests.aFullOutputAndTheFaceRulesCostNothing` | **真实缺陷**：`FusorSides.space` 只给 INPUT 面返回容量，测试直接向输出槽装料被静默拒绝，于是"满输出"从未成立。输出槽本来就该有容量。 | 改 `FusorSides.space`，INPUT 与 OUTPUT 都按其自身要素给出余量 |
+| `S2ProcessingGameTests.everyFaceReachesTheRightSlot` | `ProcessorBlockEntity` 的 `items` 处理器对输出槽一律 `isItemValid=false`，无侧面视图因此填不进输出槽；但输出槽是机器自管的。 | `isItemValid` 只对输入槽应用加工规则，输出槽放行；面视图仍按槽位限制 |
+| `WandChargeGameTests` 2 项 | `makeMockServerPlayerInLevel()` 会真正登录，登录欢迎包写向 headless 测试端不存在的 netty 通道，`Connection.channel()` 空指针；充电本身不碰连接。 | 测试改为直接 `new ServerPlayer(...)`，不登录、不发包 |
+| `NodeFabricatorGameTests` 5 项 | 测试把控制器放在相对 y=1，而 GameTest 把结构整体下移一格、地面在相对 y=1，于是 3×3 外壳与地面重叠而无法成型；另外多处把绝对坐标当相对坐标用。 | 控制器改到相对 y=2；绝对/相对位置分开；节点改用 `level.setBlockAndUpdate(nodePosition(), ...)` |
 
-这些需要作为独立批次处理，不能算作本节两台机器的验收结果。
+修复后 `runGameTestServer` 在**有/无 GTCEu** 下均为 **All 80 required tests passed**。

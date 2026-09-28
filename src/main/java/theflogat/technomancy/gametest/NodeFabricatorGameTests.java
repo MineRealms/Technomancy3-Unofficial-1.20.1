@@ -53,14 +53,14 @@ public final class NodeFabricatorGameTests {
     /** Eight shells, all pointing at the controller, and every one of them a port into it. */
     @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH, timeoutTicks = 100)
     public static void theSlabIsBuiltAndEveryShellIsAPortIntoTheController(GameTestHelper helper) {
-        BlockPos pos = new BlockPos(2, 1, 3);
+        BlockPos pos = new BlockPos(2, 2, 3);
         NodeFabricatorBlockEntity machine = place(helper, pos, Direction.NORTH);
         helper.assertTrue(machine.structureComplete(helper.getLevel()), "the slab was not formed");
 
         machine.energy().ledger().receive(5000, 0, false);
         for (BlockPos shellRel : NodeFabricatorBlockEntity.shellPositions(pos, Direction.NORTH)) {
             NodeFabricatorShellBlockEntity shell = (NodeFabricatorShellBlockEntity) helper.getBlockEntity(shellRel);
-            helper.assertTrue(shell != null && pos.equals(shell.host()),
+            helper.assertTrue(shell != null && helper.absolutePos(pos).equals(shell.host()),
                     "shell at " + shellRel + " does not know its host");
             IEnergyStorage energy = shell.getCapability(ForgeCapabilities.ENERGY, Direction.UP)
                     .orElseThrow(() -> new AssertionError("no energy port on the shell at " + shellRel));
@@ -81,7 +81,7 @@ public final class NodeFabricatorGameTests {
     /** A blocked position leaves the slab unformed instead of breaking the player's blocks. */
     @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH, timeoutTicks = 100)
     public static void aBlockedSlabIsNotBuiltAndNothingIsDestroyed(GameTestHelper helper) {
-        BlockPos pos = new BlockPos(2, 1, 3);
+        BlockPos pos = new BlockPos(2, 2, 3);
         BlockPos blocked = pos.above();
         helper.setBlock(blocked, Blocks.DIAMOND_BLOCK);
         NodeFabricatorBlockEntity machine = place(helper, pos, Direction.NORTH);
@@ -94,7 +94,7 @@ public final class NodeFabricatorGameTests {
     /** Breaking the controller takes every shell with it: no unbreakable residue. */
     @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH, timeoutTicks = 100)
     public static void removingTheControllerRemovesTheShells(GameTestHelper helper) {
-        BlockPos pos = new BlockPos(2, 1, 3);
+        BlockPos pos = new BlockPos(2, 2, 3);
         NodeFabricatorBlockEntity machine = place(helper, pos, Direction.NORTH);
         machine.removeShells(helper.getLevel());
         helper.setBlock(pos, Blocks.AIR);
@@ -110,11 +110,13 @@ public final class NodeFabricatorGameTests {
      */
     @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH, timeoutTicks = 100)
     public static void rechargeMovesOneVisAndChargesExactlyOnce(GameTestHelper helper) {
-        BlockPos pos = new BlockPos(1, 1, 2);
+        BlockPos pos = new BlockPos(1, 2, 2);
         NodeFabricatorBlockEntity machine = place(helper, pos, Direction.EAST);
         BlockPos nodePos = machine.nodePosition();
-        helper.setBlock(nodePos, TCBlocks.AURA_NODE.get());
-        AuraNodeBlockEntity node = (AuraNodeBlockEntity) helper.getBlockEntity(nodePos);
+        // nodePosition() is absolute; helper.setBlock/getBlockEntity take structure-relative
+        // coordinates, so go through the level with the absolute position.
+        helper.getLevel().setBlockAndUpdate(nodePos, TCBlocks.AURA_NODE.get().defaultBlockState());
+        AuraNodeBlockEntity node = (AuraNodeBlockEntity) helper.getLevel().getBlockEntity(nodePos);
         LinkedHashMap<AspectId, Integer> base = new LinkedHashMap<>();
         base.put(AER, 10);
         LinkedHashMap<AspectId, Integer> current = new LinkedHashMap<>();
@@ -139,11 +141,13 @@ public final class NodeFabricatorGameTests {
     /** With a gem, an aspect the node never had is introduced and its base rises by one. */
     @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH, timeoutTicks = 100)
     public static void expansionRaisesTheBaseOfANewAspect(GameTestHelper helper) {
-        BlockPos pos = new BlockPos(1, 1, 2);
+        BlockPos pos = new BlockPos(1, 2, 2);
         NodeFabricatorBlockEntity machine = place(helper, pos, Direction.EAST);
         BlockPos nodePos = machine.nodePosition();
-        helper.setBlock(nodePos, TCBlocks.AURA_NODE.get());
-        AuraNodeBlockEntity node = (AuraNodeBlockEntity) helper.getBlockEntity(nodePos);
+        // nodePosition() is absolute; helper.setBlock/getBlockEntity take structure-relative
+        // coordinates, so go through the level with the absolute position.
+        helper.getLevel().setBlockAndUpdate(nodePos, TCBlocks.AURA_NODE.get().defaultBlockState());
+        AuraNodeBlockEntity node = (AuraNodeBlockEntity) helper.getLevel().getBlockEntity(nodePos);
         node.setNodeState(new AuraNodeState(Optional.of(UUID.randomUUID()), NodeTypeId.NORMAL,
                 NodeModifierId.FADING, NodeVis.EMPTY, NodeVis.EMPTY));
 
@@ -165,13 +169,15 @@ public final class NodeFabricatorGameTests {
     public static void onlyAFacingPairBecomesActive(GameTestHelper helper) {
         // The 5x5x5 template is too small for the pair, so the partner is checked by hand: an
         // unmatched fabricator must report itself inactive after its structure check has run.
-        BlockPos pos = new BlockPos(2, 1, 2);
+        BlockPos pos = new BlockPos(2, 2, 2);
         NodeFabricatorBlockEntity machine = place(helper, pos, Direction.NORTH);
         helper.runAfterDelay(40, () -> {
             helper.assertFalse(machine.isActive(), "a lone fabricator reported itself active");
-            helper.assertTrue(machine.partnerPosition().equals(pos.north(NodeFabricatorBlockEntity.PARTNER_DISTANCE)),
+            helper.assertTrue(
+                    machine.partnerPosition().equals(helper.absolutePos(pos).north(NodeFabricatorBlockEntity.PARTNER_DISTANCE)),
                     "the partner is looked for at " + machine.partnerPosition());
-            helper.assertTrue(machine.nodePosition().equals(pos.north(NodeFabricatorBlockEntity.NODE_DISTANCE).above()),
+            helper.assertTrue(
+                    machine.nodePosition().equals(helper.absolutePos(pos).north(NodeFabricatorBlockEntity.NODE_DISTANCE).above()),
                     "the node is looked for at " + machine.nodePosition());
             helper.succeed();
         });

@@ -6,9 +6,12 @@ import dev.tc4port.thaumcraft.api.wand.WandMaterialId;
 import dev.tc4port.thaumcraft.api.wand.WandPartApi;
 import dev.tc4port.thaumcraft.api.wand.WandRodSpec;
 import dev.tc4port.thaumcraft.api.wand.WandView;
+import com.mojang.authlib.GameProfile;
 import java.util.Optional;
+import java.util.UUID;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -35,6 +38,20 @@ public final class WandChargeGameTests {
 
     private WandChargeGameTests() {}
 
+    /**
+     * A server player built directly instead of logging one in.
+     *
+     * <p>{@code makeMockServerPlayerInLevel()} runs a full {@code PlayerList} login, whose welcome
+     * packets are written to a netty channel the headless test server never opens, so it throws
+     * inside {@code Connection.channel()}. Charging never touches the connection, so a bare
+     * {@link ServerPlayer} is enough and no packet is ever attempted.</p>
+     */
+    private static ServerPlayer mockPlayer(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        return new ServerPlayer(level.getServer(), level,
+                new GameProfile(UUID.randomUUID(), "technom-wand-test"));
+    }
+
     /** The rod definition is a data map entry; an absent one would silently disable everything. */
     @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH)
     public static void theEnergizedRodIsRegisteredFromTheDataMap(GameTestHelper helper) {
@@ -55,7 +72,7 @@ public final class WandChargeGameTests {
     /** One pass turns buffered Q into Vis at 100 Q per centivis and spends exactly that much. */
     @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH)
     public static void aChargingPassConservesEnergy(GameTestHelper helper) {
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        ServerPlayer player = mockPlayer(helper);
         ItemStack wand = WandApi.create(TechnomWandRods.ELECTRIC, WandMaterialId.IRON);
         long budget = 60 * WandCharge.Q_PER_CENTIVIS;
         TechnomWandRods.setCharge(wand, budget);
@@ -97,7 +114,7 @@ public final class WandChargeGameTests {
     /** Forge Energy goes in through the stack capability, never out, and simulate does not charge. */
     @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH)
     public static void theSceptreAcceptsForgeEnergyAndCountsAsAWrench(GameTestHelper helper) {
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        ServerPlayer player = mockPlayer(helper);
         ItemStack sceptre = WandApi.create(TechnomWandRods.TECHNOTURGE, WandMaterialId.IRON);
         IEnergyStorage energy = sceptre.getCapability(ForgeCapabilities.ENERGY)
                 .orElseThrow(() -> new AssertionError("no Forge Energy capability on a technoturge wand"));
