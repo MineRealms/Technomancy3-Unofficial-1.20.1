@@ -146,7 +146,7 @@ public class FusionFocusItem extends Item implements FocusIdentityItem {
         FocusApi.appendFocusTooltip(stack, lines);
         lines.add(Component.translatable("item.technom.fusion_focus.usage")
                 .withStyle(net.minecraft.ChatFormatting.GRAY));
-        lines.add(Component.translatable("item.technom.fusion_focus.no_creation")
-                .withStyle(net.minecraft.ChatFormatting.DARK_RED));
+        lines.add(Component.translatable("item.technom.fusion_focus.carry")
+                .withStyle(net.minecraft.ChatFormatting.GRAY));
     }
 }

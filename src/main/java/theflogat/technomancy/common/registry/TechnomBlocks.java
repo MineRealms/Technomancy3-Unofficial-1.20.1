@@ -356,6 +356,46 @@ public final class TechnomBlocks {
                         .isValidSpawn((state, level, pos, entity) -> false)));
     }
 
+    // ---- S4 deep TC ----
+
+    /**
+     * {@code fluxLamp}: calms a nearby infusion altar, paid for in ordo and paid out in flux goo.
+     */
+    public static final RegistryObject<Block> FLUX_LAMP = register("flux_lamp",
+            () -> new theflogat.technomancy.common.blocks.machines.FluxLampBlock(
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_LIGHT_GRAY)
+                            .strength(1.5F)
+                            .sound(SoundType.GLASS)
+                            .lightLevel(state -> 10)
+                            .noOcclusion()
+                            .requiresCorrectToolForDrops()
+                            .isValidSpawn((state, level, pos, entity) -> false)));
+
+    /** {@code electricBellows}: blows into the furnace it faces without being cranked. */
+    public static final RegistryObject<Block> ELECTRIC_BELLOWS = register("electric_bellows",
+            () -> new theflogat.technomancy.common.blocks.machines.ElectricBellowsBlock(
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.WOOD)
+                            .strength(2.0F)
+                            .sound(SoundType.WOOD)
+                            .requiresCorrectToolForDrops()
+                            .noOcclusion()
+                            .isValidSpawn((state, level, pos, entity) -> false)));
+
+    /** {@code biomeMorpher}: rewrites the biome around it, one column per half charge. */
+    public static final RegistryObject<Block> BIOME_MORPHER = register("biome_morpher",
+            () -> new theflogat.technomancy.common.blocks.machines.BiomeMorpherBlock(
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.METAL)
+                            .strength(3.0F, 9.0F)
+                            .sound(SoundType.METAL)
+                            .requiresCorrectToolForDrops()
+                            .noOcclusion()
+                            .isValidSpawn((state, level, pos, entity) -> false)));
+
+    // ---- end S4 deep TC ----
+
     // ---- S3 Botania ----
     // The four Botania machines and the BO processor are registered from
     // compat/botania/BotaniaContent, only when Botania is loaded, because their blocks and block

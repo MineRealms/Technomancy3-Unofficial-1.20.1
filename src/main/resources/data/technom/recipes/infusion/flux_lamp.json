@@ -1,0 +1,38 @@
+{
+  "type": "thaumcraft:infusion",
+  "research": "technom:FLUXLAMP",
+  "central": {
+    "item": "thaumcraft:thaumium_block"
+  },
+  "components": [
+    {
+      "item": "thaumcraft:order_shard"
+    },
+    {
+      "item": "thaumcraft:order_shard"
+    },
+    {
+      "item": "minecraft:bucket"
+    },
+    {
+      "item": "minecraft:bucket"
+    },
+    {
+      "item": "minecraft:emerald"
+    },
+    {
+      "item": "minecraft:emerald"
+    }
+  ],
+  "instability": 10,
+  "aspects": {
+    "machina": 45,
+    "vitium": 45,
+    "ordo": 45,
+    "lux": 45
+  },
+  "result": {
+    "item": "technom:flux_lamp",
+    "count": 1
+  }
+}

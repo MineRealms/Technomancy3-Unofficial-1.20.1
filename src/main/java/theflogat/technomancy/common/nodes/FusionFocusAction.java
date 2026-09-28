@@ -43,17 +43,23 @@ import theflogat.technomancy.common.items.FusionFocusItem;
  * {@link NodeApi#replaceLoadedStates} transaction and charges the focus cost; when the source has
  * nothing left, its block is taken away.</p>
  *
- * <p>Deliberate reduction: the original built a brand new node wherever you pointed. There is no
- * public way to create a node in TC4R (engineering guide 9.3), so the destination has to be a node
- * that already exists. The transaction boundary this uses is the two-node compare-and-set TC4R
- * documents for exactly this case - composing two single-node calls could duplicate or lose Vis if
- * the second one failed.</p>
+ * <p>The original's other gesture is back too, as two explicit halves: a shift-right-click takes a
+ * whole node into the focus and removes its block, and a right-click on free space builds it
+ * again, Vis and all. The node lives either in the world or inside the stack that is being used —
+ * never both — and the focus refuses to absorb a second node while it is already carrying one.
+ * Creating a node needs no Mixin: {@link NodeCreation} reuses the path TC4R's own
+ * {@code AuraNodeBlock.setPlacedBy} takes.</p>
+ *
+ * <p>The transaction boundary is still the two-node compare-and-set TC4R documents for fusing -
+ * composing two single-node calls could duplicate or lose Vis if the second one failed.</p>
  */
 public final class FusionFocusAction {
 
     public static final ResourceLocation ACTION_ID = new ResourceLocation(Technomancy.MOD_ID, "fuse_node");
     /** Focus property that holds the selected source node. */
     public static final ResourceLocation LINK_PROPERTY = new ResourceLocation(Technomancy.MOD_ID, "fusion_link");
+    /** Focus property that holds a node the focus has taken into itself. */
+    public static final ResourceLocation CARRY_PROPERTY = new ResourceLocation(Technomancy.MOD_ID, "fusion_carry");
     /** Research the action is gated behind; the same key the focus recipe uses. */
     public static final ResearchKey RESEARCH = ResearchKey.parse("technom:FUSIONFOCUS");
     /** Blocks away a node may be selected or fused, bounded by the focus action API. */
@@ -92,8 +98,18 @@ public final class FusionFocusAction {
         ServerLevel level = context.player().serverLevel();
         BlockPos target = hit.getBlockPos();
         AuraNodeState targetState = nodeState(level, target);
+        AuraNodeState carried = carried(context);
+        // With a node inside the focus, a click on free space puts it back down. That is the
+        // original's "absorb a node, then build it elsewhere" gesture, split in two so neither
+        // half can lose a node: the node exists either in the world or in the focus, never both.
+        if (carried != null && targetState == null) {
+            return place(context, action, level, target, carried);
+        }
         if (targetState == null) {
             return FocusActionResult.PASS;
+        }
+        if (carried == null && context.player().isShiftKeyDown()) {
+            return absorb(context, action, level, target, targetState);
         }
         Link link = Link.parse(context.installedFocus().properties().get(LINK_PROPERTY));
         if (link == null || link.position().equals(target) || !link.dimension().equals(dimension(level))) {
@@ -163,6 +179,92 @@ public final class FusionFocusAction {
         Technomancy.LOGGER.debug("Fusion focus moved {} base and {} vis from {} into {}",
                 fusion.movedBase(), fusion.movedVis(), link.position(), target);
         return FocusActionResult.SUCCESS;
+    }
+
+    /**
+     * Takes a whole node into the focus and removes its block.
+     *
+     * <p>The original did this on a plain right-click and left the node sitting in an item
+     * singleton, which is the bug the two-click link above was written to avoid. It is a
+     * shift-right-click here, it stores the node in the focus properties of the stack being used,
+     * and it refuses to run while the focus is already carrying one — so a node is never
+     * overwritten and never duplicated. Free, like the selection.</p>
+     */
+    private static FocusActionResult absorb(FocusActionContext context, VisAction action, ServerLevel level,
+            BlockPos target, AuraNodeState state) {
+        if (action == VisAction.SIMULATE) {
+            return FocusActionResult.SUCCESS;
+        }
+        String encoded = encode(state);
+        if (encoded == null) {
+            return FocusActionResult.FAILED;
+        }
+        if (!write(context, java.util.Map.of(CARRY_PROPERTY, encoded,
+                LINK_PROPERTY, new Link(dimension(level), target, state.instanceId()).encode()), Set.of())) {
+            return FocusActionResult.FAILED;
+        }
+        if (!level.removeBlock(target, false)) {
+            // The block would not come away, so the focus must not go on claiming to carry it.
+            write(context, java.util.Map.of(), Set.of(CARRY_PROPERTY, LINK_PROPERTY));
+            return FocusActionResult.FAILED;
+        }
+        level.playSound(null, target, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.7F, 1.0F);
+        Technomancy.LOGGER.debug("Fusion focus absorbed the node at {}", target);
+        return FocusActionResult.SUCCESS;
+    }
+
+    /** Puts a carried node back down. Costs what a fusion costs; the node's Vis is not topped up. */
+    private static FocusActionResult place(FocusActionContext context, VisAction action, ServerLevel level,
+            BlockPos target, AuraNodeState carried) {
+        boolean free = level.isLoaded(target)
+                && (level.getBlockState(target).isAir() || level.getBlockState(target).canBeReplaced());
+        if (!free || !context.pay(context.configuredCost(), action).affordable()) {
+            return FocusActionResult.FAILED;
+        }
+        if (action == VisAction.SIMULATE) {
+            return FocusActionResult.SUCCESS;
+        }
+        if (!NodeCreation.create(level, target, carried.type(), carried.modifier(),
+                carried.baseVis(), carried.currentVis())) {
+            return FocusActionResult.FAILED;
+        }
+        if (!write(context, java.util.Map.of(), Set.of(CARRY_PROPERTY))) {
+            // The stack still says it is carrying this node, so leaving the new one standing
+            // would be the same node in two places. Take the world change back instead.
+            level.removeBlock(target, false);
+            return FocusActionResult.FAILED;
+        }
+        level.playSound(null, target, SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.8F, 1.2F);
+        Technomancy.LOGGER.debug("Fusion focus rebuilt a node at {}", target);
+        return FocusActionResult.SUCCESS;
+    }
+
+    private static boolean write(FocusActionContext context, java.util.Map<ResourceLocation, String> values,
+            Set<ResourceLocation> removed) {
+        FocusPropertyUpdateResult result = FocusApi.updateInstalledProperties(context.player(), context.hand(),
+                values, removed, VisAction.EXECUTE);
+        return result == FocusPropertyUpdateResult.UPDATED || result == FocusPropertyUpdateResult.UNCHANGED;
+    }
+
+    @Nullable
+    private static AuraNodeState carried(FocusActionContext context) {
+        String value = context.installedFocus().properties().get(CARRY_PROPERTY);
+        if (value == null) {
+            return null;
+        }
+        return AuraNodeState.CODEC
+                .parse(com.mojang.serialization.JsonOps.INSTANCE,
+                        com.google.gson.JsonParser.parseString(value))
+                .result()
+                .orElse(null);
+    }
+
+    @Nullable
+    private static String encode(AuraNodeState state) {
+        return AuraNodeState.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, state)
+                .result()
+                .map(com.google.gson.JsonElement::toString)
+                .orElse(null);
     }
 
     @Nullable

@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "technom:block/electric_bellows",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "technom:block/electric_bellows",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "technom:block/electric_bellows"
+    },
+    "facing=south": {
+      "model": "technom:block/electric_bellows",
+      "y": 180
+    },
+    "facing=up": {
+      "model": "technom:block/electric_bellows",
+      "x": 270
+    },
+    "facing=west": {
+      "model": "technom:block/electric_bellows",
+      "y": 270
+    }
+  }
+}

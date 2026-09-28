@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "technom:block/electricbellows",
+    "particle": "technom:block/electricbellows"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "type": "thaumcraft:arcane_shaped",
+  "research": "technom:BIOMEMORPHER",
+  "pattern": [
+    " E ",
+    "TOB",
+    "GCG"
+  ],
+  "key": {
+    "E": {
+      "item": "minecraft:emerald"
+    },
+    "T": {
+      "item": "thaumcraft:quicksilver"
+    },
+    "O": {
+      "item": "thaumcraft:mirrored_glass"
+    },
+    "B": {
+      "item": "thaumcraft:shimmerleaf"
+    },
+    "G": {
+      "item": "technom:neutronized_gear"
+    },
+    "C": {
+      "item": "technom:enchanted_coil"
+    }
+  },
+  "result": {
+    "item": "technom:biome_morpher",
+    "count": 1
+  },
+  "vis": {
+    "terra": 30,
+    "ordo": 30,
+    "aqua": 30
+  }
+}

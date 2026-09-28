@@ -144,6 +144,28 @@ public final class TechnomBlockEntities {
                             TechnomBlocks.EXISTENCE_SEALER.get())
                     .build(null));
 
+    // ---- S4 deep TC ----
+
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.machines.FluxLampBlockEntity>> FLUX_LAMP =
+            TYPES.register("flux_lamp", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.machines.FluxLampBlockEntity::new,
+                            TechnomBlocks.FLUX_LAMP.get())
+                    .build(null));
+
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.machines.ElectricBellowsBlockEntity>> ELECTRIC_BELLOWS =
+            TYPES.register("electric_bellows", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.machines.ElectricBellowsBlockEntity::new,
+                            TechnomBlocks.ELECTRIC_BELLOWS.get())
+                    .build(null));
+
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.machines.BiomeMorpherBlockEntity>> BIOME_MORPHER =
+            TYPES.register("biome_morpher", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.machines.BiomeMorpherBlockEntity::new,
+                            TechnomBlocks.BIOME_MORPHER.get())
+                    .build(null));
+
+    // ---- end S4 deep TC ----
+
     // The Botania machines' block entity types are registered from
     // compat/botania/BotaniaContent, only when Botania is loaded.
 

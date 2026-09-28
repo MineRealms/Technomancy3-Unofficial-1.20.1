@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "target=eerie": {
+      "model": "technom:block/biome_morpher"
+    },
+    "target=magical_forest": {
+      "model": "technom:block/biome_morpher"
+    },
+    "target=tainted": {
+      "model": "technom:block/biome_morpher"
+    }
+  }
+}

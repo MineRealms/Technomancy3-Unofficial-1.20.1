@@ -4,6 +4,8 @@ import dev.tc4port.thaumcraft.api.aspect.AspectId;
 import dev.tc4port.thaumcraft.api.node.AuraNodeState;
 import dev.tc4port.thaumcraft.api.node.NodeModifierId;
 import dev.tc4port.thaumcraft.api.node.NodeTypeId;
+import dev.tc4port.thaumcraft.api.node.NodeModifierId;
+import dev.tc4port.thaumcraft.api.node.NodeTypeId;
 import dev.tc4port.thaumcraft.api.node.NodeVis;
 import dev.tc4port.thaumcraft.block.entity.AuraNodeBlockEntity;
 import dev.tc4port.thaumcraft.registry.TCBlocks;
@@ -36,7 +38,21 @@ public final class NodeCreation {
      */
     public static boolean create(ServerLevel level, BlockPos pos, @Nullable AspectId aspect,
             int amount, NodeTypeId type, NodeModifierId modifier) {
-        if (aspect == null || amount <= 0 || !level.isLoaded(pos)) {
+        if (aspect == null || amount <= 0) {
+            return false;
+        }
+        NodeVis vis = new NodeVis(Map.of(aspect, amount));
+        return create(level, pos, type, modifier, vis, vis);
+    }
+
+    /**
+     * Places a node carrying exactly the state handed in, which is what the fusion focus needs
+     * when it puts back a node it absorbed: a real node has several aspects and its current Vis is
+     * not its base Vis, so the single-aspect form above cannot express it.
+     */
+    public static boolean create(ServerLevel level, BlockPos pos, NodeTypeId type, NodeModifierId modifier,
+            NodeVis base, NodeVis current) {
+        if (!level.isLoaded(pos) || base.amounts().isEmpty()) {
             return false;
         }
         BlockState existing = level.getBlockState(pos);
@@ -47,8 +63,7 @@ public final class NodeCreation {
         if (!(level.getBlockEntity(pos) instanceof AuraNodeBlockEntity node)) {
             return false;
         }
-        NodeVis vis = new NodeVis(Map.of(aspect, amount));
-        node.setNodeState(new AuraNodeState(Optional.of(UUID.randomUUID()), type, modifier, vis, vis));
+        node.setNodeState(new AuraNodeState(Optional.of(UUID.randomUUID()), type, modifier, base, current));
         return true;
     }
 }

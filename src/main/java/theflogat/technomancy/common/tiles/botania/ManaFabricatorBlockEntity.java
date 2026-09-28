@@ -20,6 +20,7 @@ import theflogat.technomancy.common.energy.EnergyLimits;
 import theflogat.technomancy.common.energy.EnergyPorts;
 import theflogat.technomancy.common.energy.MachineEnergy;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
+import theflogat.technomancy.config.TechnomancyConfig;
 
 /**
  * {@code TileManaFabricator}, ported 1:1: it is a Botania {@link ManaPool} holding 100,000 Mana,
@@ -50,8 +51,11 @@ public final class ManaFabricatorBlockEntity extends BlockEntity implements Mana
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ManaFabricatorBlockEntity machine) {
-        if (machine.energy.ledger().stored() >= FE_PER_CYCLE && machine.mana + MANA_PER_CYCLE <= MAX_MANA) {
-            if (machine.energy.ledger().tryConsume(FE_PER_CYCLE)) {
+        // The 1.12 fork cut this to 5000; that is its own rebalance rather than upstream
+        // consensus, so the original stays the default and the fork's number is a config value.
+        long cost = TechnomancyConfig.MANA_FABRICATOR_COST.get();
+        if (machine.energy.ledger().stored() >= cost && machine.mana + MANA_PER_CYCLE <= MAX_MANA) {
+            if (machine.energy.ledger().tryConsume(cost)) {
                 machine.mana += MANA_PER_CYCLE;
                 machine.setChanged();
             }
