@@ -591,3 +591,41 @@ python tools\validate_technom_data.py                              # OK: no erro
 | `NodeFabricatorGameTests` 5 项 | 测试把控制器放在相对 y=1，而 GameTest 把结构整体下移一格、地面在相对 y=1，于是 3×3 外壳与地面重叠而无法成型；另外多处把绝对坐标当相对坐标用。 | 控制器改到相对 y=2；绝对/相对位置分开；节点改用 `level.setBlockAndUpdate(nodePosition(), ...)` |
 
 修复后 `runGameTestServer` 在**有/无 GTCEu** 下均为 **All 80 required tests passed**。
+
+## 客户端实机探针（2026-09-28）
+
+服务端与 GameTest 都不加载模型/blockstate/图集，所以本轮用 RosettaRemoteDebugBridge 把 dev 客户端实机拉起来跑客户端探针。操作流程见 [README 的“客户端实机探针”](../README.md#客户端实机探针)。
+
+### 执行
+
+```powershell
+# 非阻塞独立进程；带 GTCEu，quick-join "New World"
+Start-Process -FilePath .\tools\start_client_detached.cmd -ArgumentList '"New World"','"true"' -WorkingDirectory $PWD
+# 轮询 build\client-run.log 至 "Remote bridge listening on"（桥 127.0.0.1:48791）
+python .\tools\client_probe.py probes\client --attach
+```
+
+- 客户端确实带 GTCEu（日志含 `GTCEu common proxy init!` 与材料注册）；quick-join 用 `--quickPlaySingleplayer New World`，进世界后 `Dev joined the game`，桥在 `ServerStartedEvent` 监听 48791。
+- 非阻塞启动必须用 `Start-Process`：`cmd /c start` 和直接调用都会让后台 java 继承并占住调用方的 stdout 管道，导致 agent 被卡住。
+- 带 GTCEu 时 Forge 早期窗口崩在 `DisplayWindow.setupMinecraftWindow → UnionFileSystemProvider.getFileSystem → FileSystemNotFoundException`；`run-client/config/fml.toml` 设 `earlyWindowControl = false` 后正常。
+- 关客户端用桥 `exec` 执行 `Minecraft.getInstance().stop()`；执行后 java 进程与 48791 均消失。
+
+### 结果
+
+```
+============ 00_models_and_sprites.java ============   PASS
+============ 10_renderers_and_tab.java =============   PASS
+2/2 probes passed
+```
+
+- `00_models_and_sprites` 遍历 technom 的全部 15 个方块、321 个 blockstate 与 42 个物品，断言每个都有真实烘焙模型与粒子贴图，并断言 quantized_glass/quantum_jar 在 translucent 层。
+- `10_renderers_and_tab` 放置每个方块、确认客户端 BlockEntity 与渲染器解析，并确认创造标签为 42 项。
+
+### 探针抓到并修掉的缺陷
+
+`technom:node_dynamo` 的方块模型引用了 `technom:models/nodedynamo`，而 `assets/technom/textures/models/` 不存在（贴图在 `textures/entity/nodedynamo.png`）；方块图集因此对该模型报 “Missing textures … missingno”。改引用为 `technom:block/nodedynamo` 并把贴图放入 `textures/block/` 后，客户端探针 2/2 通过。这是纯客户端问题：服务端、GameTest 与数据校验都不会报告它。
+
+### 尚未验证
+
+- 几何、朝向、颜色与 z-order 的“看起来对不对”仍需人眼；探针只保证有模型、有贴图、在正确的渲染层。
+- 客户端脚本（CRD SCRIPT）与会话未启用；本轮只用 README 描述的进程与桥路径。

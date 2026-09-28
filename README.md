@@ -1,6 +1,6 @@
 # Technomancy Unofficial — Forge 1.20.1
 
-基于官方 Forge MDK 初始化的现代移植工程。当前是开发骨架：已有模组入口、构建和依赖配置、来源记录与工程指导；机器、研究、仪式及 FE/EU 能量适配尚未实现。
+基于官方 Forge MDK 初始化的现代移植工程。S0–S2 已落地（S1 精华闭环、S2 机器/线圈/节点/法杖/工具与两台补充机器），S3 起的仪式、Existence 与可选模块尚未实现；逐项证据见[功能矩阵](docs/FEATURE_MATRIX.zh-CN.md)与[验证记录](docs/VALIDATION.zh-CN.md)。
 
 目标是恢复 Technomancy 的 TC4 玩法，使用 TC4R 20721，移除 Thermal Expansion 和 CoFH RF 依赖，提供 Forge Energy 与 GTCEu EU 兼容。Botania 和 Blood Magic 作为后续可选模块。
 
@@ -14,7 +14,7 @@ Set-Location 'H:\MinecraftMods\Technomancy-1.20.1'
 .\gradlew.bat build --console=plain --no-daemon
 ```
 
-本地 TC4R 获取方式见 [local-repo/README.md](local-repo/README.md)。其他依赖由 Gradle 下载。成品路径：`build/libs/technom-1.20.1-0.1.0-dev.jar`，当前仅为骨架 JAR。
+本地 TC4R 获取方式见 [local-repo/README.md](local-repo/README.md)。其他依赖由 Gradle 下载。成品路径：`build/libs/technom-1.20.1-0.1.0-dev.jar`。
 
 ```powershell
 # TC4R 基础开发环境
@@ -30,7 +30,28 @@ Set-Location 'H:\MinecraftMods\Technomancy-1.20.1'
 .\gradlew.bat runData
 ```
 
-`runGameTestServer` 现有 3 个 `technom_smoke` 冒烟测试（TC4R 要素 API 已链接、GTCEu 存在性与类隔离），在有/无 `-PwithGtceu=true` 两种开发运行时均 3/3 通过，结果见[验证记录](docs/VALIDATION.zh-CN.md)；它们只覆盖加载与隔离，不是玩法验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
+`runGameTestServer` 现有 80 个必跑 GameTest（批次见 `src/main/java/theflogat/technomancy/gametest/`），在有/无 `-PwithGtceu=true` 两种开发运行时均 80/80 通过；它们覆盖注册、守恒、方向与安全边界，仍不等于人工实机验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
+
+## 客户端实机探针
+
+服务端与 GameTest 看不到模型、blockstate 与贴图图集，所以客户端要实机跑一遍。用 RosettaRemoteDebugBridge（`run-client/mods/rosetta_bridge_dev.jar`，桥端口 **48791**）：
+
+```powershell
+# 1. 非阻塞地把 dev 客户端拉成独立进程（带 GTCEu，quick-join "New World"）。
+#    必须用 Start-Process；`cmd /c start` 与直接调用都会让后台进程占住本命令的管道。
+Start-Process -FilePath .\tools\start_client_detached.cmd -ArgumentList '"New World"','"true"' -WorkingDirectory $PWD
+
+# 2. 轮询日志与桥，再对已运行的客户端跑探针
+Select-String .\build\client-run.log -Pattern 'Remote bridge listening on'   # 等这一行出现
+python .\tools\client_probe.py probes\client --attach                        # PASS/FAIL，退出码=失败数
+
+# 3. 关掉客户端（--attach 不会自动关）：桥 exec Minecraft.stop()，或 taskkill 整个 java 树
+```
+
+- `tools/start_client_detached.cmd <世界> [withgtceu]`，默认 `New World` / `true`；Gradle 控制台写到 `build\client-run.log`，游戏日志在 `run-client\logs\`。
+- 客户端带 GTCEu 时 Forge 早期窗口会在无真实控制台/union FS 环境下崩（`java.nio.file.FileSystemNotFoundException`），因此 `run-client/config/fml.toml` 设 `earlyWindowControl = false`。
+- `tools/client_probe.py <探针> [--attach]`：每个探针是一段 Java 方法体，经桥在客户端线程执行并自带 PASS/FAIL；`--attach` 只跑探针，不开、不关客户端。
+- 该流程首次运行即抓到 `technom:node_dynamo` 的模型引用了不存在的 `technom:models/nodedynamo`（粒子图标为 missingno），已改为 `technom:block/nodedynamo`。
 
 ## 工程文档
 

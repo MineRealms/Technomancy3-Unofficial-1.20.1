@@ -2,8 +2,8 @@
   "parent": "block/block",
   "render_type": "cutout",
   "textures": {
-    "particle": "technom:models/nodedynamo",
-    "all": "technom:models/nodedynamo"
+    "particle": "technom:block/nodedynamo",
+    "all": "technom:block/nodedynamo"
   },
   "display": {
     "gui": {

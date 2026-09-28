@@ -75,12 +75,20 @@ def main() -> int:
     parser.add_argument("--world", default=DEFAULT_WORLD, help="save folder to quick-join")
     parser.add_argument("--timeout", type=int, default=900,
                         help="seconds to wait for the client to load a world and its bridge")
+    parser.add_argument("--attach", action="store_true",
+                        help="run against an already-running client's bridge (started detached) "
+                             "instead of launching one and closing it")
     parser.add_argument("--keep", action="store_true", help="leave the client running afterwards")
     args = parser.parse_args()
 
     files = harness.probe_files(args.probes)
     if not files:
         raise SystemExit(f"no probes found in {args.probes}")
+    if args.attach:
+        if not TOKEN_FILE.is_file():
+            raise SystemExit(f"no bridge token at {TOKEN_FILE}; has the client started?")
+        print(f"attaching to the client bridge on {PORT}; running {len(files)} probe(s)\n")
+        return harness.run_probes(files, PORT, TOKEN_FILE)
     harness.require_bridge(RUN_DIR)
     ensure_world(args.world)
 
