@@ -1,90 +1,93 @@
-// Client-side wiring that a server cannot have: the BlockEntityRenderer, the creative
-// tab contents, and actually placing our blocks so their client block entities are
-// constructed and rendered at least once.
+// Client-side wiring that a server cannot have: the creative tab contents, and actually
+// placing our blocks so their client block entities are constructed and a renderer is
+// resolved for each.
+//
+// The placing has to happen on the integrated SERVER, not on mc.level. A ClientLevel's
+// chunk refuses setBlockState (the client is not allowed to author blocks), so the old
+// version of this probe - mc.level.setBlock(...) followed by an immediate read-back -
+// could never pass: every one of the 44 blocks "failed to place" for that reason alone.
+// Placing server-side also means the client only sees the blocks once the block-update
+// packets arrive, which is what 11_renderers_verify.java waits for.
+//
+// The placement is scheduled and NOT waited for. Blocking the client thread here would
+// stall the integrated server's own thread, which is exactly what the first attempt at
+// this did - it timed out with the blocks still unplaced.
+//
+// Both probes share a JVM, so the origin is handed over through a system property rather
+// than recomputed. Recomputing does not work: the test player is in a void world and
+// falls, so "the player's position" is a different place by the time 11 runs.
 net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-StringBuilder out = new StringBuilder();
-java.util.List<String> bad = new java.util.ArrayList<String>();
-
 if (mc.level == null || mc.player == null) {
     return "FAIL: the client is not in a world with a player\n";
 }
+net.minecraft.server.MinecraftServer server = mc.getSingleplayerServer();
+if (server == null) {
+    return "FAIL: no integrated server, so blocks cannot be placed\n";
+}
+net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension = mc.level.dimension();
+StringBuilder out = new StringBuilder();
+java.util.List<String> bad = new java.util.ArrayList<String>();
 
-// Place one of each of our blocks next to the player, on the client level. This is what
-// forces a client block entity to be created and a renderer to be resolved for it.
-net.minecraft.core.BlockPos origin = mc.player.blockPosition().offset(2, 0, 2);
-java.util.List<net.minecraft.core.BlockPos> placed = new java.util.ArrayList<net.minecraft.core.BlockPos>();
-int index = 0;
-for (net.minecraft.resources.ResourceLocation id : net.minecraft.core.registries.BuiltInRegistries.BLOCK.keySet()) {
-    if (!id.getNamespace().equals("technom")) {
-        continue;
-    }
-    net.minecraft.core.BlockPos at = origin.offset(index % 8, 0, index / 8);
-    index++;
-    net.minecraft.world.level.block.Block block = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(id);
-    mc.level.setBlock(at, block.defaultBlockState(), 3);
-    placed.add(at);
-    if (!mc.level.getBlockState(at).is(block)) {
-        bad.add("could not place " + id + " on the client level");
-        continue;
-    }
-    net.minecraft.world.level.block.entity.BlockEntity be = mc.level.getBlockEntity(at);
-    if (block instanceof net.minecraft.world.level.block.EntityBlock) {
-        if (be == null) {
-            bad.add("no client block entity for " + id);
-        } else {
-            // A block entity that declares a renderer must actually have one registered,
-            // or its dynamic parts silently never draw.
-            Object renderer = mc.getBlockEntityRenderDispatcher().getRenderer(be);
-            out.append("  ").append(id.getPath()).append(" BE=").append(be.getClass().getSimpleName())
-               .append(" renderer=").append(renderer == null ? "none" : renderer.getClass().getSimpleName())
-               .append("\n");
+// The creative tab is a pure client thing and can be checked right here. A technom item
+// that no tab shows is one a player cannot reach without /give.
+java.util.Set<String> shown = new java.util.HashSet<>();
+for (net.minecraft.world.item.CreativeModeTab tab
+        : net.minecraft.core.registries.BuiltInRegistries.CREATIVE_MODE_TAB) {
+    for (net.minecraft.world.item.ItemStack stack : tab.getDisplayItems()) {
+        net.minecraft.resources.ResourceLocation key =
+                net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
+        if (key.getNamespace().equals("technom")) {
+            shown.add(key.getPath());
         }
     }
 }
-out.append("placed ").append(placed.size()).append(" block(s) at ").append(origin.toShortString()).append("\n");
 
-// The quantum jar draws its contents and label in code, so its renderer is required.
-net.minecraft.world.level.block.entity.BlockEntity jar = null;
-for (net.minecraft.core.BlockPos at : placed) {
-    net.minecraft.world.level.block.entity.BlockEntity be = mc.level.getBlockEntity(at);
-    if (be instanceof theflogat.technomancy.common.tiles.essentia.QuantumJarBlockEntity) {
-        jar = be;
+// Every one of our blocks, in a stable order so both probes agree on the layout.
+java.util.List<net.minecraft.resources.ResourceLocation> ids = new java.util.ArrayList<>();
+for (net.minecraft.resources.ResourceLocation id
+        : net.minecraft.core.registries.BuiltInRegistries.BLOCK.keySet()) {
+    if (id.getNamespace().equals("technom")) {
+        ids.add(id);
     }
 }
-if (jar == null) {
-    bad.add("the quantum jar was not placed, so its renderer could not be checked");
-} else {
-    Object renderer = mc.getBlockEntityRenderDispatcher().getRenderer(jar);
-    if (renderer == null) {
-        bad.add("no BlockEntityRenderer registered for the quantum jar - its essentia level and label would never draw");
+java.util.Collections.sort(ids);
+out.append("blocks=").append(ids.size()).append("\n");
+
+server.execute(() -> {
+    net.minecraft.server.level.ServerLevel level = server.getLevel(dimension);
+    if (level == null) {
+        return;
+    }
+    // Anchor on the server player so the chunk is loaded on the client - a block the
+    // client cannot see is indistinguishable from one that never arrived. Gravity is
+    // switched off so the player stops falling and the chunk stays put while 11 runs.
+    java.util.List<net.minecraft.server.level.ServerPlayer> players = level.players();
+    net.minecraft.core.BlockPos origin;
+    if (players.isEmpty()) {
+        origin = new net.minecraft.core.BlockPos(0, 100, 0);
     } else {
-        out.append("quantum jar renderer: ").append(renderer.getClass().getName()).append("\n");
+        net.minecraft.server.level.ServerPlayer player = players.get(0);
+        player.setNoGravity(true);
+        player.setDeltaMovement(0.0D, 0.0D, 0.0D);
+        player.hurtMarked = true;
+        origin = player.blockPosition().offset(2, 3, 2);
     }
+    int index = 0;
+    for (net.minecraft.resources.ResourceLocation id : ids) {
+        net.minecraft.world.level.block.Block block =
+                net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(id);
+        level.setBlock(origin.offset(index % 8, 0, index / 8), block.defaultBlockState(), 3);
+        index++;
+    }
+    System.setProperty("technom.probe.renderer.origin",
+            origin.getX() + "," + origin.getY() + "," + origin.getZ());
+});
+out.append("asked the integrated server to place ").append(ids.size())
+   .append(" block(s); 11_renderers_verify.java checks them once they arrive\n");
+out.append("creative tabs hold ").append(shown.size()).append(" technom item(s)\n");
+if (shown.isEmpty()) {
+    bad.add("no technom item is in any creative tab");
 }
 
-// A creative tab that reports nothing hides the whole mod. Contents are built lazily,
-// so they have to be rebuilt before being read.
-try {
-    net.minecraft.world.item.CreativeModeTabs.tryRebuildTabContents(
-            net.minecraft.world.flag.FeatureFlags.DEFAULT_FLAGS, true, mc.level.registryAccess());
-} catch (Throwable ignored) {
-    // Already built for this session; the read below is what matters.
-}
-net.minecraft.world.item.CreativeModeTab tab = net.minecraft.core.registries.BuiltInRegistries.CREATIVE_MODE_TAB
-        .get(new net.minecraft.resources.ResourceLocation("technom", "main"));
-if (tab == null) {
-    bad.add("our creative tab is not registered");
-} else {
-    int shown = tab.getDisplayItems().size();
-    out.append("creative tab holds ").append(shown).append(" item(s)\n");
-    if (shown == 0) {
-        bad.add("our creative tab is empty");
-    }
-}
-
-// Clean up, so a repeated run starts from the same world as the first.
-for (net.minecraft.core.BlockPos at : placed) {
-    mc.level.setBlock(at, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
-}
 out.append(bad.isEmpty() ? "PASS\n" : "FAIL: " + bad + "\n");
 return out.toString();

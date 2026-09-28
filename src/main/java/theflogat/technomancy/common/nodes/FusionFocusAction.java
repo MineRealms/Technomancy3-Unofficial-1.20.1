@@ -1,6 +1,7 @@
 package theflogat.technomancy.common.nodes;
 
 import dev.tc4port.thaumcraft.api.Registration;
+import dev.tc4port.thaumcraft.api.aspect.AspectId;
 import dev.tc4port.thaumcraft.api.aspect.VisAction;
 import dev.tc4port.thaumcraft.api.aspect.VisPaymentResult;
 import dev.tc4port.thaumcraft.api.focus.FocusApi;
@@ -33,6 +34,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import theflogat.technomancy.Technomancy;
 import theflogat.technomancy.common.items.FusionFocusItem;
+import theflogat.technomancy.common.rituals.RitualFx;
 
 /**
  * The fusion focus in play: select a node, then fuse it into a second one.
@@ -224,10 +226,13 @@ public final class FusionFocusAction {
         if (action == VisAction.SIMULATE) {
             return FocusActionResult.SUCCESS;
         }
+        AspectId dominant = carried.currentVis().amounts().isEmpty() ? null
+                : carried.currentVis().amounts().keySet().iterator().next();
         if (!NodeCreation.create(level, target, carried.type(), carried.modifier(),
                 carried.baseVis(), carried.currentVis())) {
             return FocusActionResult.FAILED;
         }
+        RitualFx.nodeCreated(level, target, RitualFx.aspectColour(dominant));
         if (!write(context, java.util.Map.of(), Set.of(CARRY_PROPERTY))) {
             // The stack still says it is carrying this node, so leaving the new one standing
             // would be the same node in two places. Take the world change back instead.

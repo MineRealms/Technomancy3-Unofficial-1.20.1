@@ -4,6 +4,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import theflogat.technomancy.client.fx.TechnomClientFx;
 import theflogat.technomancy.client.render.QuantumJarRenderer;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 
@@ -31,6 +32,7 @@ public final class TechnomancyClient {
         S2MachinesClient.init(modBus);
         BotaniaClient.init(modBus);
         ExistenceHud.init(modBus);
+        TechnomClientFx.init(modBus);
     }
 
     /**

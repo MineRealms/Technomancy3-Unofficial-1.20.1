@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.rituals.IRitualEffectHandler;
 import theflogat.technomancy.common.rituals.Ritual;
+import theflogat.technomancy.common.rituals.RitualFx;
 import theflogat.technomancy.common.rituals.RitualRegistry;
 
 /**
@@ -81,8 +82,12 @@ public final class CatalystBlockEntity extends BlockEntity {
                 continue;
             }
             ritual.applyEffect(level, worldPosition);
-            if (player != null && level instanceof ServerLevel server) {
-                ritual.addAffinity(server, player);
+            if (level instanceof ServerLevel server) {
+                if (player != null) {
+                    ritual.addAffinity(server, player);
+                }
+                // The effect already changed the world; say so where a player can see it.
+                RitualFx.ritualFired(server, worldPosition, ritual.core());
             }
             setChanged();
             return true;

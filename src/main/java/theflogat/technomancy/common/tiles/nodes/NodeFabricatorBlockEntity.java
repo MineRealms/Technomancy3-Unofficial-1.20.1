@@ -2,6 +2,7 @@ package theflogat.technomancy.common.tiles.nodes;
 
 import dev.tc4port.thaumcraft.api.ThaumcraftApiHelper;
 import dev.tc4port.thaumcraft.api.aspect.AspectAmounts;
+import theflogat.technomancy.common.rituals.RitualFx;
 import dev.tc4port.thaumcraft.api.aspect.AspectApi;
 import dev.tc4port.thaumcraft.api.aspect.AspectContainerView;
 import dev.tc4port.thaumcraft.api.aspect.AspectId;
@@ -433,6 +434,7 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
         if (created) {
             store.takeExact(creationAspect(), own, false);
             partner.store.takeExact(partner.creationAspect(), theirs, false);
+            RitualFx.nodeCreated(level, nodePosition(), RitualFx.aspectColour(aspect));
         } else {
             // The energy was already spent; refund it rather than lose the work.
             energy.ledger().generate(cost);
