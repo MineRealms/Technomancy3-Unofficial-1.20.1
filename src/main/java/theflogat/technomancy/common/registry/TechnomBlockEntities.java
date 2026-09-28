@@ -161,6 +161,12 @@ public final class TechnomBlockEntities {
                             TechnomBlocks.PROCESSOR_BO.get())
                     .build(null));
 
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.botania.ManaExchangerBlockEntity>> MANA_EXCHANGER =
+            TYPES.register("mana_exchanger", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.botania.ManaExchangerBlockEntity::new,
+                            TechnomBlocks.MANA_EXCHANGER.get())
+                    .build(null));
+
     private TechnomBlockEntities() {
     }
 }

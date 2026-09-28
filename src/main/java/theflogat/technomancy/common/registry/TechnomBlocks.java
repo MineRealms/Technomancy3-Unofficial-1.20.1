@@ -378,6 +378,12 @@ public final class TechnomBlocks {
                             .sound(SoundType.METAL).requiresCorrectToolForDrops()
                             .lightLevel(state -> state.getValue(ProcessorBlock.LIT) ? ProcessorBlock.LIT_LIGHT : 0)));
 
+    public static final RegistryObject<Block> MANA_EXCHANGER = register("mana_exchanger",
+            () -> new theflogat.technomancy.common.blocks.botania.ManaExchangerBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(3.0F, 6.0F)
+                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()
+                            .isValidSpawn((state, level, pos, entity) -> false)));
+
     private TechnomBlocks() {
     }
 
