@@ -6,17 +6,32 @@
 
 - **S0（工程/构建/文档）**：完成。
 - **S1（TC4 精华闭环）**：完成（量子罐、源质发电机、能量凝聚器、S1-B 配方/研究）。
-- **S2（核心机器）**：完成（节点机器、线圈、法杖/工具、储库/创造罐/净化器/分解台/吞噬器/融合器，以及两台补做的机器）。80/80 GameTest 有/无 GTCEu 通过，JUnit 229 通过。
-- **S3（仪式联动）**：完成（客户端实机与 Botania 缺席安全都已补）：
+- **S2（核心机器）**：完成（节点机器、线圈、法杖/工具、储库/创造罐/净化器/分解台/吞噬器/融合器，以及两台补做的机器）。
+- **S3（仪式联动）**：完成（本轮补齐了此前只有创造栏一条路径的部分）：
   - 核心方块（水晶×5、催化器×5、玄武岩、假空气光源）。
   - 仪式 **16/16**、仪式手册 + Screen。
   - Existence 全套（喷泉、燃烧器、塔三阶、使用器三变体、传输接口）。
-  - 宝物村民 + 三件宝物。
+  - 宝物村民 + 三件宝物；新增 `world.treasures` 配置，**默认关闭**（对应上游 `treasureSafeguard=false` 的净效果，此前本工程无条件开启）。
   - 玩家亲和/Existence 数据、被动效果、HUD + 网络同步。
-  - Botania：**四台机器全部按上游精确对齐**（FlowerDynamo/ManaFabricator/BOProcessor/ManaExchanger），`mana_coil`/`manasteel_gear`、**魔力流体 + 桶**、**Botania 灌注/合成配方 7 条**、**Lexicon 词条 5 条**、**机器模型/贴图**全部落地。**缺席安全已做**：Botania 内容在 `compat/botania/BotaniaContent`，只在 `BotaniaPresence` 为真时注册。85/85 GameTest 有/无 GTCEu/无 Botania 通过，238 JUnit 通过。
-- **S3 仍缺（仅剩人眼验收）**：客户端探针已过（3/3，有/无 GT），但几何/朝向好不好看、Lexicon 页面排版、魔力流体/桶、节点创建光效仍需人眼。
-- **S4**: **节点创建已实现**——`technom:node_fabricator` 成对时用法杖右键启动 200 刻仪式，用 auram(北/西) + vitium(南/东) 造节点（类型/修正/Vis/能量按上游 `generateNode` 公式），创建原语 `NodeCreation` 复用 `AuraNodeBlock.setPlacedBy` 的路径，**不需要 Mixin**。85/85 GameTest、238 JUnit 通过。**S4 仍缺**：稳定灯、电动风箱、生态转换器。融合焦点的“吸收节点再造节点”手势未恢复（仍只合并两节点）。
+  - Botania：四台机器按上游精确对齐、`mana_coil`/`manasteel_gear`、魔力流体 + 桶、灌注/合成配方 7 条、Lexicon 词条 5 条、模型/贴图，且缺席安全。
+  - **本轮新增**：`technom:existence_gem`（上游 `ItemExistenceGem`，此前整个物品缺失，而它是所有 Existence 机器配方的核心材料）+ 21 条 S3 合成配方（水晶×5、催化器×5、手册、宝石、燃烧器×2、使用器×3、塔×3）+ **喷泉接入 Existence 网络**（此前不是 `IExistenceProducer`，塔抽不到它，网络是断的）+ `technom_s3_rituals` / `technom_s3_existence` 两个 GameTest 批次（此前 S3 零覆盖）。
+- **S3 仍缺（仅剩人眼验收）**：仪式手册的 GUI 缩放；客户端几何/朝向、Lexicon 排版、魔力流体/桶、节点创建光效仍需人眼。
+- **S4（深层 TC）**：完成。
+  - 节点创建（`technom:node_fabricator` 成对 + 法杖右键 200 刻仪式，复用 `AuraNodeBlock.setPlacedBy` 路径，无 Mixin）。
+  - **注魔稳定灯** `technom:flux_lamp`：ordo→不稳定度→淤泥，数值全按上游；写不稳定度是 TC4R 唯一没有公开口的动作，集中在 `compat/thaumcraft/ThaumcraftInternals` 用反射兜底（查不到字段就降级）。
+  - **电动风箱** `technom:electric_bellows`：吹 1–2 格外的奥术炼金炉或 1 格外的原版熔炉；原版熔炉写不进燃料，改为一次充能买 80 tick 推进（等价于原版的 `burnTime=80` + 每 2 tick +1）。
+  - **生态转换器** `technom:biome_morpher`：公开 `TaintSpreadLogic.setSpecialBiomeColumn`，无需 Mixin；右键切换魔法森林/阴森/污染之地。
+  - **融合焦点恢复“吸收节点→右键空地再造节点”**（潜行右键吸收、空地右键立起，节点只存在于世界或焦点之一，不会复制或丢失）。
+  - 三台机器都有配方、研究（`FLUXLAMP`/`ELECTRICBELLOWS`/`BIOMEMORPHER`）与模型，均**未实机验证**。
 - **S5**：未做（专用服务器/客户端/多人/重载/守恒总验收）。
+
+## 最近一次全量验证（2026-09-29）
+
+- `build`：**JUnit 238 通过 / 0 失败**（28 个测试类）。
+- `runGameTestServer` ×3（默认 / `-PwithGtceu=true` / `-PwithBotania=false`）：**各 94/94 通过**（批次 `technom_s4_deep_tc` 是本轮新增）。
+- `python tools/validate_technom_data.py`：**OK: no errors**（16 warning / 1 skip；本轮修复前是 45 errors）。
+- Rosetta 客户端探针（带 GTCEu）：**3/3 通过**。注意“桥就绪 ≠ 世界就绪”，世界加载完成前跑会全报放置失败，需重跑。
+- 本轮修复的 10 个缺陷（含 21 个此前就已存在的“要工具却无 mineable 标签”方块）逐条记录在 [VALIDATION](docs/VALIDATION.zh-CN.md) 的 2026-09-29 一节。
 
 ## 先读这些文件（按顺序）
 
@@ -30,11 +45,10 @@
 
 ## 下一步（按优先级）
 
-1. **客户端（已大部分做）**：`probes/client`（3 个探针）在**有/无 GTCEu** 两种运行时下都 **3/3 通过**；修掉 S3/Botania 的三个模型缺陷（`fake_air_light` BOM、`existence_fountain` 的 `entity/` 贴图、`mana_fabricator` 非法旋转角），把 JEI 固定到 GTCEu 7.5.3 的编译版本 `15.20.0.115` 使含 GT 的客户端能启动，并确认 Botania 手册里确实有我们的 1 分类 5 词条（Patchouli 加页必须放在 `assets/botania/`，不是本模组命名空间）。**仍缺**：页面的排版/图标人眼、魔力流体/桶、节点创建光效。
-2. **Botania 缺席安全（已完成）**：Botania 内容全部移入 `compat/botania/BotaniaContent`，由 `BotaniaPresence` 门控；`-PwithBotania=false` 下 85/85 GameTest 通过（Botania 批次自动跳过）。Botania 之外的代码不再出现 `vazkii.botania` 类型。
-3. **S4 余项**：稳定灯、电动风箱、生态转换器；融合焦点的吸收/创建手势（可选）。
-4. **S5 总验收**：专用服务器、多人、重载、跨维度、守恒、研究/配方可达。
-5. 全部完成后：`build` + `runGameTestServer`（有/无 GTCEu/无 Botania）+ 客户端探针，并更新 FEATURE_MATRIX 与 VALIDATION。
+1. **S5 总验收（现在是唯一剩下的阶段）**：专用服务器长期运行、多人联机、`/reload`、跨维度/死亡重生、持久化往返、守恒总账、研究/配方可达性全链、无 Botania 客户端（`-PwithBotania=false runClient` 未跑）、JEI/Jade 集成（目前没有任何代码）。
+2. **人眼验收**：仪式手册缩放、S4 三台机器的实机行为（尤其稳定灯对真实祭坛、风箱对真实炼金炉）、客户端几何/朝向、魔力流体与桶、节点创建光效。
+3. 全部完成后：`build` + `runGameTestServer`（有/无 GTCEu/无 Botania）+ Rosetta 客户端探针，并更新 FEATURE_MATRIX 与 VALIDATION。
+4. 工程卫生：`main` 领先 `origin/main` 的提交需要推送；`s1x/assets`、`s2/coils`、`s2/machines`、`s2/nodes-wands` 四个分支已全部合并（0 ahead），但挂在另一个 worktree 上，不要删。
 
 ## 已确定的方向（不可随意改）
 

@@ -69,3 +69,15 @@ Society Sunlit Valley（1.20.1 Forge）已加载与本工程相关的：
 | BloodMagic | **排除，不做** |
 | Thaumic Energistics | **自动兼容**（实现 TC4R 接口即可），不写注册代码；补文档与验证 |
 | Waila | 用 Jade；TC4R 有 `api/integration/JadeRegistration`，可后补 |
+
+## 6. S4 三台机器触及的 TC4R 边界（实施记录）
+
+S4 的注魔稳定灯、电动风箱、生态转换器各自撞到一个 TC4R 20721 的边界，处理方式如下，**不在 `api.*` 范围内的用法都集中隔离，不散落在业务代码里**。
+
+| 机器 | 需要的动作 | 20721 提供什么 | 本工程怎么做 |
+|---|---|---|---|
+| 注魔稳定灯 | 读取并**降低**运行中祭坛的不稳定度 | `InfusionMatrixBlockEntity` 有公开的 `instability()` / `crafting()` / `active()`，但 `instability` 是私有字段，全仓没有 setter，也没有 `api/infusion/**` | 读走公开 API；写走 `compat/thaumcraft/ThaumcraftInternals`，反射 TC4R 自有类的私有字段。TC4R 是模组、字段名不参与 MC 重混淆，开发与打包环境一致；字段查不到时该机降级为“只存 ordo、产淤泥、不降不稳定度”并在日志里报一次错 |
+| 电动风箱 | 给奥术炼金炉续燃、开加速 | `AlchemyFurnaceBlockEntity` 的 `burnTime`/`speedBoost` 私有；`api/alchemy/ArcaneBellowsApi` 只能查询吹向/相邻计数，没有注册自定义风箱的口子；原版熔炉则给了 `nativeimpl/mixin/FurnaceAccessor`（公开 accessor） | 炼金炉走 `ThaumcraftInternals` 反射（同上，失败即停用炼金炉分支）；原版熔炉只用公开的 `FurnaceAccessor` 推进 cooking（不写燃料，改为一充能买 80 tick 推进）；**不引入 Mixin 工具链** |
+| 生态转换器 | 把一列群系写成魔法森林/阴森/污染之地 | `api/taint/TaintBiomeApi` 只支持污染；但 `block/TaintSpreadLogic.setSpecialBiomeColumn(ServerLevel, BlockPos, ResourceKey<Biome>)` 是 public static，`worldgen/TCBiomes` 给出四个 biome key | 直接用公开静态方法，**无需 Mixin**。注意它不在 `api.*` 包内，属于版本锁定面：升级 TC4R 时要复核签名 |
+
+结论：S4 只引入**一处集中式反射桥**（`compat/thaumcraft/ThaumcraftInternals`），没有新增 Mixin；`TaintSpreadLogic` 与 `FurnaceAccessor` 都是 TC4R 自己的公开入口，登记为版本升级复核点。

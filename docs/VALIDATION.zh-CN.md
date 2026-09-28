@@ -828,3 +828,53 @@ GTCEu 7.5.3 的 JEI 兼容 Mixin 期望旧版 JEI 的 `List<String>` tooltip 方
 
 - 只验证了**专用/GameTest 服务端**在无 Botania 下可启动并跑完测试；没有跑无 Botania 的**客户端**（`-PwithBotania=false` 的 `runClient`）。客户端理论上不需要 Botania（模型/词条只在有 Botania 时才注册），但未实测。
 - 没有验证“存档先有 Botania 内容、再移除 Botania”的场景（那属于跨模组移除，预期会丢内容，不在缺席安全范围内）。
+
+## S3 遗漏补齐、S4 三台机器与审计修复（2026-09-29）
+
+### 本轮范围
+
+补齐 S3 此前“只有创造栏一条路径”的部分，并一次性做完 S4：
+
+- **S3**：新增 `technom:existence_gem`（上游 `ItemExistenceGem`；此前整个物品缺失，而它是全部 Existence 机器配方的核心材料）；按上游 `CraftingHandler.java:41-179` 补 21 条合成配方（水晶×5、催化器×5、仪式手册、宝石、燃烧器×2、使用器×3、塔×3）；**喷泉接入 Existence 网络**（此前未实现 `IExistenceProducer`，塔抽不到它，整条链是断的）；新增 `world.treasures` 配置并**默认关闭**（对应上游 `treasures && treasureSafeguard`、后者 false 的净效果；此前本工程无条件开启）。
+- **S4**：注魔稳定灯 `technom:flux_lamp`、电动风箱 `technom:electric_bellows`、生态转换器 `technom:biome_morpher`（配方/研究/模型齐备）；融合焦点恢复“吸收节点→右键空地再造节点”手势。
+- **1.12 增量**：魔力制造器能耗改为配置项 `balance.manaFabricatorCostQ`（默认仍按上游 1,000,000；1.12 fork 的 5000 作为可调档）；纯矿按矿种着色此前已具备。
+
+### 审计发现并修复的缺陷
+
+由独立静态审计（数据/资产核对 + 对抗式复核）发现以下缺陷，全部已修并加测试防线：
+
+| # | 缺陷 | 证据 | 修复 |
+|---|---|---|---|
+| 1 | 三台新机器的 BlockItem 没有物品模型 → 客户端显示紫黑缺失模型 | `assets/technom/models/item/` 下没有这三个；同类方块（如 `processor_tc`）都有，且客户端探针 `00_models_and_sprites` 会断言每个技术方块物品都能烘出模型 | 补 3 个 item 模型（`parent: technom:block/<name>`）；探针转为 PASS |
+| 2 | 三条新研究缺 `tc.research_text`，手册/笔记显示原始 key | 校验器 6 个 ERROR（en_us / zh_cn 各 3） | 补 6 个语言键 |
+| 3 | **25 个方块要求正确工具却不在任何 mineable 标签 → 挖了不掉、放下去收不回**；其中 **21 个是本轮之前就存在的旧缺陷** | 新守卫 `everyToolRequiringBlockIsMineable` 首轮即报 `technom:flower_dynamo`；逐条核对 `requiresCorrectToolForDrops`：直注册 14 + 催化器 5 + 塔 3 + 使用器 3 + Botania 4 | pickaxe 标签补到 24 项，新增 axe 标签（风箱）；4 台 Botania 机器用 `"required": false` 条目，避免缺席时数据包加载失败 |
+| 4 | 水晶配方染料与上游不符 | 上游 `CraftingHandler.java:42-66` 按 metadata 顺序取染料（nature=黑、火=白、水=红、光=绿、暗=蓝），与催化器按语义取色**不是同一套映射** | 按上游改；这是**上游自身的错位**，照抄并在此登记，不擅自“修正” |
+| 5 | 2 个配方含非法 `comment` 字段 | 校验器 ERROR | 删除 |
+| 6 | 稳定灯先扣 ordo 再写不稳定度 | 反射不可用时会白扣 5 ordo/次 | 改为“先确认不稳定度下降，再扣料”，并加 `canStabilise()` 闸门 |
+| 7 | 稳定灯上报了永远不给的源质（缺陷 A-7 同类） | `essentiaType/Amount` 返回存量但 `takeEssentia` 恒 0，TC4R 缓冲管会在这一面白耗一次转向 | 与处理器/凝聚器一致返回 null/0；并**补上上游漏做的行为**：每 10 tick 从正上方邻居抽 1 点 ordo |
+| 8 | 风箱对“烧不出东西”的输入照样收 3000 Q；且照搬了 TC4R 不存在的“奥术炉 2 格”伸距 | 上游原版炉分支要求 `FurnaceRecipes.getSmeltingResult != null` | 加熔炼配方探测；去掉 2 格伸距并记录 |
+| 9 | 融合焦点属性写失败时可能把节点复制成两份 | `absorb` 先写属性后移方块、`place` 先建方块后清属性，任一步失败即“世界里一份、焦点里一份” | 两处都加回滚 |
+| 10 | 催熟器门槛比上游晚 1 点 | 上游 `power > 605`；本工程 `power <= 606` 才返回，实际从 607 起 | 改为 605 |
+
+### 本轮实际执行
+
+在项目根目录、JDK 17 下执行：
+
+| 命令 | 结果 |
+|---|---|
+| `gradlew.bat build` | BUILD SUCCESSFUL；**JUnit 238 通过 / 0 失败**（28 个测试类） |
+| `gradlew.bat runGameTestServer` | **All 94 required tests passed** |
+| `gradlew.bat runGameTestServer -PwithGtceu=true` | **All 94 required tests passed** |
+| `gradlew.bat runGameTestServer -PwithBotania=false` | **All 94 required tests passed** |
+| `python tools/validate_technom_data.py` | **OK: no errors**（16 warning / 1 skipped）；本轮开始时为 45 errors |
+| Rosetta 客户端探针（带 GTCEu，quickJoin "New World"） | **3/3 通过**（`00_models_and_sprites`、`10_renderers_and_tab`、`20_patchouli_lexicon`） |
+
+GameTest 由 91 增至 94：新增批次 `technom_s4_deep_tc` 三项（全工程“要求工具的方块必须在 mineable 标签”遍历断言、三台新机器用对工具掉落自身、三条新配方与研究键可达）。新守卫在首轮就抓到了第 3 项里漏掉的 `flower_dynamo`。新增的 `technom_s3_rituals` / `technom_s3_existence`（6 项）在三种运行时下均通过；`technom_s3_existence` 的日志行 `pylon took 5 from a fountain holding 9995` 是喷泉接网成功的直接证据。
+
+### 本轮未验证
+
+- 客户端探针**首轮 2/3 失败**：桥在世界加载完成前就已就绪，探针 10/20 把全部 44 个方块报成“放置失败”（放置坐标 10,65,10），Patchouli 词条数为 0。世界真正加载完成后**重跑即 3/3 通过**（放置坐标变为玩家实际位置 214,74,-737）。结论：这是启动时序而非内容缺陷；但“桥就绪 ≠ 世界就绪”，后续探针流程应先确认玩家已进入世界再跑。
+- 没有任何**人工实机点击**：仪式阵列的真实搭建与触发、Existence 网络在真实拓扑下的产消、稳定灯对真实注魔祭坛、风箱对真实炼金炉、生态转换器的客户端群系刷新、融合焦点吸收/再造全流程、宝物村民开关，均只有代码与自动测试证据。
+- 未跑：专用服务器长期运行、多人联机、`/reload`、跨维度与死亡重生、无 Botania 客户端（`-PwithBotania=false runClient`）、JEI/Jade 集成（至今没有代码）。
+- 校验器 16 条 warning 未处理：13 条是“category 未在本文件声明”（分类确实声明在 `technomancy.json`，校验器逐文件检查看不到），2 条是未知目录 schema，属既有噪声。
+- 校验器读取的 `run-gametest/technom-data-inventory.json` 由最后一次 GameTest 运行写入；因此**必须在“有 Botania”的那次运行之后立刻跑校验器**，否则会把 Botania 物品误报为缺失（本轮第一次跑就踩到了这个顺序问题）。

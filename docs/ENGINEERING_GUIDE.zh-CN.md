@@ -367,10 +367,10 @@ Botania 1.12 分支的“空桶 + 50,000 Mana → 1,000 mB 魔力桶”是可评
 
 | 功能 | 旧实现 | 20721 缺口/适配选择 |
 |---|---|---|
-| 注魔稳定灯 | 直接修改矩阵 `instability` | `InfusionMatrixBlockEntity` 的状态字段 private，仅有 getter；静态稳定器 tags 不等价于主动消耗资源降低不稳定度。优先向 TC4R 加受控操作 API；否则限定版本的 Mixin |
-| 电动风箱 | 改炼金炉燃烧/进度、反射 speedBoost，改地狱炉时间 | 炼金炉相关字段 private；`ArcaneBellowsBlock` 为 final 且识别写死具体类型，现有 API 只查询。需要风箱提供者/加热加速扩展或局部 Mixin |
-| 新建节点 | `ThaumcraftWorldGenerator.createNodeAt` | `NodeApi` 没有公开创建入口；可封装内部节点放置与 `AuraNodeBlockEntity.setNodeState`，最好由 TC4R 提供公开、受约束操作 |
-| 魔法森林/阴森林改造 | `Utils.setBiomeAt` | 公开腐化 API 不覆盖任意群系；独立实现现代 quart 修改和同步，协调污染恢复历史 |
+| 注魔稳定灯 | 直接修改矩阵 `instability` | `InfusionMatrixBlockEntity` 的状态字段 private，仅有 getter；静态稳定器 tags 不等价于主动消耗资源降低不稳定度。**已实施决定**：读用公开 getter，写用唯一的集中式反射桥 `compat/thaumcraft/ThaumcraftInternals`（不引入 Mixin 工具链），字段缺失即降级并在日志报一次错 |
+| 电动风箱 | 改炼金炉燃烧/进度、反射 speedBoost，改地狱炉时间 | 炼金炉相关字段 private；`ArcaneBellowsBlock` 为 final 且识别写死具体类型，现有 API 只查询。**已实施决定**：炼金炉复用同一反射桥；原版熔炉走 TC4R 公开的 `FurnaceAccessor` 推进 cooking（写不进燃料，等价实现为一次充能买 80 tick、每 2 tick +1）。不引入 Mixin |
+| 新建节点 | `ThaumcraftWorldGenerator.createNodeAt` | `NodeApi` 没有公开创建入口。**已实施决定**：`common/nodes/NodeCreation` 封装“放 `TCBlocks.AURA_NODE` + `AuraNodeBlockEntity.setNodeState`”，节点制造器与融合焦点的吸收/再造手势共用；这套原语本就是 TC4R 自己的 `setPlacedBy` 路径，无 Mixin |
+| 魔法森林/阴森林改造 | `Utils.setBiomeAt` | 公开腐化 API 不覆盖任意群系。**已实施决定**：直接调用 TC4R 公开静态的 `block/TaintSpreadLogic.setSpecialBiomeColumn` + `worldgen/TCBiomes.*`（不在 `api.*` 包内，已登记为版本升级复核点）；无需独立 quart 实现，也无需 Mixin |
 | 研究台创建交互 | 笔直接把两张桌替换为研究台 | 插槽识别已有公开 `ScribeTools`，但两格结构创建还需核对现代桌交互并单独封装 |
 | 特殊设备无线精华 | 硬编码 Bore、Lamp、Thaumatorium 和 Buffer 内部类 | 重新核对各设备公开接口和转发 view；不照搬具体类名分支 |
 
