@@ -30,7 +30,7 @@
 
 ## 下一步（按优先级）
 
-1. **客户端（已部分做）**：`probes/client` 在**有/无 GTCEu** 两种运行时下都 **2/2 通过**；修掉 S3/Botania 的三个模型缺陷（`fake_air_light` BOM、`existence_fountain` 的 `entity/` 贴图、`mana_fabricator` 非法旋转角），并把 JEI 固定到 GTCEu 7.5.3 的编译版本 `15.20.0.115` 使含 GT 的客户端能启动（见 VALIDATION）。**仍缺**：Patchouli 词条是否真的显示、魔力流体/桶、节点创建光效未人眼验证。
+1. **客户端（已大部分做）**：`probes/client`（3 个探针）在**有/无 GTCEu** 两种运行时下都 **3/3 通过**；修掉 S3/Botania 的三个模型缺陷（`fake_air_light` BOM、`existence_fountain` 的 `entity/` 贴图、`mana_fabricator` 非法旋转角），把 JEI 固定到 GTCEu 7.5.3 的编译版本 `15.20.0.115` 使含 GT 的客户端能启动，并确认 Botania 手册里确实有我们的 1 分类 5 词条（Patchouli 加页必须放在 `assets/botania/`，不是本模组命名空间）。**仍缺**：页面的排版/图标人眼、魔力流体/桶、节点创建光效。
 2. **Botania 缺席安全（可选，但被 ENGINEERING_GUIDE 要求）**：把 Botania 机器及其方块/物品/配方的注册、能力与 API 引用收进存在性门控，使缺少 Botania 时核心 TC4R+FE 路线可完整启动。
 3. **S4 余项**：稳定灯、电动风箱、生态转换器；融合焦点的吸收/创建手势（可选）。
 4. **S5 总验收**：专用服务器、多人、重载、跨维度、守恒、研究/配方可达。

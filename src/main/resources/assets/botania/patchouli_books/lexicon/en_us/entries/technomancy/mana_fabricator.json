@@ -1,6 +1,6 @@
 {
   "name": "technom.lexicon.entry.mana_fabricator",
-  "category": "technom:technomancy",
+  "category": "botania:technomancy",
   "icon": "technom:mana_fabricator",
   "sortnum": 2,
   "pages": [

@@ -2,7 +2,7 @@
 
 核对日期：2026-09-28。来源：原版 `37bf9a5` 的 `common/tiles/botania/**`、`lib/compat/Botania.java`、`lib/handlers/Rate.java`。目标：本工程的 Botania 模块必须与上游**严格对应**（贴图、模型、物品、代码逻辑、数值、功能）。
 
-> **实施状态（2026-09-28 第二批）**：1–4 节已全部落地；5 节配方/Lexicon 已落地；6 节模型/贴图已替换。代码见 `common/tiles/botania/**`、`common/blocks/botania/**`、`common/fluids/**`、`common/registry/TechnomFluids.java`，数据见 `data/technom/recipes/botania/**`、`assets/technom/patchouli_books/lexicon/**`。验证记录见 [VALIDATION](VALIDATION.zh-CN.md) 的“Botania 收尾”一节。下方保留规格原文供逐条复核。
+> **实施状态（2026-09-28 第二批）**：1–4 节已全部落地；5 节配方/Lexicon 已落地；6 节模型/贴图已替换。代码见 `common/tiles/botania/**`、`common/blocks/botania/**`、`common/fluids/**`、`common/registry/TechnomFluids.java`，数据见 `data/technom/recipes/botania/**`、`assets/botania/patchouli_books/lexicon/**`（**必须放在 `botania` 命名空间**：Patchouli 的 `use_resource_pack` 按 `book.id` 分组，放本模组命名空间不会被 `botania:lexicon` 取到；客户端探针已确认 12 分类/250 词条里包含我们的 1 分类 5 词条）。验证记录见 [VALIDATION](VALIDATION.zh-CN.md) 的“Botania 收尾”一节。下方保留规格原文供逐条复核。
 >
 > 已知偏差：`TileManaExchanger` 上游用 `tile instanceof TilePool`，1.20.1 改为 `ManaPool` 能力（任何魔力池实现都接受）；FlowerDynamo/ManaFabricator 的扳手在移植版为“循环六面”，上游为“转向首个相邻能量方块”。
 
@@ -82,5 +82,5 @@
 2. ManaFabricator：`IManaPool` + 100,000 + 1,000,000 FE/100 mana + 单面 + 扳手。**已完成**（`ManaFabricatorBlockEntity`），`ManaFabricatorBlock.use` 接线扳手。
 3. BOProcessor：自身 1,000,000 缓冲 + 9×9 每 tick 吸 5000 + `multiplier*150 + 1500*reprocess`（需与处理器架构一起定夺）。**已完成数值**（`BoProcessorBlockEntity`，按加工刻计费，折算见类注释）。
 4. ManaExchanger：正上方池 + 魔力流体罐 + mode/扳手 + 1000 mana↔1 mB + 1000 FE/次。**已完成**（`ManaExchangerBlockEntity` + `ManaExchangerBlock` 的 `OUT`/`ACTIVE` 方块状态与 `PoolOverlayProvider`）。
-5. 配方（灌注/合成）、Lexicon 页、魔力流体与桶。**已完成**：7 条配方（`data/technom/recipes/botania/`），`FluidType`+Source/Flowing+`LiquidBlock`+`BucketItem`，5 条 Patchouli 词条（`technom` 命名空间的 `lexicon` 加页，挂在 `botania:lexicon`）。
+5. 配方（灌注/合成）、Lexicon 页、魔力流体与桶。**已完成**：7 条配方（`data/technom/recipes/botania/`），`FluidType`+Source/Flowing+`LiquidBlock`+`BucketItem`，5 条 Patchouli 词条（放在 `assets/botania/patchouli_books/lexicon/`，见上，客户端探针确认已进书）。
 6. 模型与贴图对齐。**已完成**：FlowerDynamo 底座+机头、ManaFabricator 花盆、ManaExchanger 逐面 in/out、Mana Purifier 逐面 lit/inactive；`mana_fluid` 补 blockstate（`LiquidBlock` 渲染为 INVISIBLE，仅为满足客户端模型探针）。

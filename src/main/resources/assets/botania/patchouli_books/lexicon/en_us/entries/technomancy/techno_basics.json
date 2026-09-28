@@ -1,6 +1,6 @@
 {
   "name": "technom.lexicon.entry.techno_basics",
-  "category": "technom:technomancy",
+  "category": "botania:technomancy",
   "icon": "technom:mana_coil",
   "sortnum": 0,
   "pages": [

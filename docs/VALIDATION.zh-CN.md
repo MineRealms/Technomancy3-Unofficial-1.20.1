@@ -656,7 +656,7 @@ python tools\validate_technom_data.py                                        # O
 - **ManaExchanger**（`ManaExchangerBlockEntity`）：`EXCHANGER_COST=1000`、能量容量 10,000、`FluidTank(1000)` 只收魔力流体、默认红石 `LOW`；`mode==false` 池→罐、`mode==true` 罐→池，每 tick 各按 1,000 Mana↔1 mB、1,000 Q 结算；池必须在正上方（`ManaPool` 能力），否则不工作。流体面规则照上游：顶面与无侧面解析都不给读写，`mode` 决定可填/可取。方块状态 `OUT`/`ACTIVE` 同时驱动 in/out 侧面模型与池上覆盖层；`ManaExchangerBlock implements PoolOverlayProvider`（1.20.1 的池渲染器在池下方方块上查这个接口）。
 - **魔力流体与桶**：`ManaFluidType` + `ForgeFlowingFluid.Source/Flowing` + `ManaFluidBlock` + `ManaBucketItem`；贴图 `block/manafluid_still|flow`（已带 `.mcmeta`），客户端经 `IClientFluidTypeExtensions` 提供。`BucketItem` 带 `FluidBucketWrapper` 能力，容器物品为空桶。
 - **配方**（`data/technom/recipes/botania/`，全部带 `forge:mod_loaded=botania` 与 `forge:item_exists` 门控）：魔力灌注 `mana_coil`（红石，3000）与 `mana_bucket`（空桶，50000，1.12 增量）；有序合成 `manasteel_gear`、`flower_dynamo`、`mana_fabricator`、`processor_bo`、`mana_exchanger`，材料映射按无 TE 分支（`ingotManasteel`→`botania:manasteel_ingot`、`manaDiamond`→`botania:mana_diamond`、`livingrock`→`botania:livingrock`、魔力池→`botania:mana_pool`、`powerCoilSilver`→红石、`frameTesseract`→末影之眼）。
-- **Lexicon**：`assets/technom/patchouli_books/lexicon/en_us/` 下 1 个分类 + 5 个词条，挂在 Botania 的 `botania:lexicon`（该书 `use_resource_pack=true`）。灌注页用 `botania:mana_infusion` 页型，普通页用 `crafting`；文本键同时写入 `en_us`/`zh_cn`（键集合一致，校验器通过）。
+- **Lexicon**：`assets/botania/patchouli_books/lexicon/en_us/` 下 1 个分类 + 5 个词条。**必须放在 `botania` 命名空间**：Patchouli 的 `BookContentResourceListenerLoader` 按 `book.id` 分组，放本模组命名空间不会被 `botania:lexicon` 取到（客户端探针已实测）。灌注页用 `botania:mana_infusion` 页型，普通页用 `crafting`；文本键同时写入 `en_us`/`zh_cn`（键集合一致，校验器通过）。
 - **模型/贴图**：`ManaExchanger` 拆成 `mana_exchanger_in/out`（底/顶/侧逐面，顶恒为 inactive）、`FlowerDynamo` 底座+机头、`ManaFabricator` 花盆、`processor_bo`/`processor_bo_lit` 用 BO 自己的贴图（此前误用 Blood Magic 的 `processorbm*`）。`blockstates/mana_fluid.json` 覆盖 `level=0..15`（`LiquidBlock` 的 `getRenderShape` 是 `INVISIBLE`，模型不会被绘制，只是为了不让客户端模型探针把它判为缺失）。
 - **校验器**：`tools/validate_technom_data.py` 新增 `botania:mana_infusion` schema 与 `input`/`output`/`mana` 读取，因此该数据包不再被误报为未知配方类型。
 
@@ -756,7 +756,7 @@ python .\tools\client_probe.py probes\client --attach
 # 修完模型缺陷后，再用 "true" 重跑一次；见下“含 GTCEu 的客户端”
 ```
 
-结果：两种运行时下 `00_models_and_sprites` 与 `10_renderers_and_tab` 都 **2/2 通过**；后者放置 41 个方块、确认 73 项创造标签、各 BlockEntity 与渲染器解析正常。
+结果：两种运行时下 `00_models_and_sprites` 与 `10_renderers_and_tab` 都 **2/2 通过**；后者放置 41 个方块、确认 73 项创造标签、各 BlockEntity 与渲染器解析正常。后来又加了 `20_patchouli_lexicon`（见下），最终 **3/3 通过**。
 
 ### 抓到并修掉的三个客户端缺陷
 
@@ -781,9 +781,20 @@ GTCEu 7.5.3 的 JEI 兼容 Mixin 期望旧版 JEI 的 `List<String>` tooltip 方
 
 **修复**：本工程没有任何 JEI 代码（`rg "mezz.jei" src/main/java` 为空，`86c9cac` 说“JEI 插件随后”但从未写），JEI 纯粹是开发客户端用来显示配方的运行时依赖，因此可以自由选版本。GTCEu 7.5.3 的 `mods.toml` 声明 `jei ("[15.20.0.115,)")`，其下限通常就是它的编译版本；把 `jei_version` 从 `15.56.0.205` 改为 **`15.20.0.115`** 后，含 GT 的客户端正常启动，探针同样 **2/2 通过**。`build` 与 `runGameTestServer -PwithGtceu=true` 仍分别是 238 JUnit / 85 GameTest 通过。
 
+### Botania Lexicon 实机验证（新增 `20_patchouli_lexicon`）
+
+加了这个探针后，第一次跑就发现词条**不在书里**：书的分类 11、词条 245，全是 Botania 自己的；我们的 `technom:technomancy` 分类与 5 个词条一个都没加载，且日志没有任何报错。
+
+根因（反汇编 `BookContentResourceListenerLoader`）：`apply` 把每个 `patchouli_books/<bookId>/...` 按 **`new ResourceLocation(文件命名空间, bookId)`** 分组，而 `findFiles(book, ...)` 只取 `data.get(book.id)`。书 id 是 `botania:lexicon`，我们的文件在 `assets/technom/...`，被分到 `technom:lexicon`，永远匹配不上。也就是说，`use_resource_pack` 给别的书加页时，**文件必须放在那本书的命名空间下**，不是自己的。
+
+修复：把整套 `patchouli_books/lexicon/` 从 `assets/technom/` 移到 `assets/botania/`，并把 5 个词条的 `"category"` 从 `technom:technomancy` 改成 `botania:technomancy`（词条/分类 id 随命名空间变成 `botania:*`）。文本键仍留在 `assets/technom/lang/`，Patchouli 的 `i18n` 按全局键解析，不受影响。
+
+修复后探针实测：书的分类 12、词条 250（各 +1/+5），`techno_basics`/`flower_dynamo`/`mana_fabricator`/`processor_bo`/`mana_exchanger` 全部 `true`。`probes/client` 由 2/2 变 **3/3 通过**。
+
 ### 覆盖与未覆盖
 
 - 探针只证明“每个方块/物品都有真实烘焙模型与粒子贴图、渲染器解析、在正确的渲染层”。几何、朝向、颜色、z-order 是否好看仍需人眼。
 - 两种客户端运行时（有/无 GTCEu）现在都跑通了 `probes/client`；无 GT 那次用于定位上面三个模型缺陷，含 GT 那次用于确认 JEI 降版后 GT 客户端可启动。
-- 本次未验证：Patchouli 词条在游戏内书上是否真的显示（客户端日志里没有本模组词条的报错，只有缺席的 `gardenofglass` 词条噪音）；魔力流体与桶的手持/倒出；仪式创建节点的光效（旧版有雷电 TESR，本版没有）。
+- Botania 手册词条已确认**进了书的分类与词条表**；但“翻开那一页、图标与文字排版是否好看”仍需人眼。
+- 本次仍未验证：魔力流体与桶的手持/倒出；仪式创建节点的光效（旧版有雷电 TESR，本版没有）；节点创建仪式没有客户端渲染。
 - `run-client/logs` 里 `gardenofglass` 的配方警告来自 Botania 自带词条引用了未安装的 Garden of Glass，与本模组无关。
