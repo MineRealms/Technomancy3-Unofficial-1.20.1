@@ -88,6 +88,10 @@ public final class TechnomItems {
 
     // ---- end S3 treasures ----
 
+    /** {@code itemRitualTome}: opens the ritual list. */
+    public static final RegistryObject<Item> RITUAL_TOME = ITEMS.register("ritual_tome",
+            () -> new theflogat.technomancy.common.items.RitualTomeItem(new Item.Properties()));
+
     private TechnomItems() {
     }
 
