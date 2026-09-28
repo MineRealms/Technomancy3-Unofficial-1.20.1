@@ -747,15 +747,16 @@ python tools\gen_gametest_structures.py --check                              # �
 
 ### 执行
 
-以 JDK 17 在本 worktree 执行。客户端**不带 GTCEu**（见下）：
+以 JDK 17 在本 worktree 执行。先用**无 GTCEu** 的客户端定位模型缺陷，再用**含 GTCEu** 的客户端确认 JEI 降版后 GT 运行时可用：
 
 ```powershell
 Start-Process -FilePath .\tools\start_client_detached.cmd -ArgumentList '"New World"','"false"' -WorkingDirectory $PWD
 # 等 build\client-run.log 出现 "Remote bridge listening on 127.0.0.1:48791"
 python .\tools\client_probe.py probes\client --attach
+# 修完模型缺陷后，再用 "true" 重跑一次；见下“含 GTCEu 的客户端”
 ```
 
-结果：`00_models_and_sprites` 与 `10_renderers_and_tab` **2/2 通过**；后者放置 41 个方块、确认 73 项创造标签、各 BlockEntity 与渲染器解析正常。
+结果：两种运行时下 `00_models_and_sprites` 与 `10_renderers_and_tab` 都 **2/2 通过**；后者放置 41 个方块、确认 73 项创造标签、各 BlockEntity 与渲染器解析正常。
 
 ### 抓到并修掉的三个客户端缺陷
 
@@ -767,19 +768,22 @@ python .\tools\client_probe.py probes\client --attach
 
 三者服务端、GameTest 与数据校验都不报（模型只在客户端烘焙）。这与 README 记录的 `node_dynamo` 贴图问题是同一类失败。
 
-### 含 GTCEu 的客户端（已知阻塞，非本次引入）
+### 含 GTCEu 的客户端（已修复：JEI 降到 GTCEu 的编译版本）
 
-`withgtceu=true` 的客户端在启动早期崩：
+`withgtceu=true` 的客户端最初在启动早期崩：
 
 ```text
 MixinApplyError: gtceu.mixins.json:jei.FluidHelperMixin ... Invalid descriptor
 Expected (Ljava/util/List;...) but found (Lmezz/jei/api/gui/builder/ITooltipBuilder;...)
 ```
 
-GTCEu 7.5.3 的 JEI 兼容 Mixin 期望旧版 JEI 的 `List<String>` tooltip 方法，而运行时解析到 `jei 15.56.0.205` 的新 `ITooltipBuilder` 签名。JEI 是提交 `86c9cac` 加入的 `runtimeOnly`，`runGameTestServer`（服务端、不加载 JEI）不受影响；此前那次客户端实机（`run-client/logs`，19:02）早于该提交，所以没暴露。这是 GTCEu × JEI 的版本组合问题，不是本模组的类：本次只做记录，未改 JEI 版本（本工程的 JEI 插件按 15.56 编译），因此客户端探针在无 GT 运行时执行。
+GTCEu 7.5.3 的 JEI 兼容 Mixin 期望旧版 JEI 的 `List<String>` tooltip 方法，而运行时解析到 `jei 15.56.0.205` 的新 `ITooltipBuilder` 签名。JEI 是提交 `86c9cac` 加入的 `runtimeOnly`，`runGameTestServer`（服务端、不加载 JEI）不受影响；此前那次客户端实机（`run-client/logs`，19:02）早于该提交，所以没暴露。
+
+**修复**：本工程没有任何 JEI 代码（`rg "mezz.jei" src/main/java` 为空，`86c9cac` 说“JEI 插件随后”但从未写），JEI 纯粹是开发客户端用来显示配方的运行时依赖，因此可以自由选版本。GTCEu 7.5.3 的 `mods.toml` 声明 `jei ("[15.20.0.115,)")`，其下限通常就是它的编译版本；把 `jei_version` 从 `15.56.0.205` 改为 **`15.20.0.115`** 后，含 GT 的客户端正常启动，探针同样 **2/2 通过**。`build` 与 `runGameTestServer -PwithGtceu=true` 仍分别是 238 JUnit / 85 GameTest 通过。
 
 ### 覆盖与未覆盖
 
 - 探针只证明“每个方块/物品都有真实烘焙模型与粒子贴图、渲染器解析、在正确的渲染层”。几何、朝向、颜色、z-order 是否好看仍需人眼。
+- 两种客户端运行时（有/无 GTCEu）现在都跑通了 `probes/client`；无 GT 那次用于定位上面三个模型缺陷，含 GT 那次用于确认 JEI 降版后 GT 客户端可启动。
 - 本次未验证：Patchouli 词条在游戏内书上是否真的显示（客户端日志里没有本模组词条的报错，只有缺席的 `gardenofglass` 词条噪音）；魔力流体与桶的手持/倒出；仪式创建节点的光效（旧版有雷电 TESR，本版没有）。
 - `run-client/logs` 里 `gardenofglass` 的配方警告来自 Botania 自带词条引用了未安装的 Garden of Glass，与本模组无关。
