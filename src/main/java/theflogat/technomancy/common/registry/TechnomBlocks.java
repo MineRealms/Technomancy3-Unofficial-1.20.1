@@ -338,6 +338,24 @@ public final class TechnomBlocks {
 
     // ---- end S3 Existence network ----
 
+    public static final RegistryObject<Block> EXISTENCE_CROP_ACCELERATOR = existenceUser(
+            "existence_crop_accelerator",
+            theflogat.technomancy.common.tiles.technom.existence.ExistenceUserBlockEntity.Mode.CROP);
+    public static final RegistryObject<Block> EXISTENCE_HARVESTER = existenceUser(
+            "existence_harvester",
+            theflogat.technomancy.common.tiles.technom.existence.ExistenceUserBlockEntity.Mode.HARVEST);
+    public static final RegistryObject<Block> EXISTENCE_SEALER = existenceUser(
+            "existence_sealer",
+            theflogat.technomancy.common.tiles.technom.existence.ExistenceUserBlockEntity.Mode.SEAL);
+
+    private static RegistryObject<Block> existenceUser(String name,
+            theflogat.technomancy.common.tiles.technom.existence.ExistenceUserBlockEntity.Mode mode) {
+        return register(name, () -> new theflogat.technomancy.common.blocks.technom.existence.ExistenceUserBlock(mode,
+                BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(2.0F)
+                        .sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()
+                        .isValidSpawn((state, level, pos, entity) -> false)));
+    }
+
     private TechnomBlocks() {
     }
 

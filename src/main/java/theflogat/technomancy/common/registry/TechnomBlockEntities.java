@@ -137,6 +137,13 @@ public final class TechnomBlockEntities {
                             TechnomBlocks.EXISTENCE_PYLON_COMPLEX.get())
                     .build(null));
 
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.technom.existence.ExistenceUserBlockEntity>> EXISTENCE_USER =
+            TYPES.register("existence_user", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.technom.existence.ExistenceUserBlockEntity::new,
+                            TechnomBlocks.EXISTENCE_CROP_ACCELERATOR.get(), TechnomBlocks.EXISTENCE_HARVESTER.get(),
+                            TechnomBlocks.EXISTENCE_SEALER.get())
+                    .build(null));
+
     private TechnomBlockEntities() {
     }
 }

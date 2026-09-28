@@ -59,6 +59,7 @@ public final class Technomancy {
         MinecraftForge.EVENT_BUS.addListener(Technomancy::onPlayerLogin);
         // S3 rituals: a catalyst running a ritual is unbreakable, as the original's hardness -1 was.
         MinecraftForge.EVENT_BUS.addListener(Technomancy::onBlockBreak);
+        theflogat.technomancy.common.items.technom.TreasureVillagers.register();
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                 () -> () -> theflogat.technomancy.client.TechnomancyClient.init(modBus));
     }
