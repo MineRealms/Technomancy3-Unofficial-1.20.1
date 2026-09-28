@@ -42,5 +42,13 @@ public final class RitualRegistry {
         register(new RitualWaterT1());
         register(new RitualWaterT2());
         register(new RitualWaterT3());
+        register(new theflogat.technomancy.common.rituals.earth.RitualCaveInT1());
+        register(new theflogat.technomancy.common.rituals.earth.RitualCaveInT2());
+        register(new theflogat.technomancy.common.rituals.earth.RitualCaveInT3());
+        register(new theflogat.technomancy.common.rituals.dark.RitualBlackHoleT1());
+        register(new theflogat.technomancy.common.rituals.dark.RitualBlackHoleT2());
+        register(new theflogat.technomancy.common.rituals.dark.RitualBlackHoleT3());
+        register(new theflogat.technomancy.common.rituals.fire.RitualOfFireT1());
+        register(new theflogat.technomancy.common.rituals.fire.RitualOfFireT2());
     }
 }
