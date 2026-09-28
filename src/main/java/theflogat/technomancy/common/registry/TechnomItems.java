@@ -73,6 +73,17 @@ public final class TechnomItems {
         TechnomPureOres.register(ITEMS);
     }
 
+    // ---- S3 Existence ----
+
+    /**
+     * {@code ItemExistenceGem}: the charge carrier every Existence machine is crafted from. It
+     * comes out of the crafting table empty and is filled by killing mobs.
+     */
+    public static final RegistryObject<Item> EXISTENCE_GEM = ITEMS.register("existence_gem",
+            () -> new theflogat.technomancy.common.items.technom.ExistenceGemItem(new Item.Properties()));
+
+    // ---- end S3 Existence ----
+
     // ---- S3 treasures ----
 
     /** {@code ItemTreasure:0} fire gem, :1 power plate, :2 golden wing. */

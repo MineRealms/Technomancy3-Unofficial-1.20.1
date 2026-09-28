@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BRA",
+    "RGR",
+    "ARB"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:gold_block"
+    },
+    "R": {
+      "tag": "forge:dyes/white"
+    },
+    "B": {
+      "item": "minecraft:golden_apple"
+    },
+    "A": {
+      "item": "minecraft:golden_carrot"
+    }
+  },
+  "result": {
+    "item": "technom:catalyst_light",
+    "count": 1
+  }
+}

@@ -8,10 +8,15 @@ import net.minecraft.world.level.block.state.BlockState;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 
 /**
- * The Existence fountain ({@code TileExistenceFountain}): makes Existence power over time. The
- * ritual only needs it to exist and fill; the transmitter/consumer network is a later batch.
+ * The Existence fountain ({@code TileExistenceFountain}): makes Existence power over time and is
+ * the largest producer in the network.
+ *
+ * <p>{@link ExistencePylonBlockEntity} only recognises {@link IExistenceProducer}, so the fountain
+ * has to be one or the power it makes stays inside it: the ritual that creates it is the only
+ * way to obtain one, and without a producer side the whole Existence chain — fountain, pylon,
+ * burner, users — would have no source that is not a mob grinder.</p>
  */
-public final class ExistenceFountainBlockEntity extends BlockEntity {
+public final class ExistenceFountainBlockEntity extends BlockEntity implements IExistenceProducer {
 
     public static final int POWER_CAP = 1_000_000;
     public static final int PRODUCTION = 500;
@@ -45,6 +50,37 @@ public final class ExistenceFountainBlockEntity extends BlockEntity {
 
     public boolean isRunning() {
         return power < POWER_CAP;
+    }
+
+    @Override
+    public int getPower() {
+        return power;
+    }
+
+    @Override
+    public int getPowerCap() {
+        return POWER_CAP;
+    }
+
+    @Override
+    public int getMaxRate() {
+        return PRODUCTION * 4;
+    }
+
+    @Override
+    public void addPower(int value) {
+        power = Math.max(0, Math.min(POWER_CAP, power + value));
+        setChanged();
+    }
+
+    @Override
+    public boolean canInput() {
+        return false;
+    }
+
+    @Override
+    public boolean canOutput() {
+        return power > 0;
     }
 
     @Override

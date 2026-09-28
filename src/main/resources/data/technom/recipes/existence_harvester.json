@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " H ",
+    "BGB",
+    " H "
+  ],
+  "key": {
+    "G": {
+      "item": "technom:existence_gem"
+    },
+    "B": {
+      "item": "minecraft:golden_apple"
+    },
+    "H": {
+      "item": "minecraft:iron_hoe"
+    }
+  },
+  "result": {
+    "item": "technom:existence_harvester",
+    "count": 1
+  }
+}

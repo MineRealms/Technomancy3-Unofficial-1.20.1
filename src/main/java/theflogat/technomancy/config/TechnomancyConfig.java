@@ -10,6 +10,9 @@ public final class TechnomancyConfig {
     public static final ForgeConfigSpec.DoubleValue ESSENTIA_FUEL_SCALE;
     public static final ForgeConfigSpec.LongValue CONDENSER_COST;
     public static final ForgeConfigSpec.LongValue CONSUMER_COST;
+    public static final ForgeConfigSpec.BooleanValue TREASURES;
+    public static final ForgeConfigSpec.LongValue MANA_FABRICATOR_COST;
+    public static final ForgeConfigSpec.LongValue BIOME_MORPHER_COST;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -42,6 +45,26 @@ public final class TechnomancyConfig {
                         "One charge is paid for each item entity, mob or block it consumes. The default is",
                         "the original 20000; the buffer holds fifty charges, also as in 1.7.10.")
                 .defineInRange("eldritchConsumerCostQ", 20_000L, 1L, Long.MAX_VALUE);
+        MANA_FABRICATOR_COST = builder
+                .comment("Energy the Botania mana fabricator spends per 100 mana, in Q.",
+                        "1.7.10 charged 1000000 per operation; the 1.12 fork cut it to 5000, which is a",
+                        "rebalance by that fork's author and not upstream consensus, so the default stays",
+                        "at the original. Set it to 5000 to play with the fork's cheaper rate.")
+                .defineInRange("manaFabricatorCostQ", 1_000_000L, 1L, Long.MAX_VALUE);
+        BIOME_MORPHER_COST = builder
+                .comment("Energy the biome morpher spends per biome column it converts, in Q.",
+                        "The original 20000 is what its 800000 Q buffer buys forty conversions with.")
+                .defineInRange("biomeMorpherCostQ", 20_000L, 1L, Long.MAX_VALUE);
+        builder.pop();
+
+        builder.push("world");
+        TREASURES = builder
+                .comment("Let villagers carry the three treasures, which the Extraction ritual then takes.",
+                        "Off by default, as in 1.7.10: the original gated this behind a second option,",
+                        "treasureSafeguard, that shipped false, so its treasures flag ended up false too.",
+                        "Turning this on makes one villager in fifty a carrier and makes killing that",
+                        "villager drop its treasure - which is a reason to keep it off on a public server.")
+                .define("treasures", false);
         builder.pop();
 
         SPEC = builder.build();

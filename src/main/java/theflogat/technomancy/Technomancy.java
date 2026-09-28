@@ -71,6 +71,8 @@ public final class Technomancy {
         // S3 rituals: a catalyst running a ritual is unbreakable, as the original's hardness -1 was.
         MinecraftForge.EVENT_BUS.addListener(Technomancy::onBlockBreak);
         theflogat.technomancy.common.items.technom.TreasureVillagers.register();
+        // S3 Existence: killing a mob charges the gem the Existence machines are crafted from.
+        MinecraftForge.EVENT_BUS.addListener(Technomancy::onLivingDeath);
         theflogat.technomancy.common.player.PlayerAffinityEffects.register(MinecraftForge.EVENT_BUS);
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                 () -> () -> theflogat.technomancy.client.TechnomancyClient.init(modBus));
@@ -78,6 +80,17 @@ public final class Technomancy {
 
     private static void onPlayerLogin(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
         theflogat.technomancy.common.player.PlayerAffinity.prepare(event.getEntity());
+    }
+
+    /**
+     * A player kill charges the first unfinished Existence gem in their inventory, which is the
+     * only way to fill one ({@code EventRegister} in 1.7.10 did the same on the same event).
+     */
+    private static void onLivingDeath(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+        if (event.getSource().getEntity() instanceof net.minecraft.world.entity.player.Player player
+                && !player.level().isClientSide) {
+            theflogat.technomancy.common.items.technom.ExistenceGemItem.chargeFromKill(player, event.getEntity());
+        }
     }
 
     private static void onBlockBreak(net.minecraftforge.event.level.BlockEvent.BreakEvent event) {

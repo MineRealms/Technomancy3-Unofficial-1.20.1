@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:ender_pearl"
+    },
+    {
+      "item": "minecraft:diamond"
+    },
+    {
+      "item": "technom:existence_gem"
+    },
+    {
+      "item": "technom:existence_pylon_advanced"
+    }
+  ],
+  "result": {
+    "item": "technom:existence_pylon_complex",
+    "count": 1
+  }
+}

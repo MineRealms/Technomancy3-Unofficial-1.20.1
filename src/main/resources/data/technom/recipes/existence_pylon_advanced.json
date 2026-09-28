@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:diamond"
+    },
+    {
+      "item": "technom:potency_gem"
+    },
+    {
+      "item": "technom:existence_gem"
+    },
+    {
+      "item": "technom:existence_pylon_basic"
+    }
+  ],
+  "result": {
+    "item": "technom:existence_pylon_advanced",
+    "count": 1
+  }
+}

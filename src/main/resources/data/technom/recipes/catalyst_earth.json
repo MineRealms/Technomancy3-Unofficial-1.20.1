@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BRB",
+    "RGR",
+    "BRB"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:gold_block"
+    },
+    "R": {
+      "tag": "forge:dyes/green"
+    },
+    "B": {
+      "item": "minecraft:grass_block"
+    }
+  },
+  "result": {
+    "item": "technom:catalyst_earth",
+    "count": 1
+  }
+}

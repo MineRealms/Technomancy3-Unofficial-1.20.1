@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "OFO",
+    "FGF",
+    "OFO"
+  ],
+  "key": {
+    "G": {
+      "item": "technom:existence_gem"
+    },
+    "O": {
+      "item": "minecraft:obsidian"
+    },
+    "F": {
+      "item": "minecraft:flint_and_steel"
+    }
+  },
+  "result": {
+    "item": "technom:existence_sealer",
+    "count": 1
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "GR ",
+    "RG "
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "R": {
+      "tag": "forge:dyes/green"
+    }
+  },
+  "result": {
+    "item": "technom:crystal_light",
+    "count": 3
+  }
+}

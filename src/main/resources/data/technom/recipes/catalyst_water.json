@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ARB",
+    "RGR",
+    "BRA"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:gold_block"
+    },
+    "R": {
+      "tag": "forge:dyes/blue"
+    },
+    "B": {
+      "item": "minecraft:clay"
+    },
+    "A": {
+      "item": "minecraft:cod"
+    }
+  },
+  "result": {
+    "item": "technom:catalyst_water",
+    "count": 1
+  }
+}

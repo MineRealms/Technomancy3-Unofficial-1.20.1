@@ -8,11 +8,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import theflogat.technomancy.common.rituals.earth.RitualExtraction;
+import theflogat.technomancy.config.TechnomancyConfig;
 
 /**
  * Gives some naturally spawned villagers a treasure and drops it when they die
  * ({@code ItemTreasure} carriers in the original). The Extraction ritual reads the same tag, and
  * a sealer can mark one so it is not lost.
+ *
+ * <p>Off unless {@code treasures} is enabled, which mirrors 1.7.10: the original also had this
+ * behaviour behind {@code Ids.treasures}, but that flag was AND-ed with {@code treasureSafeguard},
+ * which shipped false, so the feature was dormant by default there too.</p>
  */
 public final class TreasureVillagers {
 
@@ -29,6 +34,9 @@ public final class TreasureVillagers {
     }
 
     public static void onVillagerJoin(EntityJoinLevelEvent event) {
+        if (!TechnomancyConfig.TREASURES.get()) {
+            return;
+        }
         if (!(event.getEntity() instanceof Villager villager)
                 || !(event.getLevel() instanceof ServerLevel level)) {
             return;
@@ -43,6 +51,9 @@ public final class TreasureVillagers {
     }
 
     public static void onVillagerDeath(LivingDeathEvent event) {
+        if (!TechnomancyConfig.TREASURES.get()) {
+            return;
+        }
         if (!(event.getEntity() instanceof Villager villager)
                 || !(villager.level() instanceof ServerLevel level)) {
             return;
