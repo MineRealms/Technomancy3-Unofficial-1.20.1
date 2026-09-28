@@ -311,6 +311,33 @@ public final class TechnomBlocks {
                             .noOcclusion()
                             .isValidSpawn((state, level, pos, entity) -> false)));
 
+    // ---- S3 Existence network ----
+
+    public static final RegistryObject<Block> EXISTENCE_BURNER = register("existence_burner",
+            () -> new theflogat.technomancy.common.blocks.technom.existence.ExistenceBurnerBlock(false,
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(3.0F, 9.0F)
+                            .sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> EXISTENCE_DYNAMIC_BURNER = register("existence_dynamic_burner",
+            () -> new theflogat.technomancy.common.blocks.technom.existence.ExistenceBurnerBlock(true,
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(3.0F, 9.0F)
+                            .sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> EXISTENCE_PYLON_BASIC = pylon("existence_pylon_basic",
+            theflogat.technomancy.common.tiles.technom.existence.ExistenceTier.BASIC);
+    public static final RegistryObject<Block> EXISTENCE_PYLON_ADVANCED = pylon("existence_pylon_advanced",
+            theflogat.technomancy.common.tiles.technom.existence.ExistenceTier.ADVANCED);
+    public static final RegistryObject<Block> EXISTENCE_PYLON_COMPLEX = pylon("existence_pylon_complex",
+            theflogat.technomancy.common.tiles.technom.existence.ExistenceTier.COMPLEX);
+
+    private static RegistryObject<Block> pylon(String name,
+            theflogat.technomancy.common.tiles.technom.existence.ExistenceTier tier) {
+        return register(name, () -> new theflogat.technomancy.common.blocks.technom.existence.ExistencePylonBlock(tier,
+                BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(2.0F)
+                        .sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()
+                        .isValidSpawn((state, level, pos, entity) -> false)));
+    }
+
+    // ---- end S3 Existence network ----
+
     private TechnomBlocks() {
     }
 

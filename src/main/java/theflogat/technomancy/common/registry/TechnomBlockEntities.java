@@ -125,6 +125,18 @@ public final class TechnomBlockEntities {
                             TechnomBlocks.EXISTENCE_FOUNTAIN.get())
                     .build(null));
 
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.technom.existence.ExistenceBurnerBlockEntity>> EXISTENCE_BURNER =
+            TYPES.register("existence_burner", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.technom.existence.ExistenceBurnerBlockEntity::new,
+                            TechnomBlocks.EXISTENCE_BURNER.get(), TechnomBlocks.EXISTENCE_DYNAMIC_BURNER.get())
+                    .build(null));
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.technom.existence.ExistencePylonBlockEntity>> EXISTENCE_PYLON =
+            TYPES.register("existence_pylon", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.technom.existence.ExistencePylonBlockEntity::new,
+                            TechnomBlocks.EXISTENCE_PYLON_BASIC.get(), TechnomBlocks.EXISTENCE_PYLON_ADVANCED.get(),
+                            TechnomBlocks.EXISTENCE_PYLON_COMPLEX.get())
+                    .build(null));
+
     private TechnomBlockEntities() {
     }
 }
