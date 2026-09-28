@@ -35,8 +35,12 @@ public final class ExistenceUserBlockEntity extends BlockEntity implements IExis
     private static final int CROP_COST = 30;
     private static final int HARVEST_COST = 30;
     private static final int SEAL_COST = 500_000;
-    /** The crop accelerator only runs with this much banked, as the original's {@code power>605}. */
-    private static final int CROP_FLOOR = 606;
+    /**
+     * The crop accelerator only runs with this much banked, as the original's {@code power>605}:
+     * the gate below returns while {@code power <= CROP_FLOOR}, so 605 is the largest amount that
+     * does nothing and 606 the smallest that works.
+     */
+    private static final int CROP_FLOOR = 605;
     private static final String TAG_POWER = "power";
 
     private int power;

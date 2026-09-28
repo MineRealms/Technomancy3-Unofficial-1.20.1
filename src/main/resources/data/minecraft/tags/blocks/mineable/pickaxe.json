@@ -1,9 +1,45 @@
 {
   "replace": false,
   "values": [
+    "technom:basalt",
+    "technom:biome_morpher",
+    "technom:catalyst_dark",
+    "technom:catalyst_earth",
+    "technom:catalyst_fire",
+    "technom:catalyst_light",
+    "technom:catalyst_water",
+    "technom:eldritch_consumer",
     "technom:energy_condenser",
     "technom:essentia_dynamo",
+    "technom:essentia_fusor",
+    "technom:existence_burner",
+    "technom:existence_crop_accelerator",
+    "technom:existence_dynamic_burner",
+    "technom:existence_fountain",
+    "technom:existence_harvester",
+    "technom:existence_pylon_advanced",
+    "technom:existence_pylon_basic",
+    "technom:existence_pylon_complex",
+    "technom:existence_sealer",
+    "technom:flux_lamp",
     "technom:node_dynamo",
-    "technom:node_fabricator"
+    "technom:node_fabricator",
+    "technom:processor_tc",
+    {
+      "id": "technom:flower_dynamo",
+      "required": false
+    },
+    {
+      "id": "technom:mana_exchanger",
+      "required": false
+    },
+    {
+      "id": "technom:mana_fabricator",
+      "required": false
+    },
+    {
+      "id": "technom:processor_bo",
+      "required": false
+    }
   ]
 }
