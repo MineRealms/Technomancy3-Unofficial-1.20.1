@@ -300,6 +300,17 @@ public final class TechnomBlocks {
 
     // ---- end S3 ritual core blocks ----
 
+    /** {@code fountainExistence}: the Existence fountain the dark ritual builds. */
+    public static final RegistryObject<Block> EXISTENCE_FOUNTAIN = register("existence_fountain",
+            () -> new theflogat.technomancy.common.blocks.technom.existence.ExistenceFountainBlock(
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_BLACK)
+                            .strength(3.0F, 9.0F)
+                            .sound(SoundType.STONE)
+                            .requiresCorrectToolForDrops()
+                            .noOcclusion()
+                            .isValidSpawn((state, level, pos, entity) -> false)));
+
     private TechnomBlocks() {
     }
 

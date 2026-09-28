@@ -73,6 +73,21 @@ public final class TechnomItems {
         TechnomPureOres.register(ITEMS);
     }
 
+    // ---- S3 treasures ----
+
+    /** {@code ItemTreasure:0} fire gem, :1 power plate, :2 golden wing. */
+    public static final RegistryObject<Item> TREASURE_FIRE_GEM = ITEMS.register("treasure_fire_gem",
+            () -> new theflogat.technomancy.common.items.technom.TreasureItem(
+                    theflogat.technomancy.common.player.Affinity.FIRE, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> TREASURE_POWER_PLATE = ITEMS.register("treasure_power_plate",
+            () -> new theflogat.technomancy.common.items.technom.TreasureItem(
+                    theflogat.technomancy.common.player.Affinity.DARK, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> TREASURE_GOLDEN_WING = ITEMS.register("treasure_golden_wing",
+            () -> new theflogat.technomancy.common.items.technom.TreasureItem(
+                    theflogat.technomancy.common.player.Affinity.LIGHT, new Item.Properties().stacksTo(1)));
+
+    // ---- end S3 treasures ----
+
     private TechnomItems() {
     }
 

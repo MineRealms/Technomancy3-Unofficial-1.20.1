@@ -50,5 +50,7 @@ public final class RitualRegistry {
         register(new theflogat.technomancy.common.rituals.dark.RitualBlackHoleT3());
         register(new theflogat.technomancy.common.rituals.fire.RitualOfFireT1());
         register(new theflogat.technomancy.common.rituals.fire.RitualOfFireT2());
+        register(new theflogat.technomancy.common.rituals.earth.RitualExtraction());
+        register(new theflogat.technomancy.common.rituals.dark.RitualFountainExistence());
     }
 }

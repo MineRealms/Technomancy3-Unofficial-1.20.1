@@ -119,6 +119,12 @@ public final class TechnomBlockEntities {
                             TechnomBlocks.FAKE_AIR_LIGHT.get())
                     .build(null));
 
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.technom.existence.ExistenceFountainBlockEntity>> EXISTENCE_FOUNTAIN =
+            TYPES.register("existence_fountain", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.technom.existence.ExistenceFountainBlockEntity::new,
+                            TechnomBlocks.EXISTENCE_FOUNTAIN.get())
+                    .build(null));
+
     private TechnomBlockEntities() {
     }
 }
