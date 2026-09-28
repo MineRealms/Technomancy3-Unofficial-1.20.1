@@ -549,3 +549,42 @@ JAR 内 `theflogat/technomancy/gametest/` 0 条、`com/gregtechceu` 0 条；`dat
 - 功能矩阵开头那句“当前工程只有初始化骨架，以下游戏内容全部待迁移”在量子罐落地时就已过时，本批次未改动它以免与其它分支冲突。
 
 下一阶段开始后，每批功能都应更新此记录，写明实际运行命令、观察结果和未覆盖的环境；不要用 `test NO-SOURCE`、启动成功或 GameTest 冒烟结果代替功能验收。
+
+## S2 剩余两台机器与合并修复（2026-09-28）
+
+本节覆盖合并 `s2/machines`（`2a2ae1c`）之后补全的两台 S2 机器，以及同一次核对中发现的合并破损。
+
+### 合并修复
+
+合并提交 `2a2ae1c` 是在没有构建合并树的情况下提交的，其中两处按行拼接的冲突结果无法编译：`TechnomBlocks` 的 `NODE_FABRICATOR` 注册丢失了 `.sound/.requiresCorrectToolForDrops/.noOcclusion/.isValidSpawn` 及右括号，`TechnomancyClient` 丢了 `FMLClientSetupEvent` 导入而方法签名仍在用。功能矩阵则有 6 台机器同时保留旧「待迁移」行与新「已实现」行。修复提交 `af58c9e`（语言文件经键集合核对无缺失无重复）。`s1x/assets` 的 24 张纹理随 `ca5f18d` 合入。
+
+### 新增的两台机器
+
+| 机器 | id | 已执行 |
+|---|---|---|
+| 高级分解台 | `technom:adv_decon_table` | 逻辑 `DeconstructionTable`（原始要素递归、两段掷骰、倍率）JUnit `DeconstructionTableTest` 5 项；GameTest `technom_s2_decon` 3 项：活体注册表下 `potentia → ignis+ordo`、无主机器持续进食、六面 `IItemHandler` |
+| 邪术吞噬器 | `technom:eldritch_consumer` | GameTest `technom_s2_consumer` 5 项：无能量不进食、掉落物按要素与整份能量被吞、方块只取要素不掉落物、基岩与箱子被放过、六面可抽出要素 |
+
+命令与结果：
+
+```powershell
+.\gradlew.bat build --offline --console=plain --no-daemon          # 成功；JUnit 229 项通过 0 失败（新增 5）
+python tools\validate_technom_data.py                              # OK: no errors（13 条 category 警告为既有惯例）
+.\gradlew.bat runGameTestServer --offline --console=plain --no-daemon  # 新增 8 项全过；另有 9 项既有失败见下
+```
+
+### 本节尚未验证
+
+- 两台机器的客户端渲染、实机点击与 Tooltip；消费者的生物击杀与带方块实体方块的实机行为。
+- 消费者的容器容量：原版 `canFillList` 在已有 4 种要素或任一超过 4 点时停止，本实现取「4 种要素、合计 256、每种 64」，已写在类注释里，是刻意的放宽。
+
+### 合并核对发现的既有 GameTest 失败（非本节两台机器）
+
+这 9 项来自更早的 S2 分支，其测试当时随提交写入但从未运行，本次是首次执行，均为既有缺口：
+
+- `WandChargeGameTests` 2 项：`makeMockServerPlayerInLevel` 的玩家没有网络连接，`WandChargeEvents` 发同步包时 netty 空指针；属测试环境限制。
+- `NodeFabricatorGameTests` 5 项：`AuraNodeBlockEntity` 为 null（测试期望的节点未生成）、1x3x3 外壳结构不成型。
+- `S2ProcessingGameTests.everyFaceReachesTheRightSlot` 1 项：无侧面 `IItemHandler` 对输出槽的插入被 `isItemValid` 拒绝，与测试期望不符。
+- `S2FusorGameTests.aFullOutputAndTheFaceRulesCostNothing` 1 项：满输出未让机器停机。
+
+这些需要作为独立批次处理，不能算作本节两台机器的验收结果。
