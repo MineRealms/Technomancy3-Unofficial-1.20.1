@@ -113,6 +113,12 @@ public final class TechnomBlockEntities {
 
     // ---- end S3 ritual core blocks ----
 
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.air.FakeAirLightBlockEntity>> FAKE_AIR_LIGHT =
+            TYPES.register("fake_air_light", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.air.FakeAirLightBlockEntity::new,
+                            TechnomBlocks.FAKE_AIR_LIGHT.get())
+                    .build(null));
+
     private TechnomBlockEntities() {
     }
 }

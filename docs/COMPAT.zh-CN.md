@@ -57,6 +57,8 @@ Society Sunlit Valley（1.20.1 Forge）已加载与本工程相关的：
 
 **决定**：不新增 `compat/thaumicenergistics` 代码模块；兼容性由“正确实现 TC4R 源质接口”保证，这正是 S1/S2 已完成的接口契约（有 GameTest 覆盖每个面的 `canInputFrom/canOutputTo/takeEssentia/addEssentia/availableEssentia`）。需要补的是**文档**与**版本对齐**，而不是注册代码。
 
+**兜底方案（若自动发现不够）**：TE 移植版的发现逻辑是它自己的 `dev.thaumicenergistics.integration.*`（`EssentiaWorldIntegration`/`EssentiaTarget`）。若实际运行发现某台机器没被识别（例如它只按 `EssentiaTransport` 的某些面或缓存了注册表），**用 Mixin 在 TE 侧补齐**，而不是往 Technomancy 加注册 API：目标类是 `EssentiaWorldIntegration.register()` 之后的容器收集点或 `EssentiaTarget` 的构造/`canImportFrom`/`canExportTo`，注入点以运行期实际反编译为准。原则与工程其它 Mixin 一致：优先 TC4R/原版公开接口，Mixin 只作桥接，并单独记录注入目标与退避条件。当前**不实现**，仅登记为备选。
+
 ## 5. 处理决定汇总
 
 | 原 compat | 决定 |

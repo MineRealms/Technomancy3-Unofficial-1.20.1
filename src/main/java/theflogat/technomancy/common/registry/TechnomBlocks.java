@@ -255,6 +255,24 @@ public final class TechnomBlocks {
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()));
 
+    /**
+     * {@code fakeAirLight}: an invisible light left behind by machines, with no item and no
+     * drops. Like the fabricator shell it is registered without a {@link BlockItem}.
+     */
+    public static final RegistryObject<Block> FAKE_AIR_LIGHT = BLOCKS.register("fake_air_light",
+            () -> new theflogat.technomancy.common.blocks.air.FakeAirLightBlock(
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.NONE)
+                            .strength(-1.0F, 3_600_000.0F)
+                            .lightLevel(state -> 15)
+                            .noLootTable()
+                            .noCollission()
+                            .noOcclusion()
+                            .isValidSpawn((state, level, pos, entity) -> false)
+                            .isRedstoneConductor((state, level, pos) -> false)
+                            .isSuffocating((state, level, pos) -> false)
+                            .isViewBlocking((state, level, pos) -> false)));
+
     private static RegistryObject<Block> crystal(Ritual.Type type) {
         return register("crystal_" + type.name().toLowerCase(java.util.Locale.ROOT),
                 () -> new CrystalBlock(type, BlockBehaviour.Properties.of()
