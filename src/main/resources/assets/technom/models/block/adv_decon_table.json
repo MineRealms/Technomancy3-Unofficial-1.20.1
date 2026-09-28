@@ -1,0 +1,42 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "technom:block/advdecontable",
+    "tex": "technom:block/advdecontable"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        12,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#tex",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#tex"
+        },
+        "north": {
+          "texture": "#tex"
+        },
+        "south": {
+          "texture": "#tex"
+        },
+        "west": {
+          "texture": "#tex"
+        },
+        "east": {
+          "texture": "#tex"
+        }
+      }
+    }
+  ]
+}

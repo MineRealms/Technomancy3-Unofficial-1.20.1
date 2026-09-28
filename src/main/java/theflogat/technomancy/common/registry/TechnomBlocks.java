@@ -17,6 +17,8 @@ import theflogat.technomancy.common.blocks.dynamo.EssentiaDynamoBlock;
 import theflogat.technomancy.common.blocks.essentia.CreativeJarBlock;
 import theflogat.technomancy.common.blocks.essentia.EssentiaReservoirBlock;
 import theflogat.technomancy.common.blocks.essentia.QuantumJarBlock;
+import theflogat.technomancy.common.blocks.machines.AdvDeconTableBlock;
+import theflogat.technomancy.common.blocks.machines.EldritchConsumerBlock;
 import theflogat.technomancy.common.blocks.machines.EnergyCondenserBlock;
 import theflogat.technomancy.common.blocks.machines.EssentiaFusorBlock;
 import theflogat.technomancy.common.blocks.machines.ProcessorBlock;
@@ -171,6 +173,33 @@ public final class TechnomBlocks {
             () -> new EssentiaFusorBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_PURPLE)
                     .strength(3.0F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)));
+
+    /**
+     * {@code advDeconTable}: breaks an object down into a primal research point for its owner.
+     * See {@link theflogat.technomancy.common.tiles.machines.AdvDeconTableBlockEntity}.
+     */
+    public static final RegistryObject<Block> ADV_DECON_TABLE = register("adv_decon_table",
+            () -> new AdvDeconTableBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.WOOD)
+                    .strength(2.0F)
+                    .sound(SoundType.WOOD)
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, type) -> false)
+                    .isRedstoneConductor((state, level, pos) -> false)));
+
+    /**
+     * {@code eldritchConsumer}: a powered pit that eats mobs, drops and blocks below it and
+     * stores the aspect of what it destroys. See
+     * {@link theflogat.technomancy.common.tiles.machines.EldritchConsumerBlockEntity}.
+     */
+    public static final RegistryObject<Block> ELDRITCH_CONSUMER = register("eldritch_consumer",
+            () -> new EldritchConsumerBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_BLACK)
+                    .strength(3.5F, 8.0F)
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()

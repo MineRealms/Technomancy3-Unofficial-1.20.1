@@ -1,0 +1,35 @@
+{
+  "type": "thaumcraft:infusion",
+  "research": "technom:ELDRITCHCONSUMER",
+  "central": {
+    "item": "thaumcraft:essentia_reservoir"
+  },
+  "components": [
+    {
+      "item": "minecraft:diamond_pickaxe"
+    },
+    {
+      "item": "technom:enchanted_coil"
+    },
+    {
+      "item": "thaumcraft:warded_jar"
+    },
+    {
+      "item": "thaumcraft:warded_jar"
+    },
+    {
+      "item": "thaumcraft:thaumium_pickaxe"
+    }
+  ],
+  "instability": 16,
+  "aspects": {
+    "permutatio": 256,
+    "perfodio": 128,
+    "potentia": 64,
+    "motus": 32
+  },
+  "result": {
+    "item": "technom:eldritch_consumer",
+    "count": 1
+  }
+}

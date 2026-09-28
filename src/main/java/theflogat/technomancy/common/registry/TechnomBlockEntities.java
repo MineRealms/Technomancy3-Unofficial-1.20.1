@@ -88,6 +88,18 @@ public final class TechnomBlockEntities {
                     .of(EssentiaFusorBlockEntity::new, TechnomBlocks.ESSENTIA_FUSOR.get())
                     .build(null));
 
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.machines.AdvDeconTableBlockEntity>> ADV_DECON_TABLE =
+            TYPES.register("adv_decon_table", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.machines.AdvDeconTableBlockEntity::new,
+                            TechnomBlocks.ADV_DECON_TABLE.get())
+                    .build(null));
+
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.machines.EldritchConsumerBlockEntity>> ELDRITCH_CONSUMER =
+            TYPES.register("eldritch_consumer", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.machines.EldritchConsumerBlockEntity::new,
+                            TechnomBlocks.ELDRITCH_CONSUMER.get())
+                    .build(null));
+
     private TechnomBlockEntities() {
     }
 }

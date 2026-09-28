@@ -9,6 +9,7 @@ public final class TechnomancyConfig {
     public static final ForgeConfigSpec.LongValue Q_PER_EU;
     public static final ForgeConfigSpec.DoubleValue ESSENTIA_FUEL_SCALE;
     public static final ForgeConfigSpec.LongValue CONDENSER_COST;
+    public static final ForgeConfigSpec.LongValue CONSUMER_COST;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -36,6 +37,11 @@ public final class TechnomancyConfig {
                         "motion machine. The original 1000000 left a 15.6x margin at 1:1 fuel value; 200000",
                         "keeps a 12.5x margin at the default fuel scale without the multi-hour wait.")
                 .defineInRange("condenserCostQ", 200_000L, 1L, Long.MAX_VALUE);
+        CONSUMER_COST = builder
+                .comment("Energy the eldritch consumer spends per object it destroys, in Q.",
+                        "One charge is paid for each item entity, mob or block it consumes. The default is",
+                        "the original 20000; the buffer holds fifty charges, also as in 1.7.10.")
+                .defineInRange("eldritchConsumerCostQ", 20_000L, 1L, Long.MAX_VALUE);
         builder.pop();
 
         SPEC = builder.build();

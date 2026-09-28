@@ -16,6 +16,19 @@
       "permutatio": 12,
       "praecantatio": 6,
       "vitreus": 4
+    },
+    "technom:adv_decon_table": {
+      "machina": 8,
+      "permutatio": 6,
+      "instrumentum": 4,
+      "praecantatio": 4
+    },
+    "technom:eldritch_consumer": {
+      "machina": 10,
+      "permutatio": 10,
+      "perfodio": 8,
+      "metallum": 6,
+      "praecantatio": 6
     }
   }
 }
