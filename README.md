@@ -52,6 +52,8 @@ python .\tools\client_probe.py probes\client --attach                        # P
 - 客户端带 GTCEu 时 Forge 早期窗口会在无真实控制台/union FS 环境下崩（`java.nio.file.FileSystemNotFoundException`），因此 `run-client/config/fml.toml` 设 `earlyWindowControl = false`。
 - `tools/client_probe.py <探针> [--attach]`：每个探针是一段 Java 方法体，经桥在客户端线程执行并自带 PASS/FAIL；`--attach` 只跑探针，不开、不关客户端。
 - 该流程首次运行即抓到 `technom:node_dynamo` 的模型引用了不存在的 `technom:models/nodedynamo`（粒子图标为 missingno），已改为 `technom:block/nodedynamo`。
+- S3/Botania 资产重跑又抓到三个同类问题：`fake_air_light` 的 JSON 带 BOM、`existence_fountain` 引用了不会进方块图集的 `entity/` 贴图、`mana_fabricator` 用了非法的 `±15/±30` 旋转角，均已修复（见 [VALIDATION](docs/VALIDATION.zh-CN.md)）。
+- **含 GTCEu 的客户端当前无法启动**：GTCEu 7.5.3 的 JEI Mixin 与 `jei 15.56.0.205` 的 tooltip 签名不兼容。客户端探针在 `withgtceu=false` 下跑；服务端 GameTest 的 `-PwithGtceu=true` 不受影响。
 
 ## 工程文档
 

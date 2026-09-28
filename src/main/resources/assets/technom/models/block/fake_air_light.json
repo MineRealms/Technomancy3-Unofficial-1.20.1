@@ -1,1 +1,7 @@
-﻿{`n  "parent": "block/block",`n  "textures": {`n    "particle": "technom:block/blank"`n  },`n  "elements": []`n}
+{
+  "parent": "block/block",
+  "textures": {
+    "particle": "technom:block/blank"
+  },
+  "elements": []
+}

@@ -740,3 +740,46 @@ python tools\gen_gametest_structures.py --check                              # �
 - **吸收节点再创建**：`ItemFusionFocus` 的“吸收一个节点、右键空地造节点”旧手势没有恢复，本焦点仍只合并两节点。
 - **节点类型分布的长期行为**：HUNGRY/PURE/TAINTED 等建出后的生态生命周期（饿节点吃方块、腐化扩散）只由 TC4R 自身负责，本节只断言建出时的瞬时状态。
 - **音效/周边**：`amethyst_block_resonate` 是否合适、外壳与节点的清理在真实存档中的表现未验证。
+
+## 客户端实机验证（S3/Botania 资产，2026-09-28）
+
+这是 `probes/client` 在 S2 之后第一次重跑。之前那次的结论只覆盖当时存在的 15 个方块；S3 与 Botania 新增的方块从未在客户端加载过，这次的探针一次抓出三个真实缺陷。
+
+### 执行
+
+以 JDK 17 在本 worktree 执行。客户端**不带 GTCEu**（见下）：
+
+```powershell
+Start-Process -FilePath .\tools\start_client_detached.cmd -ArgumentList '"New World"','"false"' -WorkingDirectory $PWD
+# 等 build\client-run.log 出现 "Remote bridge listening on 127.0.0.1:48791"
+python .\tools\client_probe.py probes\client --attach
+```
+
+结果：`00_models_and_sprites` 与 `10_renderers_and_tab` **2/2 通过**；后者放置 41 个方块、确认 73 项创造标签、各 BlockEntity 与渲染器解析正常。
+
+### 抓到并修掉的三个客户端缺陷
+
+| 缺陷 | 现象 | 根因 | 修复 |
+|---|---|---|---|
+| `technom:fake_air_light` | blockstate 与模型均 `Failed to load`，粒子图标 missingno | 两个 JSON 都带 UTF-8 BOM，`Gson` 报 `MalformedJsonException` | 去掉 BOM（`fake_air_light.json` 的 blockstate 与模型） |
+| `technom:existence_fountain` | `Missing textures ... technom:entity/fountain` | 方块模型引用了 `textures/entity/` 下的贴图；方块图集只拼接 `block/`、`item/` 与模型引用的方块级贴图，`entity/` 不进图集 | 把 `fountain.png` 复制到 `textures/block/` 并把模型改引 `technom:block/fountain` |
+| `technom:mana_fabricator` | 模型 `Failed to load`，进而 `FileNotFoundException`，粒子 missingno | 模型元素用了 `-15`/`15`/`±30` 度旋转，而 1.20.1 只接受 `-45/-22.5/0/22.5/45`，整个模型解析失败 | 全部改成 `±22.5` |
+
+三者服务端、GameTest 与数据校验都不报（模型只在客户端烘焙）。这与 README 记录的 `node_dynamo` 贴图问题是同一类失败。
+
+### 含 GTCEu 的客户端（已知阻塞，非本次引入）
+
+`withgtceu=true` 的客户端在启动早期崩：
+
+```text
+MixinApplyError: gtceu.mixins.json:jei.FluidHelperMixin ... Invalid descriptor
+Expected (Ljava/util/List;...) but found (Lmezz/jei/api/gui/builder/ITooltipBuilder;...)
+```
+
+GTCEu 7.5.3 的 JEI 兼容 Mixin 期望旧版 JEI 的 `List<String>` tooltip 方法，而运行时解析到 `jei 15.56.0.205` 的新 `ITooltipBuilder` 签名。JEI 是提交 `86c9cac` 加入的 `runtimeOnly`，`runGameTestServer`（服务端、不加载 JEI）不受影响；此前那次客户端实机（`run-client/logs`，19:02）早于该提交，所以没暴露。这是 GTCEu × JEI 的版本组合问题，不是本模组的类：本次只做记录，未改 JEI 版本（本工程的 JEI 插件按 15.56 编译），因此客户端探针在无 GT 运行时执行。
+
+### 覆盖与未覆盖
+
+- 探针只证明“每个方块/物品都有真实烘焙模型与粒子贴图、渲染器解析、在正确的渲染层”。几何、朝向、颜色、z-order 是否好看仍需人眼。
+- 本次未验证：Patchouli 词条在游戏内书上是否真的显示（客户端日志里没有本模组词条的报错，只有缺席的 `gardenofglass` 词条噪音）；魔力流体与桶的手持/倒出；仪式创建节点的光效（旧版有雷电 TESR，本版没有）。
+- `run-client/logs` 里 `gardenofglass` 的配方警告来自 Botania 自带词条引用了未安装的 Garden of Glass，与本模组无关。

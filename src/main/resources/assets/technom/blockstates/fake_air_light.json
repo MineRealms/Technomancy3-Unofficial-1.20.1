@@ -1,1 +1,7 @@
-﻿{`n  "variants": {`n    "": {`n      "model": "technom:block/fake_air_light"`n    }`n  }`n}
+{
+  "variants": {
+    "": {
+      "model": "technom:block/fake_air_light"
+    }
+  }
+}

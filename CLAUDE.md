@@ -14,7 +14,7 @@
   - 宝物村民 + 三件宝物。
   - 玩家亲和/Existence 数据、被动效果、HUD + 网络同步。
   - Botania：**四台机器全部按上游精确对齐**（FlowerDynamo/ManaFabricator/BOProcessor/ManaExchanger），`mana_coil`/`manasteel_gear`、**魔力流体 + 桶**、**Botania 灌注/合成配方 7 条**、**Lexicon 词条 5 条**、**机器模型/贴图**全部落地。83/83 GameTest 有/无 GTCEu 通过，JUnit 233 通过。
-- **S3 仍缺（仅两项，且都不是功能）**：Botania 不在运行时时机器类会 `NoClassDefFoundError`（未做缺席安全门控）；客户端实机渲染（模型/图集/池覆盖层/Lexicon 显示）未重跑探针。
+- **S3 仍缺（仅两项，且都不是功能）**：Botania 不在运行时时机器类会 `NoClassDefFoundError`（未做缺席安全门控）；客户端实机渲染已重跑探针 2/2（无 GT），但仍未人眼看过几何/朝向与 Lexicon 实际显示。
 - **S4**: **节点创建已实现**——`technom:node_fabricator` 成对时用法杖右键启动 200 刻仪式，用 auram(北/西) + vitium(南/东) 造节点（类型/修正/Vis/能量按上游 `generateNode` 公式），创建原语 `NodeCreation` 复用 `AuraNodeBlock.setPlacedBy` 的路径，**不需要 Mixin**。85/85 GameTest、238 JUnit 通过。**S4 仍缺**：稳定灯、电动风箱、生态转换器。融合焦点的“吸收节点再造节点”手势未恢复（仍只合并两节点）。
 - **S5**：未做（专用服务器/客户端/多人/重载/守恒总验收）。
 
@@ -30,7 +30,7 @@
 
 ## 下一步（按优先级）
 
-1. **客户端实机总验收**：按 README 的非阻塞探针起客户端，重跑 `python tools\client_probe.py probes\client --attach`。重点看 Botania 四台机器的新模型、`mana_fluid`/`mana_bucket`、池覆盖层、以及 Lexicon 词条是否出现在 Botania 手册里（Patchouli 的 `use_resource_pack` 跨命名空间加载尚未在客户端确认）。
+1. **客户端（已部分做）**：`probes/client` 已在 `withgtceu=false` 下重跑 **2/2 通过**，并修掉 S3/Botania 的三个模型缺陷（`fake_air_light` BOM、`existence_fountain` 的 `entity/` 贴图、`mana_fabricator` 非法旋转角）。**仍缺**：含 GTCEu 的客户端因 GTCEu 7.5.3 × JEI 15.56 的 Mixin 冲突无法启动（见 VALIDATION）；Patchouli 词条是否真的显示、魔力流体/桶、节点创建光效未人眼验证。
 2. **Botania 缺席安全（可选，但被 ENGINEERING_GUIDE 要求）**：把 Botania 机器及其方块/物品/配方的注册、能力与 API 引用收进存在性门控，使缺少 Botania 时核心 TC4R+FE 路线可完整启动。
 3. **S4 余项**：稳定灯、电动风箱、生态转换器；融合焦点的吸收/创建手势（可选）。
 4. **S5 总验收**：专用服务器、多人、重载、跨维度、守恒、研究/配方可达。
