@@ -1,0 +1,47 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "technom:block/manafabricator",
+    "tex": "technom:block/manafabricator"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#tex",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#tex",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#tex",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#tex",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#tex",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#tex",
+          "cullface": "east"
+        }
+      }
+    }
+  ]
+}

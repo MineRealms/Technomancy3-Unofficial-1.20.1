@@ -356,6 +356,21 @@ public final class TechnomBlocks {
                         .isValidSpawn((state, level, pos, entity) -> false)));
     }
 
+    // ---- S3 Botania ----
+
+    public static final RegistryObject<Block> FLOWER_DYNAMO = register("flower_dynamo",
+            () -> new theflogat.technomancy.common.blocks.botania.FlowerDynamoBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(2.0F)
+                            .sound(SoundType.WOOD).requiresCorrectToolForDrops().noOcclusion()
+                            .isValidSpawn((state, level, pos, entity) -> false)));
+    public static final RegistryObject<Block> MANA_FABRICATOR = register("mana_fabricator",
+            () -> new theflogat.technomancy.common.blocks.botania.ManaFabricatorBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(3.0F, 6.0F)
+                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()
+                            .isValidSpawn((state, level, pos, entity) -> false)));
+
+    // ---- end S3 Botania ----
+
     private TechnomBlocks() {
     }
 
