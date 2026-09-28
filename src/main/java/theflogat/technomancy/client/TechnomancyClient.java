@@ -29,6 +29,7 @@ public final class TechnomancyClient {
         modBus.addListener(TechnomancyClient::clientSetup);
         modBus.addListener(TechnomancyClient::registerRenderers);
         S2MachinesClient.init(modBus);
+        ExistenceHud.init(modBus);
     }
 
     /**

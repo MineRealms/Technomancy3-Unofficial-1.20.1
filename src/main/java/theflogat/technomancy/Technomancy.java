@@ -49,6 +49,7 @@ public final class Technomancy {
         TechnomCreativeTabs.TABS.register(modBus);
         // S2 machines and storage: the processors have a menu.
         TechnomMenus.TYPES.register(modBus);
+        theflogat.technomancy.common.network.TechnomNetwork.register();
 
         modBus.addListener(this::commonSetup);
         // Server-side data: the aspect fuel table is a data pack, so it reloads with /reload.
@@ -60,6 +61,7 @@ public final class Technomancy {
         // S3 rituals: a catalyst running a ritual is unbreakable, as the original's hardness -1 was.
         MinecraftForge.EVENT_BUS.addListener(Technomancy::onBlockBreak);
         theflogat.technomancy.common.items.technom.TreasureVillagers.register();
+        theflogat.technomancy.common.player.PlayerAffinityEffects.register(MinecraftForge.EVENT_BUS);
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                 () -> () -> theflogat.technomancy.client.TechnomancyClient.init(modBus));
     }
