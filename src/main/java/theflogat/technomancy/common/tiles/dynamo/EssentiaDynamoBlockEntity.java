@@ -137,8 +137,11 @@ public final class EssentiaDynamoBlockEntity extends BlockEntity implements Esse
      * <p>The EU rating is derived from the Q budget rather than picked: a packet that does not
      * fit the per-tick budget can never be sent, and the EU protocol refuses an over-voltage
      * packet outright instead of throttling it. At the default four Q per EU that is two
-     * amperes of LV, i.e. 256 of the 320 Q/t; a configuration where not even one packet fits
-     * leaves EU output off entirely and every neighbour served over Forge Energy.</p>
+     * amperes of LV, i.e. 256 of the 320 Q/t — the truncation of 2.5 to 2 is deliberate, because
+     * {@code EnergyLedger.reservePackets} caps at {@code floor(maxExtractPerTick / qPerPacket)}
+     * as well, so rounding the rating up would not deliver one extra Q. A configuration where
+     * not even one packet fits leaves EU output off entirely and every neighbour served over
+     * Forge Energy.</p>
      */
     private static EnergyLimits energyLimits() {
         EnergyLimits limits = EnergyLimits.fe(ENERGY_CAPACITY, 0, MAX_OUTPUT);

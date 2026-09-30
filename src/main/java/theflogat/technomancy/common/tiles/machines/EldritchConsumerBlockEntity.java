@@ -41,7 +41,7 @@ import theflogat.technomancy.common.machines.RedstoneMode;
 import theflogat.technomancy.common.machines.consumer.ConsumerRange;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.tiles.base.RedstoneControl;
-import theflogat.technomancy.compat.gtceu.EuTier;
+import theflogat.technomancy.compat.gtceu.EuRating;
 import theflogat.technomancy.config.TechnomancyConfig;
 
 /**
@@ -86,9 +86,6 @@ public final class EldritchConsumerBlockEntity extends BlockEntity implements Es
     /** {@code time = 80} before retrying when there was nothing to eat. */
     public static final int RETRY_TICKS = 80;
 
-    private static final long EU_INPUT_VOLTAGE = EuTier.EV.voltage();
-    private static final long EU_INPUT_AMPS = 2;
-
     /**
      * A four-aspect pool. The original {@code canFillList} stopped working once four aspects
      * were present or any one was above four units, but a single item can contribute more than
@@ -124,9 +121,17 @@ public final class EldritchConsumerBlockEntity extends BlockEntity implements Es
         store.setListener(this::setChanged);
     }
 
+    /**
+     * The dearest tick of work is the whole buffer. All three passes are gated only on the buffer,
+     * and the mob and item passes loop over everything in range, so a stocked consumer can pay a
+     * charge per object until the buffer runs out; rating against a single object would understate
+     * that. The hardcoded EV rating this replaces could not even fund one 20,000 Q object from an
+     * EU feed at two amperes.
+     */
     private static EnergyLimits limits() {
-        return EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0)
-                .withEuInput(EU_INPUT_VOLTAGE, EU_INPUT_AMPS);
+        EnergyLimits base = EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0);
+        long voltage = EuRating.inputVoltage(ENERGY_CAPACITY, ENERGY_CAPACITY);
+        return voltage > 0 ? base.withEuInput(voltage, EuRating.CONSUMER_AMPS) : base;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state,

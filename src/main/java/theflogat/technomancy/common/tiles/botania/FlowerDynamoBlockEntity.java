@@ -16,10 +16,12 @@ import vazkii.botania.api.mana.ManaReceiver;
 import theflogat.technomancy.common.blocks.botania.FlowerDynamoBlock;
 import theflogat.technomancy.common.energy.EnergyLimits;
 import theflogat.technomancy.common.energy.EnergyPorts;
+import theflogat.technomancy.common.energy.EnergyUnits;
 import theflogat.technomancy.common.energy.MachineEnergy;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.tiles.base.RedstoneControl;
 import theflogat.technomancy.common.machines.RedstoneMode;
+import theflogat.technomancy.compat.gtceu.EuTier;
 
 /**
  * {@code TileFlowerDynamo} (the "Hippie Dynamo"), ported 1:1 from
@@ -53,14 +55,46 @@ public final class FlowerDynamoBlockEntity extends BlockEntity implements ManaRe
 
     private final MachineEnergy energy;
     private final RedstoneControl redstone = new RedstoneControl(DEFAULT_REDSTONE);
+    private final boolean euCapable;
     private int mana;
     private int fuel;
     private boolean boost;
 
     public FlowerDynamoBlockEntity(BlockPos pos, BlockState state) {
         super(theflogat.technomancy.compat.botania.BotaniaContent.FLOWER_DYNAMO_BE.get(), pos, state);
-        energy = new MachineEnergy(this, EnergyLimits.fe(ENERGY_CAPACITY, 0, MAX_EXTRACT),
-                EnergyPorts.generator(EnergyPorts.mask(facing())));
+        EnergyLimits limits = energyLimits();
+        euCapable = limits.emitsEu();
+        energy = new MachineEnergy(this, limits, energyPorts(facing(), euCapable));
+    }
+
+    /**
+     * Energy shape of the dynamo: never accepts, emits at most {@link #MAX_EXTRACT} Q per tick.
+     *
+     * <p>Same shape as the other two dynamos, including why the EU rating is derived from the Q
+     * budget rather than picked: a packet that does not fit the per-tick budget can never be
+     * sent, and the EU protocol refuses an over-voltage packet outright instead of throttling
+     * it. At the default four Q per EU that is two amperes of LV, i.e. 256 of the 320 Q/t. The
+     * truncation of 320/128 = 2.5 to 2 is deliberate: {@code EnergyLedger.reservePackets} caps at
+     * {@code floor(maxExtractPerTick / qPerPacket)} = 2 as well, so a third ampere would not move
+     * one extra Q, only overstate the rating GT reads.</p>
+     */
+    private static EnergyLimits energyLimits() {
+        EnergyLimits limits = EnergyLimits.fe(ENERGY_CAPACITY, 0, MAX_EXTRACT);
+        long voltage = EuTier.LV.voltage();
+        long amps = MAX_EXTRACT / (voltage * EnergyUnits.qPerEu());
+        return amps > 0 ? limits.withEuOutput(voltage, amps) : limits;
+    }
+
+    /**
+     * An EU-capable dynamo offers both protocols on its output face. One whose EU rating came out
+     * at zero offers only FE: a face that advertises EU while its ledger refuses it would shadow
+     * GTCEu's own {@code nativeEUToFE} wrapper, and {@code GtceuEnergyProtocol.push} answers such
+     * a face with 0 rather than {@code NOT_APPLICABLE}, so the FE fallback would be skipped too
+     * and a GT cable would receive nothing at all.
+     */
+    private static EnergyPorts energyPorts(Direction facing, boolean eu) {
+        int mask = EnergyPorts.mask(facing);
+        return eu ? EnergyPorts.generator(mask) : new EnergyPorts(0, mask, 0, 0);
     }
 
     public Direction facing() {
@@ -188,7 +222,7 @@ public final class FlowerDynamoBlockEntity extends BlockEntity implements ManaRe
         if (level != null && getBlockState().hasProperty(FlowerDynamoBlock.FACING)) {
             level.setBlock(worldPosition, getBlockState().setValue(FlowerDynamoBlock.FACING, next), Block.UPDATE_ALL);
         }
-        energy.setPorts(EnergyPorts.generator(EnergyPorts.mask(facing())));
+        energy.setPorts(energyPorts(facing(), euCapable));
         return facing();
     }
 
@@ -223,6 +257,6 @@ public final class FlowerDynamoBlockEntity extends BlockEntity implements ManaRe
         fuel = tag.getInt(TAG_FUEL);
         boost = tag.getBoolean(TAG_BOOST);
         energy.load(tag.getCompound("Energy"));
-        energy.setPorts(EnergyPorts.generator(EnergyPorts.mask(facing())));
+        energy.setPorts(energyPorts(facing(), euCapable));
     }
 }

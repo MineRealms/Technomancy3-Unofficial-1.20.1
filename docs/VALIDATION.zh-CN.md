@@ -1513,3 +1513,73 @@ ritual tome screen built and initialised
 - `10_` 现在会在客户端线程上重建一次创造栏（`[34445ms]`），比其它探针慢很多。这是为确定性付的代价，记在这里以免以后被当成卡死。
 - 本轮只跑了默认运行时的 `runGameTestServer`，没有跑 `-PwithGtceu=true` / `-PwithBotania=false` / `-PwithJade=false`。
 - 上一轮遗留、本轮未动的项：存在燃烧器与水晶的**碰撞箱仍是整格**；仪式书条目行距端口用 `lineHeight + 1` 而上游是固定 8。
+
+## 全机 EU 覆盖与逐台电压推导（2026-10-01 第九轮）
+
+本轮把「所有耗能/产能机器都真的会说 EU」做完，并把每台消费者的输入电压**逐台推导**，不再共用一个 `EuTier.EV` 常数。**没有改动任何 Q 侧的数值或平衡**：改的只是 EU 档位，以及一个此前把整条 EU 通路堵死的端口/账本不一致。
+
+### 1. 改前的两处真实缺陷
+
+**（a）花卉发电机在 EU 上是死的。** `FlowerDynamoBlockEntity` 用 `EnergyLimits.fe(...)` 建账本（EU 输出档位全 0，`emitsEu()` 为 false），却用 `EnergyPorts.generator(...)` 建端口（`euOut` 位置 1）。`EuPort.outputEnabled()` 要求两者**同时**成立，于是该输出面交出一个永远拒收的 `IEnergyContainer`。更糟的是 `GtceuEnergyProtocol.push` 对「邻居会说 EU、但我方不收」返回 **0** 而不是 `NOT_APPLICABLE`，`MachineEnergy.pushOutput` 因此**不会**回退到 FE —— GT 线缆接在该面上什么都拿不到，而纯 FE 消费者不受影响。另两台发电机都有 `euCapable = limits.emitsEu()` 闸门，只有它没有。
+
+**（b）四台已有 EU 输入的机器里，只有凝聚器的档位是推导出来的。** 只有 `EnergyCondenserBlockEntity` 写了理由（「电压 = 自身最大耗电折算成 1 安培」），另外三台是裸的 `EuTier.EV.voltage()` + `2`，其中两台**低于自身耗电**：
+
+| 机器 | 每 tick 最大耗电 | 折算 | 推导档位 | 原档位 | 原档位的后果 |
+|---|---:|---:|---|---|---|
+| 生物群系改写器 | 20,000 Q | 5,000 EU | IV (8,192) | EV (2,048) | EV×2A = 16,384 Q/t **< 20,000 Q/t**，EU 供电跑不满速，缓冲被抽干 |
+| 诡异吞噬器 | 缓冲 1,000,000 Q | 250,000 EU | ZPM (131,072) | EV (2,048) | EV×2A = 16,384 Q/t **连一个 20,000 Q 的对象都买不起** |
+| 电动风箱 | 3,000 Q/次 | 750 EU | EV (2,048) | EV | 一致，未变 |
+| 能量凝聚器 | 8,192 Q | 2,048 EU | EV (2,048) | EV | 一致，未变（本轮改为走同一个 helper） |
+
+### 2. 新增 `EuRating`：把推导写成一条规则
+
+`compat/gtceu/EuRating.inputVoltage(peakDrawQPerTick, maxReceiveQPerTick)`：
+
+1. 取**最低**档位，使其**1 安培**就付得起这台机器最贵的一 tick 工作（除法**向上取整**，所以 8,193 Q/t 得到 IV 而不是 EV）；
+2. 若该档位的整包**装不进**每 tick 输入预算，就**逐级下退**，直到装得进；连 ULV 都装不进则返回 0，机器保持 FE-only。
+
+两个方向都会致命，所以规则必须两头都卡：GT 对**过压**包是**整包拒收**而非限流，档位低了不是变慢而是断连；而 `EnergyLedger.acceptPackets` 对**大于整个每 tick 预算**的包同样一个安培都不收，档位高了就是永远 0 安培。安培数沿用既有的 `2`（`EuRating.CONSUMER_AMPS`），理由与原凝聚器注释相同：网络电压低于额定值时不会被压到只剩一个包。
+
+`EuRating` 与 `EuTier` 一样**不链接任何 `com.gregtechceu` 类型**，所以调用它的 `common/tiles/**` 类在无 GTCEu 的运行时仍可加载 —— 这一点由本轮隔离扫描实测确认（见第 5 节）。
+
+### 3. 九台消费者的最终档位（默认 4 Q/EU）
+
+| 机器 | 「最贵的一 tick」取自 | 档位 | 整包 Q | 预算 Q |
+|---|---|---:|---:|---:|
+| 魔力交换器 | `EXCHANGER_COST` = 1,000（每 tick 一次交换） | HV | 2,048 | 10,000 |
+| 魔力制造器 | `balance.manaFabricatorCostQ` 默认 1,000,000 | ZPM | 524,288 | 2,000,000 |
+| 节点制造器 | `NodeFabricatorWork.EXPAND_ENERGY` = 10,000 | IV | 32,768 | 50,000,000 |
+| 存在燃烧器（动态） | `DYNAMIC_ENERGY_CAPACITY` = 100,000（可在一 tick 内清空） | IV | 32,768 | 100,000 |
+| 源质融合器 | `ENERGY_CAPACITY_Q` = 2,000,000（最贵的一次融合） | ZPM | 524,288 | 2,000,000 |
+| 生物群系改写器 | `balance.biomeMorpherCostQ` 默认 20,000 | IV | 32,768 | 800,000 |
+| 电动风箱 | `STOKE_COST` = 3,000 | EV | 8,192 | 20,000 |
+| 诡异吞噬器 | `ENERGY_CAPACITY` = 1,000,000（三趟都只受缓冲限制） | ZPM | 524,288 | 1,000,000 |
+| 能量凝聚器 | `MAX_RATE_Q_PER_TICK` = 8,192 | EV | 8,192 | 100,000 |
+
+制造器与融合器是**没有档位能同时满足两条规则**的两台：UV 的整包 2,097,152 Q 装不进 2,000,000 Q 的缓冲，所以退到 ZPM，需要 2 安培才够满速。这是规则的正确结果，不是缺陷。
+
+配置驱动的三台（魔力制造器、生物群系改写器、诡异吞噬器）在**构造时**读配置，改配置需要重载世界才生效 —— 与凝聚器构造时读 `CONDENSER_COST` 一致，已写在各机 javadoc 里。
+
+### 4. 端口闸门
+
+花卉发电机补上了与另两台发电机完全相同的 `euCapable = limits.emitsEu()` 与 `energyPorts(facing, eu)`，构造、`cycleFacing`、`load` 三处都走闸门。它**没有** `onLoad()` 覆写（另两台有），所以刷新点就是这三处。另两台的 `energyLimits()` 未动。
+
+### 5. 本轮实际执行
+
+| 命令 | 结果 |
+|---|---|
+| `gradlew.bat build` | BUILD SUCCESSFUL；JUnit **267 通过 / 0 失败 / 0 错误**（35 个测试类） |
+| `gradlew.bat runGameTestServer` | **107/107 required tests passed** |
+| （GameTest 内的隔离扫描） | `scanned 316 shipped classes, 0 link GTCEu outside theflogat/technomancy/compat/gtceu/` |
+
+新增 `EuRatingTest`（5 个用例）钉住三件事：九台机器在出厂 4 Q/EU 下各自落在哪个档位；**任何**档位算出来的整包都装得进预算；**没有更低的档位**能同时满足「付得起最贵一 tick」和「整包装得进」，以及向上取整与返回 0 的边界。
+
+现有断言未受影响：`CondenserGtceuChecks` 断言的凝聚器 EV × 2A 在本轮推导下仍然是 EV × 2A（8192 Q/t ÷ 4 = 2048 = EV 恰好落在档位上）。
+
+### 6. 本轮未验证 / 说明
+
+- **实机未点击、未接 GT 线缆。** 本轮只跑了 JUnit 与 `runGameTestServer`；花卉发电机的 EU 输出、九台消费者在真实 GT 网络下的收电，都**没有**实机验证。`VALIDATION` 第 546 行那条「发电机的 EU 通路目前只有代码审查依据」**对本轮仍然成立**。
+- **没有为九台消费者补 GameTest。** 只有凝聚器有（`CondenserGtceuChecks`）。新增的 `EuRatingTest` 是纯单元测试，证明的是推导规则，不是「GT 线缆真的能充上电」。要补的话，`CondenserGtceuChecks` 就是模板。
+- **档位是配置期的、不是运行期的。** `EuRating` 读的是会话开始时冻结的 `qPerEu`；把 `energy.fePerEu` 改成非 4 之后，第 3 节的档位表全部要重算（`EuRatingTest` 的档位用例会 `assumeTrue` 跳过，但另外三个性质用例仍然成立）。
+- **极端档位没有实机验证。** ZPM / IV 这些高档位在真实 GT 网络里的行为（GT 是否因为我们的 `getInputVoltage()` 很高而改变路由或损耗判定）只有代码审查依据；`acceptPackets` 对过压一律返回 0、不爆炸，所以不存在过压爆炸风险，但路由侧未实测。
+- **`MachineEnergy.getCapability` 对 FE 视图的潜在不对称**（对 `ForgeCapabilities.ENERGY` 无条件返回 `feView(side).cast()`，因此一个只开 EU 的面仍会广告一个惰性 `IEnergyStorage` 并挡掉 GT 的 `nativeEUToFE` 包装）**仍然存在**。本轮所有机器都是 fe+eu 同时开，所以触发不到；花卉发电机修复后也不再触发。这是一处待办，不是本轮引入的问题。

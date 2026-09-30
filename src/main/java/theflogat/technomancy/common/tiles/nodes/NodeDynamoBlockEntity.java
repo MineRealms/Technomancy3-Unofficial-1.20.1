@@ -103,7 +103,17 @@ public final class NodeDynamoBlockEntity extends BlockEntity implements EnergyHo
         redstone.setListener(this::changedAndSync);
     }
 
-    /** Identical shape to the essentia dynamo: never accepts, emits up to 320 Q/t. */
+    /**
+     * Energy shape of the dynamo: never accepts, emits at most {@link #MAX_OUTPUT} Q per tick.
+     *
+     * <p>Same shape as the essentia dynamo, including why the EU rating is derived from the Q
+     * budget rather than picked: a packet that does not fit the per-tick budget can never be
+     * sent, and the EU protocol refuses an over-voltage packet outright instead of throttling
+     * it. At the default four Q per EU that is two amperes of LV, i.e. 256 of the 320 Q/t. The
+     * truncation of 320/128 = 2.5 to 2 is deliberate: {@code EnergyLedger.reservePackets} caps at
+     * {@code floor(maxExtractPerTick / qPerPacket)} = 2 as well, so a third ampere would not move
+     * one extra Q, only overstate the rating GT reads.</p>
+     */
     private static EnergyLimits energyLimits() {
         EnergyLimits limits = EnergyLimits.fe(ENERGY_CAPACITY, 0, MAX_OUTPUT);
         long voltage = EuTier.LV.voltage();

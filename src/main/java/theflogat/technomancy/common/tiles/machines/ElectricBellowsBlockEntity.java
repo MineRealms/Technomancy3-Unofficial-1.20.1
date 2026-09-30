@@ -21,7 +21,7 @@ import theflogat.technomancy.common.energy.EnergyLimits;
 import theflogat.technomancy.common.energy.EnergyPorts;
 import theflogat.technomancy.common.energy.MachineEnergy;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
-import theflogat.technomancy.compat.gtceu.EuTier;
+import theflogat.technomancy.compat.gtceu.EuRating;
 import theflogat.technomancy.compat.thaumcraft.ThaumcraftInternals;
 
 /**
@@ -53,9 +53,6 @@ public final class ElectricBellowsBlockEntity extends BlockEntity implements Ene
     /** Every second tick of a burst advances cooking by one, as the original did. */
     private static final int PROGRESS_EVERY = 2;
 
-    private static final long EU_INPUT_VOLTAGE = EuTier.EV.voltage();
-    private static final long EU_INPUT_AMPS = 2;
-
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_BOOST = "boost";
 
@@ -67,10 +64,19 @@ public final class ElectricBellowsBlockEntity extends BlockEntity implements Ene
 
     public ElectricBellowsBlockEntity(BlockPos pos, BlockState state) {
         super(TechnomBlockEntities.ELECTRIC_BELLOWS.get(), pos, state);
-        energy = new MachineEnergy(this,
-                EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0)
-                        .withEuInput(EU_INPUT_VOLTAGE, EU_INPUT_AMPS),
-                EnergyPorts.consumer(EnergyPorts.ALL));
+        energy = new MachineEnergy(this, limits(), EnergyPorts.consumer(EnergyPorts.ALL));
+    }
+
+    /**
+     * One stoking is the dearest tick of work, and the machine pays for at most one per tick, so
+     * that is the draw {@link EuRating} rates it against. The average is far lower - one 3,000 Q
+     * charge then carries a vanilla furnace for eighty ticks - but a rating below the burst would
+     * stall the machine between stokes instead of letting it bank them.
+     */
+    private static EnergyLimits limits() {
+        EnergyLimits base = EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0);
+        long voltage = EuRating.inputVoltage(STOKE_COST, ENERGY_CAPACITY);
+        return voltage > 0 ? base.withEuInput(voltage, EuRating.CONSUMER_AMPS) : base;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state,

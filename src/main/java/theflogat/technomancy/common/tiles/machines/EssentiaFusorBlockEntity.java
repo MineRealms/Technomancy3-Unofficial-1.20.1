@@ -36,6 +36,7 @@ import theflogat.technomancy.common.machines.fusor.EssentiaFusorBalance;
 import theflogat.technomancy.common.machines.fusor.FusorSides;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.tiles.base.RedstoneControl;
+import theflogat.technomancy.compat.gtceu.EuRating;
 import theflogat.technomancy.config.TechnomancyConfig;
 
 /**
@@ -75,10 +76,23 @@ public final class EssentiaFusorBlockEntity extends BlockEntity
     public EssentiaFusorBlockEntity(BlockPos pos, BlockState state) {
         super(TechnomBlockEntities.ESSENTIA_FUSOR.get(), pos, state);
         // Energy in on every face but the top, which is the interaction surface; never out.
-        energy = new MachineEnergy(this, EnergyLimits.fe(EssentiaFusorBalance.ENERGY_CAPACITY_Q,
-                        EssentiaFusorBalance.ENERGY_CAPACITY_Q, 0),
+        energy = new MachineEnergy(this, limits(),
                 EnergyPorts.consumer(EnergyPorts.allExcept(Direction.UP)));
         redstone.setListener(this::changedAndSync);
+    }
+
+    /**
+     * One fusion is the dearest tick of work, and its price is not a constant: it depends on the
+     * output aspect and the fuel scale, with a worst case of 1,534,720 Q. The buffer is sized to
+     * hold exactly that worst case, so it stands in for the price here and no fusion can outgrow
+     * the rating. A typical fusion costs a few thousand Q, which the same rating covers.
+     */
+    private static EnergyLimits limits() {
+        EnergyLimits base = EnergyLimits.fe(EssentiaFusorBalance.ENERGY_CAPACITY_Q,
+                EssentiaFusorBalance.ENERGY_CAPACITY_Q, 0);
+        long voltage = EuRating.inputVoltage(EssentiaFusorBalance.ENERGY_CAPACITY_Q,
+                EssentiaFusorBalance.ENERGY_CAPACITY_Q);
+        return voltage > 0 ? base.withEuInput(voltage, EuRating.CONSUMER_AMPS) : base;
     }
 
     /** The registry's own unordered-pair lookup, i.e. the recipe book of this machine. */

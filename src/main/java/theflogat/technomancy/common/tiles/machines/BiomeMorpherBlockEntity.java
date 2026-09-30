@@ -20,7 +20,7 @@ import theflogat.technomancy.common.machines.biome.BiomeTarget;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.tiles.base.RedstoneControl;
 import theflogat.technomancy.common.machines.RedstoneMode;
-import theflogat.technomancy.compat.gtceu.EuTier;
+import theflogat.technomancy.compat.gtceu.EuRating;
 import theflogat.technomancy.config.TechnomancyConfig;
 
 /**
@@ -47,9 +47,6 @@ public final class BiomeMorpherBlockEntity extends BlockEntity implements Energy
     /** The original's triangular {@code rand(100) - rand(100)} spread. */
     private static final int SPREAD = 100;
 
-    private static final long EU_INPUT_VOLTAGE = EuTier.EV.voltage();
-    private static final long EU_INPUT_AMPS = 2;
-
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_REDSTONE = "Redstone";
 
@@ -58,11 +55,21 @@ public final class BiomeMorpherBlockEntity extends BlockEntity implements Energy
 
     public BiomeMorpherBlockEntity(BlockPos pos, BlockState state) {
         super(TechnomBlockEntities.BIOME_MORPHER.get(), pos, state);
-        energy = new MachineEnergy(this,
-                EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0)
-                        .withEuInput(EU_INPUT_VOLTAGE, EU_INPUT_AMPS),
-                EnergyPorts.consumer(EnergyPorts.ALL));
+        energy = new MachineEnergy(this, limits(), EnergyPorts.consumer(EnergyPorts.ALL));
         redstone.setListener(this::setChanged);
+    }
+
+    /**
+     * One whole charge is the dearest tick of work, and {@code serverTick} spends at most one per
+     * tick, so that is the draw {@link EuRating} rates the machine against. The cost is read from
+     * the config because that is the number the tick spends; the hardcoded EV rating this
+     * replaces was below the 20,000 Q/t default, so an EU feed could not hold full rate and the
+     * machine drained its buffer.
+     */
+    private static EnergyLimits limits() {
+        EnergyLimits base = EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0);
+        long voltage = EuRating.inputVoltage(TechnomancyConfig.BIOME_MORPHER_COST.get(), ENERGY_CAPACITY);
+        return voltage > 0 ? base.withEuInput(voltage, EuRating.CONSUMER_AMPS) : base;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state,

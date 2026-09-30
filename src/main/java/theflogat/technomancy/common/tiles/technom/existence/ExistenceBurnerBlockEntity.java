@@ -22,6 +22,7 @@ import theflogat.technomancy.common.energy.MachineEnergy;
 import theflogat.technomancy.common.machines.RedstoneMode;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.tiles.base.RedstoneControl;
+import theflogat.technomancy.compat.gtceu.EuRating;
 
 /**
  * {@code TileExistenceBurner} and {@code TileExistenceDynamicBurner}: kills the living around it and
@@ -62,10 +63,22 @@ public final class ExistenceBurnerBlockEntity extends BlockEntity
         // is reachable from the bottom face alone (TileExistenceDynamicBurner.canConnectEnergy:
         // `from == ForgeDirection.DOWN`). NONE leaves the static variant a present but inert
         // capability, so nothing can be piped into a machine that would never spend it.
-        energy = new MachineEnergy(this,
-                EnergyLimits.fe(DYNAMIC_ENERGY_CAPACITY, DYNAMIC_ENERGY_CAPACITY, 0),
+        energy = new MachineEnergy(this, limits(),
                 dynamic ? EnergyPorts.consumer(EnergyPorts.mask(Direction.DOWN)) : EnergyPorts.NONE);
         redstone.setListener(this::setChanged);
+    }
+
+    /**
+     * The dearest tick of work is the whole buffer: the sweep pays one charge per entity it finds
+     * and only stops when the buffer cannot cover the next one, so a crowded pen can empty it in
+     * a single tick. Rating against one kill instead would understate that. The static variant
+     * takes no energy at all, and the rating is harmless there because {@link EnergyPorts#NONE}
+     * grants it no face to arrive on.
+     */
+    private static EnergyLimits limits() {
+        EnergyLimits base = EnergyLimits.fe(DYNAMIC_ENERGY_CAPACITY, DYNAMIC_ENERGY_CAPACITY, 0);
+        long voltage = EuRating.inputVoltage(DYNAMIC_ENERGY_CAPACITY, DYNAMIC_ENERGY_CAPACITY);
+        return voltage > 0 ? base.withEuInput(voltage, EuRating.CONSUMER_AMPS) : base;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ExistenceBurnerBlockEntity burner) {

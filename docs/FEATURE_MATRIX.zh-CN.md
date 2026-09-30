@@ -113,7 +113,7 @@
 
 | 功能 | 来源 | 依赖/迁移风险 | 阶段 | 必须验证 | 状态 |
 |---|---|---|---|---|---|
-| 花卉/Hippie 发电机 | `TileFlowerDynamo` | Botania Mana 接收与 FE/EU 输出；不能移植旧 RF 接口 | S3 | Mana 减少与电力增加守恒；满电、花/池连接、拔除模组时核心能启动 | 已实现：`IManaReceiver`、100,000 Mana 缓冲、9×9 每池每 tick 100、`extractFuel` 换算（80/320 Q）。GameTest 待补，模型/贴图已换（`block/flowerdynamo`） |
+| 花卉/Hippie 发电机 | `TileFlowerDynamo` | Botania Mana 接收与 FE/EU 输出；不能移植旧 RF 接口 | S3 | Mana 减少与电力增加守恒；满电、花/池连接、拔除模组时核心能启动 | 已实现：`IManaReceiver`、100,000 Mana 缓冲、9×9 每池每 tick 100、`extractFuel` 换算（80/320 Q）、EU 输出 LV 2 安培（与另两台发电机同一推导，且补上了此前缺失的 `emitsEu()` 端口闸门）。GameTest 待补，模型/贴图已换（`block/flowerdynamo`） |
 | 魔力制造器 | `TileManaFabricator` | FE/EU→Mana，Botania 池识别/传输；独立存量与方向 | S3 | 满池不扣电、吞吐、颜色/连接、存储重载、无双接口套利 | 已实现：自身即 `ManaPool`、100,000、1,000,000 FE/100 Mana、单面进电、扳手转面（`use` 接线）。模型/贴图已换 |
 | 植物净化器 | `TileBOProcessor` | Botania 魔力 + 共享加工链；1.12 空侧面槽与 false 插拔为回归 | S3 | 各方向自动化、魔力成本、记录与阶段、GUI 同步 | 已实现：1,000,000 Mana 缓冲、9×9 每 tick 5,000、按加工刻计费；模型改回 `processorbo*` 贴图并按 `lit` 分两模型。GameTest `technom_s2_processing` 覆盖 |
 | 魔力交换器、魔力流体与桶 | `TileManaExchanger`、`ManaFluid`、桶；1.12 新增 50,000 Mana 灌注配方 | 现代 FluidType/流动流体/能力、物品桶；1.12 FE capability 仍返回 CoFH 存储，类型和行为不能直接认定正确 | S3 | 双向转换余数、桶灌装/倒出、模拟、槽满/池满、FE/EU 同 tick 合计、配方平衡 | 已实现（1.20.1 精确版）：池在正上方、1,000 mB 罐、mode/扳手、1,000 Mana↔1 mB、1,000 Q/次、侧面限流；`FluidType`+Source/Flowing+`LiquidBlock`+`BucketItem`+客户端贴图。GameTest `technom_botania` 3 项 |
@@ -134,6 +134,16 @@
 | KubeJS | `compat/kubejs/`：`kubejs.plugins.txt`（jar 根目录，KubeJS 的发现机制，**不是注解**）+ 只覆写 `registerBindings` 的插件；**仅 `compileOnly`**，永不进任何运行时 | S5 | 未安装时插件类不被加载；发现文件名与类名一致 | **已实现**：绑定 `Technom` 全局，暴露燃料表查询（`maxFuelValue`/`maxEnergyPerUnit`/`fuelValueAt`）、`qPerEu`、`essentiaFuelScale`、`listedAspects`；未知要素抛异常而非回落兜底值。**刻意不做**：配方 schema（本模组无自定义配方类型）、事件组（无可监听事件）。**未验证**：开发运行时没有 KubeJS，只有探针核对发现文件与类资源 |
 
 三者的共同边界：Jade 插件是 **common 代码**（两侧都加载，不能引用 `net.minecraft.client.*`），JEI 插件是**客户端代码**（JEI 本身仅客户端），KubeJS 插件**永不进运行时**。
+
+## 能量接口（FE/EU）覆盖
+
+FE 与 EU 只是**同一个** `EnergyLedger` 上的两个协议视图，不是两份存量：两者同 tick 共享 `maxReceivePerTick` / `maxExtractPerTick`，EU 另外计安培。`EnergyPorts.consumer(faces)` 同时置 `feIn` 与 `euIn`，`generator(faces)` 同时置 `feOut` 与 `euOut`，但**端口位本身不够**——`EuPort.inputEnabled()/outputEnabled()` 还要求 `limits.acceptsEu()/emitsEu()`。两者必须一致，否则该面会交出一个永远拒收的 `IEnergyContainer`，还会挡掉 GTCEu 自带的 FE 包装（花卉发电机在第九轮之前正是如此）。
+
+**消费者（9 台，输入）**：魔力交换器 HV、魔力制造器 ZPM、节点制造器 IV、存在燃烧器（动态）IV、源质融合器 ZPM、生物群系改写器 IV、电动风箱 EV、诡异吞噬器 ZPM、能量凝聚器 EV。电压一律由 `compat/gtceu/EuRating` 从**各机自己的「最贵一 tick 耗电」**推导，不再共用常数；规则与推导表见 [VALIDATION 第九轮](VALIDATION.zh-CN.md)。
+
+**发电机（3 台，输出）**：源质发电机、节点发电机、花卉发电机，一律 LV 2 安培，由 `320 / (32 × qPerEu)` 推导。取整会超出每 tick 预算，所以 2.5 截断为 2 是刻意的：`EnergyLedger.reservePackets` 同样按 `floor(maxExtract / qPerPacket)` 封顶，第三个安培一个 Q 也多送不出去。
+
+**覆盖范围**：全部 12 台持有 `MachineEnergy` 的机器都已接 EU，没有只做 FE 的耗能机器。
 
 ## 非目标、遗留未注册内容与公共验收
 

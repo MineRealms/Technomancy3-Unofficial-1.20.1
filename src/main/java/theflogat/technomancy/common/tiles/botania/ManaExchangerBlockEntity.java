@@ -22,6 +22,7 @@ import theflogat.technomancy.common.machines.RedstoneMode;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.registry.TechnomFluids;
 import theflogat.technomancy.common.tiles.base.RedstoneControl;
+import theflogat.technomancy.compat.gtceu.EuRating;
 import vazkii.botania.api.BotaniaForgeCapabilities;
 import vazkii.botania.api.mana.ManaPool;
 
@@ -69,9 +70,18 @@ public final class ManaExchangerBlockEntity extends BlockEntity {
 
     public ManaExchangerBlockEntity(BlockPos pos, BlockState state) {
         super(theflogat.technomancy.compat.botania.BotaniaContent.MANA_EXCHANGER_BE.get(), pos, state);
-        energy = new MachineEnergy(this,
-                EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0),
+        energy = new MachineEnergy(this, limits(),
                 EnergyPorts.consumer(EnergyPorts.allExcept(Direction.UP)));
+    }
+
+    /**
+     * The dearest tick of work is one whole exchange, and {@code serverTick} performs at most one
+     * per tick, so that is the draw {@link EuRating} rates the machine against.
+     */
+    private static EnergyLimits limits() {
+        EnergyLimits base = EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0);
+        long voltage = EuRating.inputVoltage(EXCHANGER_COST, ENERGY_CAPACITY);
+        return voltage > 0 ? base.withEuInput(voltage, EuRating.CONSUMER_AMPS) : base;
     }
 
     /**

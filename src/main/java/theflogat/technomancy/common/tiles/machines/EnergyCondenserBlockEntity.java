@@ -35,7 +35,7 @@ import theflogat.technomancy.common.machines.CondenserBalance;
 import theflogat.technomancy.common.machines.CondenserProduction;
 import theflogat.technomancy.common.machines.RedstoneMode;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
-import theflogat.technomancy.compat.gtceu.EuTier;
+import theflogat.technomancy.compat.gtceu.EuRating;
 import theflogat.technomancy.config.TechnomancyConfig;
 
 /**
@@ -62,17 +62,6 @@ public final class EnergyCondenserBlockEntity extends BlockEntity
 
     /** {@code TileCondenser()} passed {@code RedstoneSet.LOW}: it runs without a signal. */
     public static final RedstoneMode DEFAULT_REDSTONE = RedstoneMode.LOW;
-
-    /**
-     * EU input rating. The voltage is the machine's own maximum draw expressed as one ampere
-     * at the default 4 Q per EU ({@value CondenserBalance#MAX_RATE_Q_PER_TICK} Q/t = 2048 EU/t
-     * = EV), so a native EU feed can reach exactly the same ceiling as an FE feed; rating it
-     * lower would make the native protocol strictly worse than GTCEu's own FE wrapper. Two
-     * amperes so a cable running below that voltage is not capped to a fraction of it — the
-     * shared per-tick Q budget stays the real limit either way.
-     */
-    private static final long EU_INPUT_VOLTAGE = EuTier.EV.voltage();
-    private static final long EU_INPUT_AMPS = 2;
 
     /**
      * Ticks between pushes. A TC4R tube moves one unit every five ticks, so scanning the
@@ -115,10 +104,22 @@ public final class EnergyCondenserBlockEntity extends BlockEntity
                 TechnomancyConfig.CONDENSER_COST.get(), CondenserBalance.MAX_RATE_Q_PER_TICK);
     }
 
+    /**
+     * No extraction budget at all: this is the structural half of "no output face".
+     *
+     * <p>The EU rating is the machine's own maximum draw expressed as one ampere at the current
+     * Q per EU: at the default four, {@value CondenserBalance#MAX_RATE_Q_PER_TICK} Q/t is
+     * 2048 EU/t, i.e. one ampere of EV. That lets a native EU feed reach exactly the same
+     * ceiling as an FE feed, so the native protocol is never strictly worse than GTCEu's own FE
+     * wrapper. This was the only consumer whose rating was derived before {@link EuRating}
+     * existed; it is now the same call the other eight make.</p>
+     */
     private static EnergyLimits limits() {
-        // No extraction budget at all: this is the structural half of "no output face".
-        return EnergyLimits.fe(CondenserBalance.ENERGY_CAPACITY_Q, CondenserBalance.ENERGY_CAPACITY_Q, 0)
-                .withEuInput(EU_INPUT_VOLTAGE, EU_INPUT_AMPS);
+        EnergyLimits base = EnergyLimits.fe(CondenserBalance.ENERGY_CAPACITY_Q,
+                CondenserBalance.ENERGY_CAPACITY_Q, 0);
+        long voltage = EuRating.inputVoltage(CondenserBalance.MAX_RATE_Q_PER_TICK,
+                CondenserBalance.ENERGY_CAPACITY_Q);
+        return voltage > 0 ? base.withEuInput(voltage, EuRating.CONSUMER_AMPS) : base;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state,

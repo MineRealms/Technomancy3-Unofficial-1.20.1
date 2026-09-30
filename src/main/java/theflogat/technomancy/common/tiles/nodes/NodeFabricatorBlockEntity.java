@@ -50,6 +50,7 @@ import theflogat.technomancy.common.nodes.NodeCreationRules;
 import theflogat.technomancy.common.nodes.NodeFabricatorWork;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.tiles.base.RedstoneControl;
+import theflogat.technomancy.compat.gtceu.EuRating;
 
 /**
  * The node fabricator: two of them facing each other six blocks apart work on the aura node
@@ -134,10 +135,21 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
     public NodeFabricatorBlockEntity(BlockPos pos, BlockState state) {
         super(TechnomBlockEntities.NODE_FABRICATOR.get(), pos, state);
         // A consumer on every face but the one it looks through, which is where the node is.
-        energy = new MachineEnergy(this, EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0),
-                EnergyPorts.consumer(EnergyPorts.allExcept(facing())));
+        energy = new MachineEnergy(this, limits(), EnergyPorts.consumer(EnergyPorts.allExcept(facing())));
         store.setListener(this::setChanged);
         redstone.setListener(this::changedAndSync);
+    }
+
+    /**
+     * The dearest tick of work is an {@code EXPAND}, the operation a potency gem unlocks, and
+     * {@code work} performs at most one operation per tick, so that is the draw {@link EuRating}
+     * rates the machine against. Building a node costs far more, but {@code startCreation}
+     * refuses to start unless the whole price is already banked, so it is never a per-tick draw.
+     */
+    private static EnergyLimits limits() {
+        EnergyLimits base = EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0);
+        long voltage = EuRating.inputVoltage(NodeFabricatorWork.EXPAND_ENERGY, ENERGY_CAPACITY);
+        return voltage > 0 ? base.withEuInput(voltage, EuRating.CONSUMER_AMPS) : base;
     }
 
     // ---- geometry ----

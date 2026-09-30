@@ -20,6 +20,7 @@ import theflogat.technomancy.common.energy.EnergyLimits;
 import theflogat.technomancy.common.energy.EnergyPorts;
 import theflogat.technomancy.common.energy.MachineEnergy;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
+import theflogat.technomancy.compat.gtceu.EuRating;
 import theflogat.technomancy.config.TechnomancyConfig;
 
 /**
@@ -41,8 +42,20 @@ public final class ManaFabricatorBlockEntity extends BlockEntity implements Mana
 
     public ManaFabricatorBlockEntity(BlockPos pos, BlockState state) {
         super(theflogat.technomancy.compat.botania.BotaniaContent.MANA_FABRICATOR_BE.get(), pos, state);
-        energy = new MachineEnergy(this, EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0),
-                EnergyPorts.consumer(EnergyPorts.mask(facing())));
+        energy = new MachineEnergy(this, limits(), EnergyPorts.consumer(EnergyPorts.mask(facing())));
+    }
+
+    /**
+     * One whole cycle is the dearest tick of work, and {@code serverTick} runs at most one per
+     * tick, so that is the draw {@link EuRating} rates the machine against. The cost is read from
+     * the config here because that is the number the tick actually spends; rating against the
+     * compile-time {@code FE_PER_CYCLE} would overstate a server running the 1.12 fork's cheaper
+     * rate. Like every other config read at construction, a change needs the world reloaded.
+     */
+    private static EnergyLimits limits() {
+        EnergyLimits base = EnergyLimits.fe(ENERGY_CAPACITY, ENERGY_CAPACITY, 0);
+        long voltage = EuRating.inputVoltage(TechnomancyConfig.MANA_FABRICATOR_COST.get(), ENERGY_CAPACITY);
+        return voltage > 0 ? base.withEuInput(voltage, EuRating.CONSUMER_AMPS) : base;
     }
 
     public Direction facing() {
