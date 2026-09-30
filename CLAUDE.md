@@ -25,13 +25,13 @@
   - 三台机器都有配方、研究（`FLUXLAMP`/`ELECTRICBELLOWS`/`BIOMEMORPHER`）与模型，均**未实机验证**。
 - **S5**：部分完成。GameTest 已验证服务端 `/reload` 数据包重载；**Jade/JEI/KubeJS 三处联动已实现**（见 [COMPAT 第 7 节](docs/COMPAT.zh-CN.md)）：Jade 覆盖 15 个方块实体、JEI 一个源质燃料值类别、KubeJS 只绑定 `Technom` 只读全局且默认不进运行时。专用服务器长期运行/多人/跨维度/死亡重生/守恒总验收仍未做。
 
-## 最近一次全量验证（2026-09-29）
+## 最近一次全量验证（2026-09-30）
 
-- `build`：**JUnit 238 通过 / 0 失败**（28 个测试类）。
-- `runGameTestServer` ×3（默认 / `-PwithGtceu=true` / `-PwithBotania=false`）：**各 95/95 通过**（批次 `technom_s4_deep_tc` 是本轮新增；另加服务端 `/reload` 燃料表替换测试）。
+- `build`：**JUnit 245 通过 / 0 失败**（30 个测试类）。2026-09-29 时是 238/28。
+- `runGameTestServer`（默认运行时）：**97/97 通过**（守卫日志：`40 loot tables present, 4 blocks opted out`、`10 energy machines expose their buffer`、`31 tool-requiring blocks are all mineable`）。2026-09-29 的 95 个曾在默认 / `-PwithGtceu=true` / `-PwithBotania=false` 三种运行时各跑一遍；**本轮只跑了默认运行时**。
 - `python tools/validate_technom_data.py`：**OK: no errors**（16 warning / 1 skip；本轮修复前是 45 errors）。
 - Rosetta 客户端探针（带 GTCEu + KubeJS）：**10/10 通过**（`probes/client/`）。其中 `10_`/`11_` 这一对是真正的渲染器检查：10 在**集成服务端**放置全部 44 个方块（旧版用 `mc.level.setBlock`，`ClientLevel` 根本不接受写入，所以此前从未通过），11 等 3 秒后确认客户端看到 44/44 方块、36 个方块实体、3 个已注册渲染器。两者通过 JVM 系统属性传递原点，因为测试世界是虚空、玩家会掉落，位置不能各自重算。`12_`/`14_` 从烘焙模型与顶点捕获取证（不依赖人眼），`40_`/`41_` 覆盖三处联动与 TC4R 的要素来源页。首轮 8/10 的两个失败都不是回归：`11_` 是世界同步竞态（`--attach` 重跑 44/44），`14_` 是探针自身的颜色常量写反。
-- 本轮修复的 10 个缺陷（含 21 个此前就已存在的“要工具却无 mineable 标签”方块）逐条记录在 [VALIDATION](docs/VALIDATION.zh-CN.md) 的 2026-09-29 一节。
+- 2026-09-29 与 2026-09-30 两轮上游对照审计共修复 25 处缺陷（含 24 个此前缺失的方块掉落表、21 个“要工具却无 mineable 标签”的方块），逐条记录在 [VALIDATION](docs/VALIDATION.zh-CN.md) 的对应小节。
 
 ## 先读这些文件（按顺序）
 
