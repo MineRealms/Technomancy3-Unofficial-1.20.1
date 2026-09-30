@@ -1,5 +1,6 @@
 package theflogat.technomancy.common.tiles.nodes;
 
+import theflogat.technomancy.common.energy.EnergyHolder;
 import dev.tc4port.thaumcraft.api.aspect.AspectApi;
 import dev.tc4port.thaumcraft.api.aspect.VisAction;
 import dev.tc4port.thaumcraft.api.node.AuraNodeState;
@@ -57,7 +58,7 @@ import theflogat.technomancy.config.TechnomancyConfig;
  * freshly read state, so a concurrent recharge, wand or second dynamo can never be overwritten
  * and the Vis is only credited once the node has actually changed.</p>
  */
-public final class NodeDynamoBlockEntity extends BlockEntity {
+public final class NodeDynamoBlockEntity extends BlockEntity implements EnergyHolder {
 
     public static final long ENERGY_CAPACITY = 40_000;
     public static final long MAX_OUTPUT = 320;

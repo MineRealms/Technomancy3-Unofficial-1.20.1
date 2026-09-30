@@ -61,6 +61,17 @@ public final class EssentiaFuelTable {
         return byAspect.keySet();
     }
 
+    /**
+     * The row covering {@code aspect}, or {@code null} when it falls through to {@link #fallback()}.
+     *
+     * <p>Exposed so a display can show the row's conditions and random bonus, which
+     * {@link #fuelValue} and {@link #maxFuelValue} deliberately collapse into one number.</p>
+     */
+    @Nullable
+    public EssentiaFuelEntry entryFor(AspectId aspect) {
+        return byAspect.get(aspect);
+    }
+
     public boolean isEmpty() {
         return byAspect.isEmpty() && fallback == 0;
     }

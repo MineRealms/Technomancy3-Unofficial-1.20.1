@@ -11,6 +11,8 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 def withGtceu = providers.gradleProperty('withGtceu').map { it.toBoolean() }.getOrElse(false)
 def withBotania = providers.gradleProperty('withBotania').map { it.toBoolean() }.getOrElse(true)
+def withJade = providers.gradleProperty('withJade').map { it.toBoolean() }.getOrElse(true)
+def withKubejs = providers.gradleProperty('withKubejs').map { it.toBoolean() }.getOrElse(false)
 def tc4Repository = file(providers.gradleProperty('tc4Repository').getOrElse('local-repo'))
 
 minecraft {
@@ -79,6 +81,15 @@ repositories {
     maven { url = 'https://maven.theillusivec4.top' }
     // Botania (and its API) and JEI are published here.
     maven { url = 'https://maven.blamejared.com' }
+    // Jade is published on the Modrinth maven, which mirrors every project file.
+    maven {
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+    // KubeJS.
+    maven { url = 'https://maven.latvian.dev/releases' }
+    // Architectury, which KubeJS declares mandatory alongside Rhino.
+    maven { url = 'https://maven.architectury.dev' }
     maven { url = 'https://maven.minecraftforge.net' }
     maven { url = 'https://modmaven.dev' }
     mavenCentral()
@@ -119,6 +130,26 @@ dependencies {
     // JEI: compileOnly for the plugin, runtimeOnly so dev shows recipes.
     compileOnly(fg.deobf("mezz.jei:jei-1.20.1-forge:${jei_version}"))
     runtimeOnly(fg.deobf("mezz.jei:jei-1.20.1-forge:${jei_version}"))
+    // Jade. Unlike JEI its plugin loads on BOTH sides, so the plugin class is common code and
+    // the runtime dependency is gated: set -PwithJade=false to run the development game
+    // without Jade and exercise the absent path.
+    compileOnly(fg.deobf("maven.modrinth:jade:${jade_version}", { transitive = false }))
+    if (withJade) {
+        runtimeOnly(fg.deobf("maven.modrinth:jade:${jade_version}", { transitive = false }))
+    }
+    // KubeJS: compileOnly by default, deliberately. It is a scripting engine, so leaving it out
+    // of the normal development runtime keeps startup and the resource reload identical for every
+    // test in the suite. Its plugin is discovered from the kubejs.plugins.txt resource at the jar
+    // root, so an absent KubeJS never reads that file and never loads the class. Set
+    // -PwithKubejs=true to install it for real and exercise the plugin; Rhino and Architectury
+    // are mods rather than libraries and KubeJS declares both mandatory, so they come with it.
+    compileOnly(fg.deobf("dev.latvian.mods:kubejs-forge:${kubejs_version}", { transitive = false }))
+    if (withKubejs) {
+        runtimeOnly(fg.deobf("dev.latvian.mods:kubejs-forge:${kubejs_version}", { transitive = false }))
+        runtimeOnly(fg.deobf("dev.latvian.mods:rhino-forge:${rhino_version}", { transitive = false }))
+        runtimeOnly(fg.deobf("dev.architectury:architectury-forge:${architectury_version}",
+                { transitive = false }))
+    }
 
     testImplementation(platform("org.junit:junit-bom:${junit_version}"))
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -165,10 +196,17 @@ tasks.named('jar', Jar).configure {
     // GameTests and their templates only exist for the dev runs; never ship them.
     exclude 'theflogat/technomancy/gametest/**'
     exclude 'data/technom/structures/gametest/**'
+    // Forge 1.20.1 has no `[[mixins]]` support in mods.toml; the only registration point is the
+    // `MixinConfigs` manifest attribute (read by Mixin's MixinPlatformAgentDefault). The dev runs
+    // load the mod from `build/resources/main` as an exploded directory, so the same attribute is
+    // also shipped as a resource - drop it here so the generated manifest is the one that lands
+    // in the jar.
+    exclude 'META-INF/MANIFEST.MF'
     manifest {
         attributes('Specification-Title': mod_name, 'Specification-Vendor': mod_authors,
                 'Specification-Version': '1', 'Implementation-Title': project.name,
-                'Implementation-Version': project.version, 'Implementation-Vendor': mod_authors)
+                'Implementation-Version': project.version, 'Implementation-Vendor': mod_authors,
+                'MixinConfigs': "${mod_id}.mixins.json")
     }
     from(['LICENSE', 'NOTICE']) { into 'META-INF' }
     finalizedBy 'reobfJar'

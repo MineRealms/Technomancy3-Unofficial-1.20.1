@@ -1,5 +1,6 @@
 package theflogat.technomancy.common.tiles.machines;
 
+import theflogat.technomancy.common.energy.EnergyHolder;
 import dev.tc4port.thaumcraft.api.aspect.AspectAmounts;
 import dev.tc4port.thaumcraft.api.aspect.AspectContainerView;
 import dev.tc4port.thaumcraft.api.aspect.AspectId;
@@ -61,7 +62,7 @@ import theflogat.technomancy.config.TechnomancyConfig;
  * {@code canFillList} limit. Unlike the original's {@code getEssentiaType}, which indexed an
  * empty array and crashed, every query answers safely when the store is empty.</p>
  */
-public final class EldritchConsumerBlockEntity extends BlockEntity implements EssentiaTransport, AspectContainerView {
+public final class EldritchConsumerBlockEntity extends BlockEntity implements EssentiaTransport, AspectContainerView, EnergyHolder {
 
     /** {@code TileEldritchConsumer}: {@code Rate.consumerCost * 50}. */
     public static final long ENERGY_CAPACITY = 1_000_000;

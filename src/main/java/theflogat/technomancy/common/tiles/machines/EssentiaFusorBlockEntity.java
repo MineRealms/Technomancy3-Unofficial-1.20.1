@@ -1,5 +1,6 @@
 package theflogat.technomancy.common.tiles.machines;
 
+import theflogat.technomancy.common.energy.EnergyHolder;
 import dev.tc4port.thaumcraft.api.ThaumcraftApiHelper;
 import dev.tc4port.thaumcraft.api.aspect.AspectAmounts;
 import dev.tc4port.thaumcraft.api.aspect.AspectApi;
@@ -48,7 +49,7 @@ import theflogat.technomancy.config.TechnomancyConfig;
  * which is deliberately no longer the original's flat 1000 FE.</p>
  */
 public final class EssentiaFusorBlockEntity extends BlockEntity
-        implements EssentiaTransport, AspectContainerView {
+        implements EssentiaTransport, AspectContainerView, EnergyHolder {
 
     /** {@code getSuctionAmount}: what a marked input advertises. */
     public static final int INPUT_SUCTION = 48;

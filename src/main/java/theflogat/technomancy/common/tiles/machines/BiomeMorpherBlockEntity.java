@@ -1,5 +1,6 @@
 package theflogat.technomancy.common.tiles.machines;
 
+import theflogat.technomancy.common.energy.EnergyHolder;
 import dev.tc4port.thaumcraft.block.TaintSpreadLogic;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -31,7 +32,7 @@ import theflogat.technomancy.config.TechnomancyConfig;
  * columns outside the loaded area, where TC4R's conversion is a no-op. A morpher surrounded by
  * already-converted land still burns its charge, exactly as the original did.</p>
  */
-public final class BiomeMorpherBlockEntity extends BlockEntity {
+public final class BiomeMorpherBlockEntity extends BlockEntity implements EnergyHolder {
 
     /** {@code Rate.biomeMorpherCost * 40}. */
     public static final long ENERGY_CAPACITY = 800_000;

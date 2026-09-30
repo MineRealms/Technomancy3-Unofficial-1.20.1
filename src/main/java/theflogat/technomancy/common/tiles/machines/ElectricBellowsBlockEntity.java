@@ -1,5 +1,6 @@
 package theflogat.technomancy.common.tiles.machines;
 
+import theflogat.technomancy.common.energy.EnergyHolder;
 import dev.tc4port.thaumcraft.block.entity.AlchemyFurnaceBlockEntity;
 import dev.tc4port.thaumcraft.nativeimpl.mixin.FurnaceAccessor;
 import net.minecraft.core.BlockPos;
@@ -34,7 +35,7 @@ import theflogat.technomancy.compat.thaumcraft.ThaumcraftInternals;
  * One charge therefore buys a burst of eighty ticks during which cooking advances one step every
  * two ticks — the same forty steps the original's stoking produced, paid for the same way.</p>
  */
-public final class ElectricBellowsBlockEntity extends BlockEntity {
+public final class ElectricBellowsBlockEntity extends BlockEntity implements EnergyHolder {
 
     /** {@code Rate.bellowsCost * 40}. */
     public static final long ENERGY_CAPACITY = 20_000;

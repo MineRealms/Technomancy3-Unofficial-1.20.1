@@ -1,5 +1,6 @@
 package theflogat.technomancy.common.tiles.dynamo;
 
+import theflogat.technomancy.common.energy.EnergyHolder;
 import dev.tc4port.thaumcraft.api.ThaumcraftApiHelper;
 import dev.tc4port.thaumcraft.api.aspect.AspectAmounts;
 import dev.tc4port.thaumcraft.api.aspect.AspectApi;
@@ -55,7 +56,7 @@ import theflogat.technomancy.compat.gtceu.EuTier;
  * rate and the units taken per charge, so the Q a unit of essentia yields is identical either
  * way, with no rounding drift between the two cases.</p>
  */
-public final class EssentiaDynamoBlockEntity extends BlockEntity implements EssentiaTransport, AspectContainerView {
+public final class EssentiaDynamoBlockEntity extends BlockEntity implements EssentiaTransport, AspectContainerView, EnergyHolder {
 
     /** {@code TileEssentiaDynamo.maxAmount}. */
     public static final int ESSENTIA_CAPACITY = 64;

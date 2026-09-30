@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "theflogat.technomancy.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "priority": 900,
+  "mixins": [
+    "GtceuJeiFluidHelperMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

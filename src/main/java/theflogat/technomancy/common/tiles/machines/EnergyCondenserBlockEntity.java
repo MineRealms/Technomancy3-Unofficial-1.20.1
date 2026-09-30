@@ -1,5 +1,6 @@
 package theflogat.technomancy.common.tiles.machines;
 
+import theflogat.technomancy.common.energy.EnergyHolder;
 import dev.tc4port.thaumcraft.api.ThaumcraftApiHelper;
 import dev.tc4port.thaumcraft.api.aspect.AspectAmounts;
 import dev.tc4port.thaumcraft.api.aspect.AspectApi;
@@ -54,7 +55,7 @@ import theflogat.technomancy.config.TechnomancyConfig;
  * everything handed to it (defect A-10).</p>
  */
 public final class EnergyCondenserBlockEntity extends BlockEntity
-        implements EssentiaTransport, AspectContainerView {
+        implements EssentiaTransport, AspectContainerView, EnergyHolder {
 
     /** {@code TileCondenser.aspect = Aspect.ENERGY}. Fixed; see {@link CondenserBalance}. */
     public static final AspectId POTENTIA = AspectId.parse(CondenserBalance.ASPECT);
