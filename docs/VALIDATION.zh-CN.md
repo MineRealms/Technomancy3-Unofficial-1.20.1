@@ -952,7 +952,77 @@ GameTest 由 91 增至 95：新增批次 `technom_s4_deep_tc` 三项（全工程
 
 ### 本轮未验证
 
-- **没有重新跑 GameTest**：本轮只跑了 `build`（JUnit）与客户端探针。上一次全绿是 2026-09-29 的 95/95；本轮改动不触及服务端 tick 逻辑，但默认 / `-PwithGtceu=true` / `-PwithBotania=false` / `-PwithJade=false` 四种运行时都还没有在本轮跑过。
+- GameTest 当时**还没有**重跑，只有 `build`（JUnit）与客户端探针；当天的 95/95 是 2026-09-29 的记录。**这一点在第二轮审计后已经补齐**，见下一节：97/97 全绿（含两条新增的全树守卫），但仍然只跑了默认运行时，`-PwithGtceu=true` / `-PwithBotania=false` / `-PwithJade=false` 三种组合仍未在本轮跑过。
 - **没有任何人工实机点击**：稳定灯空/满罐的颜色与两个物品的图标只由顶点捕获与烘焙模型断言证明；"看上去对不对"仍需人眼。Jade 提示行与 JEI 燃料页的排版同样只有数值证据。
 - `check_unwrap.py` 修好的 `coil.json`（east/west）与 `node_dynamo.json`（panel3/4）只过了规则校验，**没有在游戏里目视确认**。
 - KubeJS 那一半只有发现文件与类资源的证据；`-PwithKubejs=true` 的完整运行时只验证了插件被加载（探针 40），没有写任何真实脚本去调用 `Technom` 全局。
+
+## 上游对照审计：掉落表、能量能力与三处数值（2026-09-30 第二轮）
+
+本轮的目标不是加功能，而是**拿上游 1.7.10（`37bf9a56`）逐项对照，把"看起来搬过来了、其实没搬全"的地方找出来**。做法是四个只读子代理分头扫（方块实体 / 方块与注册 / 客户端与 GUI / 仪式与玩家与网络），每条结论都回到源码复核后才动手；子代理报的假阳性（纯矿物品的共享 lang key、`essentia_container` 是 `quantum_jar` 的改名等）一律驳回。
+
+### 最严重的一条：24 个方块破坏后**什么都不掉**
+
+这一条四个子代理都没报，是交叉核对 Forge 补丁时发现的，也是本轮唯一一个"玩家会立刻察觉"的缺陷。
+
+1.20.1 里 Forge 给 `BlockBehaviour` 打了补丁：**只要方块没调用过 `.noLootTable()`**，掉落表 id 就按注册名算出来：
+
+```java
+this.lootTableSupplier = () -> {
+   ResourceLocation registryName = ForgeRegistries.BLOCKS.getKey((Block) this);
+   return new ResourceLocation(registryName.getNamespace(), "blocks/" + registryName.getPath());
+};
+```
+
+而 `BlockBehaviour.getLootTable()` 直接返回这个 id。关键在于**文件缺失时解析成 `LootTable.EMPTY`，不会回退成掉自己**——所以没有 json 就等于破坏后空气。
+
+全树只有 4 个方块显式选了退出：`creative_jar`、`node_fabricator_shell`、`fake_air_light`（`TechnomBlocks.java` 161/223/270）与 `ManaFluidBlock`（流体方块，本就不该有）。其余 24 个——**五色水晶、五色触媒、全部 Existence 机器（燃烧器 ×2、催熟器、收割者、封存器、喷泉、三种塔座）、`flower_dynamo`、`mana_exchanger`、`mana_fabricator`、`processor_bo`、`basalt`**——一个 json 都没有。上游是自掉落的（`BlockBase` 不覆写，`BlockCosmeticOpaque.quantityDropped` 返回 1），所以这是纯粹的移植遗漏。
+
+补了 24 个掉落表（原有 16 个 + 新增 24 个 = 全树 40 个，守卫日志确认 `40 loot tables present, 4 blocks opted out`）。两个生成脚本的坑也记一下：模板用 `%s` 时误当成 `dict` 格式化直接抛 `TypeError`，崩掉的进程留下了一个 0 字节的 `basalt.json`；另外正则一开始把 `TechnomItems.ITEMS.register` 也当成方块，多生成了 `mana_coil` / `manasteel_gear`（那是物品），已删除。
+
+### 五处数值 / 方向 / 能力缺陷
+
+| 位置 | 现象 | 根因 | 修复 |
+|---|---|---|---|
+| `ExistenceUserBlockEntity.getMaxRate()` | 整个 Existence 网络注能慢 50～5000 倍 | 硬编码 `4`。上游 `TileExistenceRedstoneBase.getMaxRate()` 是 `maxPower / 50`，作物催熟器/收割者 = 200，封存器 = 20,000。`ExistencePylonBlockEntity.output()` 拿它当每 tick 上限 | 改成 `getPowerCap() / 50` |
+| `ExistenceBurnerBlockEntity`（动态） | 免费烧生物，且价值表算错 | 上游先查一次 `energy >= 10000` 再在循环里扣，本工程干脆没接能量。另外 `Mob` 判怪物是错的——`Animal extends Mob`，牛会被当成怪物 | 接 `MachineEnergy`（10,000 FE/杀，上限 100,000），改成**每次击杀前**`tryConsume`；怪物判定改用 `net.minecraft.world.entity.monster.Enemy` |
+| `ManaExchangerBlockEntity` | 管道只能从正在耗液的机器里抽液 | `fill` / `drain` 的 `mode()` 判反了：上游 `fill` 只在"喝自己的罐"（`mode == true`）时收液，`drain` 只在产液（`mode == false`）时放液 | 两个方向的 `mode()` 取反对调 |
+| `BiomeMorpherBlockEntity` / `ElectricBellowsBlockEntity` | 两台机器**永远充不进电**，从不工作 | 两个方块实体都建了 `MachineEnergy`、也存读档，但**没覆写 `getCapability`**。Forge 的 `CapabilityProvider` 只回答它从 provider 字段收集到的能力，`MachineEnergy` 是普通字段，所以邻居拿到的一律是 `LazyOptional.empty()` | 补 `getCapability` / `invalidateCaps` 委托，与其余机器同型 |
+| `ExistenceConversion.getValue` | 蝙蝠只值 1 而不是 5 | 上游价值表里 `creature`（`EntityAnimal`）与 `ambient`（`EntityAmbientCreature`）都是 5，只搬了前半 | 判定改为 `Animal || AmbientCreature` |
+
+`existence_gem` 顺带从默认 64 改成 `stacksTo(1)`（上游 `ItemBase` 构造里 `setMaxStackSize(1)`）。
+
+两处**差点改错、复核后保留原样**的地方，记下来免得下轮再犯：
+
+- 燃烧器的 `getMaxRate()` **本来就是 4，是对的**。我一度把它也改成 `getPowerCap() / 50`，但上游两个燃烧器（`TileExistenceBurner` / `TileExistenceDynamicBurner`）各自硬编码 `return 4;`——它们继承的是 `TileTechnomancyRedstone` / `TileMachineRedstone`，**不是** `TileExistenceRedstoneBase`。`maxPower / 50` 只属于三台用户机器（催熟器/收割者 `maxPower = 10000` → 200，封存器 `1000000` → 20000，与端口里的 `SMALL_CAP` / `SEAL_CAP` 一一对上）。
+- 动态燃烧器的能量**只从底面进**（上游 `TileExistenceDynamicBurner.canConnectEnergy`：`from == ForgeDirection.DOWN`）。端口的 `EnergyPorts` 用绝对世界朝向，所以映射成 `mask(Direction.DOWN)`；这条映射约定已用另外两台机器交叉验证过（`TileManaExchanger` 的 `from != UP` ↔ `allExcept(Direction.UP)`，`TileManaFabricator` 的 `from.ordinal() == facing` ↔ `mask(facing())`）。
+
+静态燃烧器上游完全没有能量缓冲，所以它这一侧用 `EnergyPorts.NONE`：能力仍然应答，但每个面的 `canReceive` / `canExtract` 都是 false、传输恒为 0，玩家无法把 FE 灌进一台永远不会花掉它的机器。`TechnomJadeProvider` 也同步跳过 `NONE` 的 `EnergyHolder`，否则静态燃烧器会凭空多出一条 `0 / 100,000 FE` 的能量条。
+
+### 两条全树回归守卫
+
+这两类缺陷的共同点是**单点测试看不见**：掉落表缺失要真去查 `LootData` 才知道，能量能力缺失要有邻居去问才知道。所以把它们写成对整棵树的断言，加进 `S4DeepTcGameTests`：
+
+- `everyBlockEitherHasALootTableOrSaysItDoesNot` —— 遍历 `BuiltInRegistries.BLOCK` 里所有 `technom:` 方块，凡是没 `noLootTable()` 的，都要求 `getServer().getLootData().getLootTable(block.getLootTable()) != LootTable.EMPTY`。日志：`40 loot tables present, 4 blocks opted out`。
+- `everyEnergyMachineHandsItsBufferToNeighbours` —— 遍历所有 `technom:` 方块，凡方块实体 `instanceof EnergyHolder` 的，要求它至少从**某一个**朝向（含 `null`）回答出 `ForgeCapabilities.ENERGY`。日志：`10 energy machines expose their buffer`。
+
+第二条守卫还顺带做了一次全仓扫描确认没有反例：12 台能量机器里恰好这 2 台漏了覆写，其余 10 台都有；另外没有别的方块实体持有 `LazyOptional` 却忘了覆写 `getCapability`。
+
+### 本轮实际执行
+
+| 命令 | 结果 |
+|---|---|
+| `gradlew.bat compileJava` | 退出码 0，0 处 `error:` |
+| `gradlew.bat build` | BUILD SUCCESSFUL；**JUnit 241 通过 / 0 失败**（29 个测试类） |
+| `gradlew.bat runGameTestServer`（默认运行时） | **97/97 required tests passed**，两条新守卫日志如上 |
+| Rosetta 客户端探针（`-PwithGtceu=true -PwithKubejs=true`） | **10/10 通过**（上一轮） |
+
+### 本轮未验证 / 仍未处理
+
+- 新增的 25 个掉落表只过了规则校验（json 可解析、每条 entry 的 id 都在源码里注册过），**没有在游戏里真去挖一遍**；守卫断言的是"表存在且非 EMPTY"，不是"掉的东西对"。
+- 两处守卫只覆盖了默认运行时。`-PwithGtceu=true` / `-PwithBotania=false` / `-PwithJade=false` 三种组合本轮都没跑。
+- 子代理还报了一批**尚未处理**的差异，按影响排序记录在案（掉落表与能力这两类已闭环，下面是其余）：宝藏的命中/摧毁副作用完全没搬（`ItemTreasure.onUserHit` / `onTreasureDestroyed`，全仓没有 `LivingHurtEvent` 监听）；击杀与仪式激活不再给 Existence 能量（上游 `EventRegister.java:179-188`、`TileCatalyst.java:56-58`），亲和/被动效果因此几乎不可达；`seal` 标记永不清除（上游 80 tick 冷却后清），被封印的村民无法再封印或失去宝藏；宝藏村民每次区块加载都重掷（上游无条件写 `treasureAttempt=true` 防重掷），实际发生率远高于标称的 1/50；没有 HUD 开关且 HUD 固定画在 (6,6)（上游 `showHUD` 默认 false）；配置面约 7 项 vs 上游约 35 方块 / 15 物品 / HUD / recipes.bonus / renderers.fancy / machines.blacklist / Rate 的 8 项能耗；`EldritchConsumerBlockEntity` 把整个 tick 卡在 40 tick 的 `cooldown` 上（上游只拿它驱动动画，吞吐被砍到约 1/40）；`BoProcessorBlockEntity` 用了 TC 处理器那套法力定价（约为上游 `multiplier*150 + 1500*reprocess` 的 1/4～1/5）；收割者不扣补种种子（每次多掉一份）；燃烧器与三台 Existence 机器丢了 `RedstoneControl` 门控；`EssentiaFusorBlockEntity.addEssentia` 多要求 `fullyMarked()`；`CatalystBlockEntity` 命中第一个仪式就 `break`（上游没有 `break`）；`ConsumerRange` 多扫一层；`basalt` 既无配方也无世界生成来源；`creative_jar` 不可破坏且无掉落表（上游硬度 1、自掉落），而 `S2StorageGameTests.java:114` 把这个偏差断言死了。
+- 方块硬度/抗性偏差：`crystal_*` 0.3 vs 上游 2.0；`quantum_jar` 0.5 vs 1.0；`mana_exchanger` 3.0/6.0 vs 2.0/10.0。`processor_bo` 没有自己的掉落表（只掉内容物）；`adv_decon_table` / `essentia_reservoir` 不在任何可挖掘标签里。
+- 死资源（低优先级，多为改名遗留）：26 个无人引用的方块模型、4 个死物品模型（`coilcoupler` / `existencegem` / `itemboost` / `ritualtome`，贴图仍被正确命名的模型使用）、约 35 张无人引用的贴图，以及重名资产（`coil_coupler` vs `coilcoupler`、`neutronized_metal` vs `neutronizedmetal`）。
+- 仍需搬到 `TechneModel` 的渲染器：`node_dynamo` 浮动线、`eldritch_consumer`（14 盒）、`electric_bellows`（5 盒，128×64 图集）、`biome_morpher`（22 盒）、`mana_fabricator`（14 盒）、`adv_decon_table`（9 盒）、`crystal`（`getStage()`）、`catalyst`（`textLoc`）、`existence_burner` 立方体、`essentia_dynamo` 的 `renderFacing`、`flower_dynamo`。
+- `docs/FEATURE_MATRIX.zh-CN.md` 仍把"事件副作用"和"配置关闭 HUD"列为验收项，而代码并不满足；这两项在补齐之前应标注为未达成。

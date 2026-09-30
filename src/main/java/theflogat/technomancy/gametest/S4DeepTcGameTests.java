@@ -4,6 +4,7 @@ import dev.tc4port.thaumcraft.api.research.ResearchKey;
 import dev.tc4port.thaumcraft.research.ResearchCatalog;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -14,9 +15,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import theflogat.technomancy.Technomancy;
+import theflogat.technomancy.common.energy.EnergyHolder;
 import theflogat.technomancy.common.registry.TechnomBlocks;
 
 /**
@@ -107,6 +112,82 @@ public final class S4DeepTcGameTests {
             S2StorageGameTests.check(helper, ResearchCatalog.get(ResearchKey.parse(key)) != null,
                     key + " is not in the TC4R research catalog");
         }
+        helper.succeed();
+    }
+
+    /**
+     * Every block of the mod either deliberately has no loot table or has one that actually exists.
+     *
+     * <p>Forge gives a block that never called {@code noLootTable()} the table id
+     * {@code technom:blocks/<id>}, and a missing file resolves to {@code LootTable.EMPTY} rather
+     * than falling back to the block itself - so a block with no table drops nothing at all. The
+     * tree had twenty-four of them, including every crystal, catalyst and Existence machine, and no
+     * server-side test could see it because a missing table is not an error.</p>
+     */
+    @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH)
+    public static void everyBlockEitherHasALootTableOrSaysItDoesNot(GameTestHelper helper) {
+        int checked = 0;
+        int exempt = 0;
+        for (ResourceLocation id : BuiltInRegistries.BLOCK.keySet()) {
+            if (!Technomancy.MOD_ID.equals(id.getNamespace())) {
+                continue;
+            }
+            Block block = BuiltInRegistries.BLOCK.get(id);
+            ResourceLocation table = block.getLootTable();
+            if (table.equals(BuiltInLootTables.EMPTY)) {
+                exempt++;
+                continue;
+            }
+            checked++;
+            S2StorageGameTests.check(helper,
+                    helper.getLevel().getServer().getLootData().getLootTable(table) != LootTable.EMPTY,
+                    "technom:" + id.getPath() + " points at loot table " + table
+                            + ", which does not exist, so breaking it drops nothing");
+        }
+        S2StorageGameTests.check(helper, checked > 0, "no technom block has a loot table at all");
+        Technomancy.LOGGER.info("GameTest S4: {} loot tables present, {} blocks opted out",
+                checked, exempt);
+        helper.succeed();
+    }
+
+    /**
+     * A block entity that keeps a {@link MachineEnergy} has to hand it to neighbours, or nothing
+     * can ever charge it.
+     *
+     * <p>Forge's {@code BlockEntity} extends {@code CapabilityProvider}, whose {@code getCapability}
+     * answers {@code LazyOptional.empty()} unless a dispatcher was gathered from a registered
+     * provider field - and {@code MachineEnergy} is not one. The biome morpher and the electric
+     * bellows were the only two machines of twelve that never overrode it, so both were unpowerable
+     * and never ran; their drops test passed regardless, which is why nothing caught it.</p>
+     */
+    @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH)
+    public static void everyEnergyMachineHandsItsBufferToNeighbours(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(1, 1, 1));
+        int checked = 0;
+        for (ResourceLocation id : BuiltInRegistries.BLOCK.keySet()) {
+            if (!Technomancy.MOD_ID.equals(id.getNamespace())) {
+                continue;
+            }
+            BlockState state = BuiltInRegistries.BLOCK.get(id).defaultBlockState();
+            level.setBlockAndUpdate(pos, state);
+            if (!(level.getBlockEntity(pos) instanceof EnergyHolder)) {
+                continue;
+            }
+            checked++;
+            boolean exposed = false;
+            for (Direction side : Direction.values()) {
+                exposed |= level.getBlockEntity(pos)
+                        .getCapability(ForgeCapabilities.ENERGY, side).isPresent();
+            }
+            exposed |= level.getBlockEntity(pos)
+                    .getCapability(ForgeCapabilities.ENERGY, null).isPresent();
+            S2StorageGameTests.check(helper, exposed,
+                    "technom:" + id.getPath() + " holds a MachineEnergy but exposes no energy"
+                            + " capability, so no neighbour can ever charge it");
+        }
+        S2StorageGameTests.check(helper, checked > 0, "no technom block entity holds energy at all");
+        Technomancy.LOGGER.info("GameTest S4: {} energy machines expose their buffer", checked);
         helper.succeed();
     }
 }

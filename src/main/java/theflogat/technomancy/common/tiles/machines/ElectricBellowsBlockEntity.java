@@ -1,5 +1,6 @@
 package theflogat.technomancy.common.tiles.machines;
 
+import javax.annotation.Nullable;
 import theflogat.technomancy.common.energy.EnergyHolder;
 import dev.tc4port.thaumcraft.block.entity.AlchemyFurnaceBlockEntity;
 import dev.tc4port.thaumcraft.nativeimpl.mixin.FurnaceAccessor;
@@ -13,6 +14,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import theflogat.technomancy.common.blocks.machines.ElectricBellowsBlock;
 import theflogat.technomancy.common.energy.EnergyLimits;
 import theflogat.technomancy.common.energy.EnergyPorts;
@@ -143,6 +146,23 @@ public final class ElectricBellowsBlockEntity extends BlockEntity implements Ene
 
     public int boost() {
         return boost;
+    }
+
+    /**
+     * Without this the bellows answered {@code LazyOptional.empty()} to every neighbour - Forge's
+     * {@code BlockEntity} only exposes capabilities gathered from a registered provider field, and
+     * {@link MachineEnergy} is not one - so it could never be charged and never stoked anything.
+     */
+    @Override
+    public <T> LazyOptional<T> getCapability(Capability<T> cap, @Nullable Direction side) {
+        LazyOptional<T> view = energy.getCapability(cap, side);
+        return view.isPresent() ? view : super.getCapability(cap, side);
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        energy.invalidate();
     }
 
     @Override

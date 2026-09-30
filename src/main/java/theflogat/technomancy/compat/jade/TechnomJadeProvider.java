@@ -15,6 +15,7 @@ import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
 import theflogat.technomancy.Technomancy;
 import theflogat.technomancy.common.energy.EnergyHolder;
+import theflogat.technomancy.common.energy.EnergyPorts;
 import theflogat.technomancy.common.rituals.Ritual;
 import theflogat.technomancy.common.tiles.essentia.CreativeJarBlockEntity;
 import theflogat.technomancy.common.tiles.essentia.EssentiaReservoirBlockEntity;
@@ -75,7 +76,9 @@ public final class TechnomJadeProvider implements IBlockComponentProvider, IServ
         if (be == null) {
             return;
         }
-        if (be instanceof EnergyHolder holder) {
+        // A machine with NONE ports holds an energy component but has no way to move energy - the
+        // static Existence burner is one - so a bar would invent a stat the player cannot use.
+        if (be instanceof EnergyHolder holder && !holder.energy().ports().equals(EnergyPorts.NONE)) {
             tag.putLong(ENERGY, holder.energy().ledger().stored());
             tag.putLong(ENERGY_CAP, holder.energy().ledger().capacity());
         }

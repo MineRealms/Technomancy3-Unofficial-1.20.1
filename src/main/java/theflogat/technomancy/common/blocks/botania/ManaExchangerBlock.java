@@ -40,7 +40,10 @@ import vazkii.botania.api.mana.PoolOverlayProvider;
  */
 public class ManaExchangerBlock extends BaseEntityBlock implements PoolOverlayProvider {
 
-    /** The original's {@code mode}: {@code true} means mana leaves the pool as fluid. */
+    /**
+     * The original's {@code mode}: {@code true} means the pool gains mana and the tank is drained
+     * (fluid to mana), {@code false} means the pool is drained and the tank filled (mana to fluid).
+     */
     public static final BooleanProperty OUT = BooleanProperty.create("out");
     /** Whether the exchange is enabled right now; drives the overlay on the pool above. */
     public static final BooleanProperty ACTIVE = BooleanProperty.create("active");

@@ -1,7 +1,7 @@
 package theflogat.technomancy.common.machines.existence;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ambient.AmbientCreature;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.npc.AbstractVillager;
 
@@ -19,11 +19,11 @@ public final class ExistenceConversion {
         if (entity instanceof AbstractVillager) {
             return 50;
         }
-        if (entity instanceof Animal) {
+        // The original's table gave 5 to both EnumCreatureType.creature (EntityAnimal) and
+        // EnumCreatureType.ambient (EntityAmbientCreature). Only the first half was ported, so a
+        // bat paid 1 instead of 5.
+        if (entity instanceof Animal || entity instanceof AmbientCreature) {
             return 5;
-        }
-        if (entity instanceof Mob) {
-            return 1;
         }
         return 1;
     }

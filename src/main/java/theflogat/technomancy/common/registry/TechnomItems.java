@@ -80,7 +80,8 @@ public final class TechnomItems {
      * comes out of the crafting table empty and is filled by killing mobs.
      */
     public static final RegistryObject<Item> EXISTENCE_GEM = ITEMS.register("existence_gem",
-            () -> new theflogat.technomancy.common.items.technom.ExistenceGemItem(new Item.Properties()));
+            () -> new theflogat.technomancy.common.items.technom.ExistenceGemItem(
+                    new Item.Properties().stacksTo(1)));
 
     // ---- end S3 Existence ----
 

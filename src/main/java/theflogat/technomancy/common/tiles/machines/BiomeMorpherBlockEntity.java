@@ -1,13 +1,17 @@
 package theflogat.technomancy.common.tiles.machines;
 
+import javax.annotation.Nullable;
 import theflogat.technomancy.common.energy.EnergyHolder;
 import dev.tc4port.thaumcraft.block.TaintSpreadLogic;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import theflogat.technomancy.common.blocks.machines.BiomeMorpherBlock;
 import theflogat.technomancy.common.energy.EnergyLimits;
 import theflogat.technomancy.common.energy.EnergyPorts;
@@ -105,6 +109,24 @@ public final class BiomeMorpherBlockEntity extends BlockEntity implements Energy
 
     public RedstoneControl redstone() {
         return redstone;
+    }
+
+    /**
+     * Forge's {@code BlockEntity} only answers a capability it gathered from a registered provider
+     * field, and {@link MachineEnergy} is not one, so without this override the morpher answered
+     * {@code LazyOptional.empty()} to every neighbour and could never be charged at all - not by
+     * FE, not by EU. The other machines all delegate the same way.
+     */
+    @Override
+    public <T> LazyOptional<T> getCapability(Capability<T> cap, @Nullable Direction side) {
+        LazyOptional<T> view = energy.getCapability(cap, side);
+        return view.isPresent() ? view : super.getCapability(cap, side);
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        energy.invalidate();
     }
 
     @Override

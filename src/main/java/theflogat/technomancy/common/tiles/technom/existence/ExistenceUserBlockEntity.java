@@ -136,9 +136,14 @@ public final class ExistenceUserBlockEntity extends BlockEntity implements IExis
         return mode == Mode.SEAL ? SEAL_CAP : SMALL_CAP;
     }
 
+    /**
+     * {@code TileExistenceRedstoneBase.getMaxRate()}: {@code maxPower / 50}, which is 200 for the
+     * crop accelerator and the harvester and 20,000 for the sealer. The pylon uses this as its
+     * per-tick injection cap, so a flat 4 filled the whole network 50 to 5,000 times too slowly.
+     */
     @Override
     public int getMaxRate() {
-        return 4;
+        return getPowerCap() / 50;
     }
 
     @Override

@@ -74,7 +74,10 @@ public final class ManaExchangerBlockEntity extends BlockEntity {
                 EnergyPorts.consumer(EnergyPorts.allExcept(Direction.UP)));
     }
 
-    /** The original's {@code mode}: {@code true} means mana leaves the pool as fluid. */
+    /**
+     * The original's {@code mode}: {@code true} means the pool gains mana and the tank is drained
+     * (fluid to mana), {@code false} means the pool is drained and the tank filled (mana to fluid).
+     */
     public boolean mode() {
         BlockState state = getBlockState();
         return state.hasProperty(ManaExchangerBlock.OUT) && state.getValue(ManaExchangerBlock.OUT);
@@ -168,7 +171,10 @@ public final class ManaExchangerBlockEntity extends BlockEntity {
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
-            if (!onSide() || mode() || !resource.getFluid().isSame(TechnomFluids.MANA.get())) {
+            // TileManaExchanger.fill: only while the machine is drinking its own tank (mode == true,
+            // the fluid -> mana direction). The first cut had this and drain() the wrong way round,
+            // so pipes could only ever take fluid out of a machine that was already consuming it.
+            if (!onSide() || !mode() || !resource.getFluid().isSame(TechnomFluids.MANA.get())) {
                 return 0;
             }
             return tank.fill(resource, action);
@@ -184,7 +190,8 @@ public final class ManaExchangerBlockEntity extends BlockEntity {
 
         @Override
         public FluidStack drain(int maxDrain, FluidAction action) {
-            if (!onSide() || !mode()) {
+            // TileManaExchanger.drain: only while the machine is producing fluid (mode == false).
+            if (!onSide() || mode()) {
                 return FluidStack.EMPTY;
             }
             return tank.drain(maxDrain, action);
