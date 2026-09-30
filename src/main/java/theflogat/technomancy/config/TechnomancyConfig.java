@@ -62,8 +62,10 @@ public final class TechnomancyConfig {
                 .comment("Let villagers carry the three treasures, which the Extraction ritual then takes.",
                         "Off by default, as in 1.7.10: the original gated this behind a second option,",
                         "treasureSafeguard, that shipped false, so its treasures flag ended up false too.",
-                        "Turning this on makes one villager in fifty a carrier and makes killing that",
-                        "villager drop its treasure - which is a reason to keep it off on a public server.")
+                        "Turning this on makes one villager in fifty a carrier. Killing an unsealed",
+                        "carrier destroys the treasure and sets off its revenge - a radius-30 explosion",
+                        "for the fire gem - while killing one the sealing device has marked drops the",
+                        "treasure instead. Both are a reason to keep this off on a public server.")
                 .define("treasures", false);
         builder.pop();
 

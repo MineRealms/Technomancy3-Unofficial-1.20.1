@@ -11,7 +11,7 @@
   - 核心方块（水晶×5、催化器×5、玄武岩、假空气光源）。
   - 仪式 **16/16**、仪式手册 + Screen。
   - Existence 全套（喷泉、燃烧器、塔三阶、使用器三变体、传输接口）。
-  - 宝物村民 + 三件宝物；新增 `world.treasures` 配置，**默认关闭**（对应上游 `treasureSafeguard=false` 的净效果，此前本工程无条件开启）。
+  - 宝物村民 + 三件宝物 + **受击/摧毁副作用**（`ItemTreasure.onUserHit` / `onTreasureDestroyed`：火宝石吞火焰并点燃攻击者、力量板给单次抗性 V、金翼上抛；未封印携带者死亡时摧毁宝物并引爆，被封印的才掉落）；新增 `world.treasures` 配置，**默认关闭**（对应上游 `treasureSafeguard=false` 的净效果，此前本工程无条件开启）。
   - 玩家亲和/Existence 数据、被动效果、HUD + 网络同步。
   - Botania：四台机器按上游精确对齐、`mana_coil`/`manasteel_gear`、魔力流体 + 桶、灌注/合成配方 7 条、Lexicon 词条 5 条、模型/贴图，且缺席安全。
   - **本轮新增**：`technom:existence_gem`（上游 `ItemExistenceGem`，此前整个物品缺失，而它是所有 Existence 机器配方的核心材料）+ 21 条 S3 合成配方（水晶×5、催化器×5、手册、宝石、燃烧器×2、使用器×3、塔×3）+ **喷泉接入 Existence 网络**（此前不是 `IExistenceProducer`，塔抽不到它，网络是断的）+ `technom_s3_rituals` / `technom_s3_existence` 两个 GameTest 批次（此前 S3 零覆盖）。
@@ -28,10 +28,10 @@
 ## 最近一次全量验证（2026-09-30）
 
 - `build`：**JUnit 245 通过 / 0 失败**（30 个测试类）。2026-09-29 时是 238/28。
-- `runGameTestServer`（默认运行时）：**97/97 通过**（守卫日志：`40 loot tables present, 4 blocks opted out`、`10 energy machines expose their buffer`、`31 tool-requiring blocks are all mineable`）。2026-09-29 的 95 个曾在默认 / `-PwithGtceu=true` / `-PwithBotania=false` 三种运行时各跑一遍；**本轮只跑了默认运行时**。
+- `runGameTestServer`（默认运行时）：**105/105 通过**（97 + 新增的 `technom_s3_treasure` 批次 8 条；守卫日志：`40 loot tables present, 4 blocks opted out`、`10 energy machines expose their buffer`、`31 tool-requiring blocks are all mineable`）。2026-09-29 的 95 个曾在默认 / `-PwithGtceu=true` / `-PwithBotania=false` 三种运行时各跑一遍；**本轮只跑了默认运行时**。
 - `python tools/validate_technom_data.py`：**OK: no errors**（16 warning / 1 skip；本轮修复前是 45 errors）。
 - Rosetta 客户端探针（带 GTCEu + KubeJS）：**10/10 通过**（`probes/client/`）。其中 `10_`/`11_` 这一对是真正的渲染器检查：10 在**集成服务端**放置全部 44 个方块（旧版用 `mc.level.setBlock`，`ClientLevel` 根本不接受写入，所以此前从未通过），11 等 3 秒后确认客户端看到 44/44 方块、36 个方块实体、3 个已注册渲染器。两者通过 JVM 系统属性传递原点，因为测试世界是虚空、玩家会掉落，位置不能各自重算。`12_`/`14_` 从烘焙模型与顶点捕获取证（不依赖人眼），`40_`/`41_` 覆盖三处联动与 TC4R 的要素来源页。首轮 8/10 的两个失败都不是回归：`11_` 是世界同步竞态（`--attach` 重跑 44/44），`14_` 是探针自身的颜色常量写反。
-- 2026-09-29 与 2026-09-30 两轮上游对照审计共修复 25 处缺陷（含 24 个此前缺失的方块掉落表、21 个“要工具却无 mineable 标签”的方块），逐条记录在 [VALIDATION](docs/VALIDATION.zh-CN.md) 的对应小节。
+- 2026-09-29 至 2026-09-30 三轮上游对照审计共修复 27 处缺陷（含 24 个此前缺失的方块掉落表、21 个“要工具却无 mineable 标签”的方块，以及第四轮补上的宝物受击/摧毁副作用与顺带修掉的 2 处偏差），逐条记录在 [VALIDATION](docs/VALIDATION.zh-CN.md) 的对应小节。
 
 ## 先读这些文件（按顺序）
 

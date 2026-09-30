@@ -70,7 +70,9 @@ public final class Technomancy {
         MinecraftForge.EVENT_BUS.addListener(Technomancy::onPlayerLogin);
         // S3 rituals: a catalyst running a ritual is unbreakable, as the original's hardness -1 was.
         MinecraftForge.EVENT_BUS.addListener(Technomancy::onBlockBreak);
-        theflogat.technomancy.common.items.technom.TreasureVillagers.register();
+        // S3 treasures: the villager carriers, plus the retaliation and the death effect a held
+        // treasure has (ItemTreasure.onUserHit / onTreasureDestroyed).
+        theflogat.technomancy.common.items.technom.TreasureEvents.register();
         // S3 Existence: killing a mob charges the gem the Existence machines are crafted from.
         MinecraftForge.EVENT_BUS.addListener(Technomancy::onLivingDeath);
         theflogat.technomancy.common.player.PlayerAffinityEffects.register(MinecraftForge.EVENT_BUS);
@@ -86,9 +88,14 @@ public final class Technomancy {
      * {@code EventRegister.entityDeath}: a player carrying an Existence gem charges it, and a
      * player without one rolls for Existence power. Only the first half was ported, so the
      * affinity path - which needs {@code existencelevel} to reach 20 - was unreachable in play.
+     *
+     * <p>The upstream gate was {@code damageType == "player"}, i.e. a direct melee blow: an arrow
+     * or a player-lit explosion was "arrow" / "explosion.player" and granted nothing.
+     * {@code DamageTypes.PLAYER_ATTACK} is that source here.</p>
      */
     private static void onLivingDeath(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
-        if (event.getSource().getEntity() instanceof net.minecraft.world.entity.player.Player player
+        if (event.getSource().is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)
+                && event.getSource().getEntity() instanceof net.minecraft.world.entity.player.Player player
                 && !player.level().isClientSide) {
             if (theflogat.technomancy.common.items.technom.ExistenceGemItem.hasAny(player)) {
                 theflogat.technomancy.common.items.technom.ExistenceGemItem

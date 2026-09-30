@@ -1,5 +1,6 @@
 package theflogat.technomancy.common.items.technom;
 
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import theflogat.technomancy.common.registry.TechnomItems;
 
@@ -13,16 +14,26 @@ public final class Treasures {
     private Treasures() {
     }
 
-    public static ItemStack get(String name) {
+    /**
+     * The item behind a treasure name, or {@code null} when the name is not one of the three.
+     * The original's {@code getTreasure} returned null for an unknown name too.
+     */
+    public static TreasureItem item(String name) {
+        Item item;
         if (FIRE_GEM.equals(name)) {
-            return new ItemStack(TechnomItems.TREASURE_FIRE_GEM.get());
+            item = TechnomItems.TREASURE_FIRE_GEM.get();
+        } else if (POWER_PLATE.equals(name)) {
+            item = TechnomItems.TREASURE_POWER_PLATE.get();
+        } else if (GOLDEN_WING.equals(name)) {
+            item = TechnomItems.TREASURE_GOLDEN_WING.get();
+        } else {
+            return null;
         }
-        if (POWER_PLATE.equals(name)) {
-            return new ItemStack(TechnomItems.TREASURE_POWER_PLATE.get());
-        }
-        if (GOLDEN_WING.equals(name)) {
-            return new ItemStack(TechnomItems.TREASURE_GOLDEN_WING.get());
-        }
-        return ItemStack.EMPTY;
+        return item instanceof TreasureItem treasure ? treasure : null;
+    }
+
+    public static ItemStack get(String name) {
+        TreasureItem item = item(name);
+        return item == null ? ItemStack.EMPTY : new ItemStack(item);
     }
 }

@@ -30,7 +30,7 @@ Set-Location 'H:\MinecraftMods\Technomancy-1.20.1'
 .\gradlew.bat runData
 ```
 
-`runGameTestServer` 现有 97 个必跑 GameTest（批次见 `src/main/java/theflogat/technomancy/gametest/`）；2026-09-30 在默认开发运行时 **97/97 通过**（此前的 95 个曾在默认、`-PwithGtceu=true`、`-PwithBotania=false`、`-PwithJade=false` 四种运行时跑过）。它们覆盖注册、守恒、方向、服务端 `/reload` 与安全边界，仍不等于人工实机验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
+`runGameTestServer` 现有 105 个必跑 GameTest（批次见 `src/main/java/theflogat/technomancy/gametest/`）；2026-09-30 在默认开发运行时 **105/105 通过**（此前的 97 个曾在默认、`-PwithGtceu=true`、`-PwithBotania=false`、`-PwithJade=false` 四种运行时跑过）。它们覆盖注册、守恒、方向、服务端 `/reload` 与安全边界，仍不等于人工实机验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
 
 ## 客户端实机探针
 

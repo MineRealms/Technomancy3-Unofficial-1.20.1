@@ -1073,11 +1073,85 @@ this.lootTableSupplier = () -> {
 
 ### 仍未处理（按影响排序，已开成任务）
 
-1. **宝藏的受击/摧毁副作用完全没搬**：`ItemTreasure.onUserHit`（命中者被点燃/得抗性/被击退）与 `onTreasureDestroyed`（半径 30 爆炸、半径 5 变黑曜石、半径 25 击退）全无，全仓也没有任何 `LivingHurtEvent` 监听。注意端口"村民死亡掉宝物"本身也是新增行为——上游村民死亡不掉物品，宝物只能靠 Extraction 仪式取出。
-2. **`seal` 语义冲突**：上游是 80 tick（4 秒）的临时保护窗，到点自动清除；端口把 `seal` 当成"永久不再掉落"的开关，且没有任何清除处。修它会改变掉落行为，属设计决策，与第 1 条耦合。
+1. ~~**宝藏的受击/摧毁副作用完全没搬**~~：**已在第四轮闭环**——`ItemTreasure.onUserHit` 与 `onTreasureDestroyed` 全部落地，与它耦合的掉落语义也一并定了（见下文"宝物受击/摧毁副作用"）。
+2. **`seal` 语义冲突（部分闭环）**：第四轮把 `seal` 定义成"宝物被保住"——封印的携带者死亡时**掉落**宝物，未封印则**摧毁**——所以这个开关现在有实际用途。但上游的 80 tick（4 秒）自动清除**仍未移植**：端口里封印是永久的。改成临时窗会让"封印后立刻打死取宝"变成限时操作，是设计决策，单独留着。
 3. **`basalt` 在端口里不可获得**：无配方、无世界生成。上游唯一来源是缺失的 `RitualOfFireT3`（在 50×90×50 区域内填充玄武岩）；端口只有 T1/T2。需要先确认端口有没有 `AreaProtocolBuilder` 的等价物。
 4. **六台机器的渲染器未移植**，目前渲染成普通立方体：`crystal`（3 阶段生长，是玩法提示）、`existence_burner`（4 盒）、`biome_morpher`（22 盒，最大件）、`electric_bellows`（5 盒 + 风箱袋动画，128×64 图集）、`adv_decon_table`（9 盒）、`eldritch_consumer`（14 盒）。`node_dynamo` 另缺 4 盒。模板与 API 已定位：整机样板 `client/render/NodeFabricatorRenderer`，建模用 `client/render/model/TechneModel`（`builder(texW,texH)` → `.part(name).uv(u,v).mirror(b).at(x,y,z).rotate(rx,ry,rz).box(x,y,z,w,h,d)…end()` → `.build()`），贴图已在 `assets/technom/textures/entity/` 就位，无需重新导出。
 5. **`blood_dynamo` / `blood_fabricator` 方块本身未移植**（渲染器与方块都没有）。
 6. **`creative_jar` 不可破坏且无掉落**（上游硬度 1、破坏掉自身）：这是**有意偏离**，`CreativeJarBlock` 的 javadoc 与 `S2StorageGameTests:112/114` 两条断言把它固化住了。属设计决策，不是事故。
 7. 配置面仍远小于上游（约 7 项 vs 上游约 35 方块 / 15 物品 / HUD / recipes.bonus / renderers.fancy / machines.blacklist / Rate 的 8 项能耗）；HUD 没有开关且固定画在 (6,6)，上游 `showHUD` 默认 false。
 8. 死资源（低优先级，多为改名遗留）：26 个无人引用的方块模型、4 个死物品模型（`coilcoupler` / `existencegem` / `itemboost` / `ritualtome`）、约 35 张无人引用的贴图，以及重名资产（`coil_coupler` vs `coilcoupler`、`neutronized_metal` vs `neutronizedmetal`）。
+
+## 宝物受击/摧毁副作用（2026-09-30 第四轮）
+
+上游 `ItemTreasure.onUserHit` 与 `ItemTreasure.onTreasureDestroyed` 此前一行未搬，全仓也没有任何 `LivingHurtEvent` 监听；本轮补齐，并把与它耦合的掉落语义一起定了。做法同上一轮：先读 1.7.10（`37bf9a56`）与 1.12（`e1b146ed`）两份上游源码，再逐行落到端口，然后由四个只读子代理分头复核（上游忠实度 / 1.20.1 API / 集成副作用 / 新测试质量），每条指控都回到源码验证后才动手。
+
+### 一个需要用户拍板的设计决策
+
+上游村民死亡时宝物**被摧毁且不掉落**（火宝石半径 30 爆炸、力量板把周围变黑曜石、金翼把周围上抛）；端口此前是"死亡掉落"。两者直接相加会让火宝石的爆炸把自己刚掉的宝物炸掉，三件宝物表现不一致。用户选择 **摧毁取代掉落**：
+
+- 未封印的携带者死亡 → 触发摧毁副作用，**不掉落**；
+- 被封印的携带者死亡 → **掉落**宝物，且不引爆。
+
+上游村民根本不掉物品（宝物只能靠 Extraction 仪式取出），所以"掉落"本身是端口新增；这条决策把它保留在封印一侧，`seal` 从此读作"宝物被保住"，封印器第一次有了实际用途。
+
+### 搬过来的行为
+
+| 宝物 | 受击时（`onUserHit`） | 携带者死亡时（`onTreasureDestroyed`） |
+|---|---|---|
+| 火宝石 FIRE | 火焰伤害被取消；攻击者点燃 15 秒 | 半径 30 的可破坏爆炸；半径 25 内非无敌生物点燃 120 秒 |
+| 力量板 DARK | 受害者获得抗性 V（1 tick、amplifier 4） | 半径 5 内非无敌生物获得挖掘疲劳（1 tick、amplifier 2）；半径 5 内所有 `getDestroySpeed != -1` 的方块变黑曜石 |
+| 金翼 LIGHT | 攻击者被上抛（水平 1.5、垂直 2.1） | 半径 25 内所有生物被上抛（水平 1.5、垂直 8） |
+
+触发条件与上游一致：受击效果只对"未封印的村民携带者"或"背包里带着宝物的玩家"生效（玩家按件数逐件结算），死亡效果只对村民携带者生效——玩家死亡不会引爆。三条监听器都走 `world.treasures` 开关，并都按上游注册在 `EventPriority.LOW`。
+
+### 复刻时确认的上游细节
+
+- **1.12 用的是 `getTrueSource()`，不是 `getEntity()`**：投射物命中时，1.12 取的是"射箭的人"，1.20.1 的 `DamageSource.getEntity()` 正是这个语义（`getDirectEntity()` 才是箭本身）。所以"点燃攻击者"对远程攻击同样成立。
+- **黑曜石循环把空气也算进去**：判据是 `getDestroySpeed(...) != -1`，空气是 0、只有基岩一类是 -1，所以 11×11×11 会被填成实心黑曜石。这是上游原样。
+- **击退角度混用了弧度与角度**：`(float)(PI - yaw) * PI / 180`，`PI` 不是 180，水平方向只是"大致跟着朝向"，但水平速度恒为 1.5。按上游逐字保留，没有"顺手修正"。
+- **1 tick 是刻意的**：抗性 V 在本次伤害的减伤计算里被读到（`ForgeHooks.onLivingHurt` 早于 `getDamageAfterMagicAbsorb`），所以是单次护盾；挖掘疲劳 1 tick 则同一 tick 就过期，可见的部分是黑曜石而非减速。
+- **粒子可见性**：上游的 3 参 `PotionEffect` 默认 `showParticles=true`，端口改用 3 参 `MobEffectInstance` 与之对齐（原先写成 `(…, false, false)` 会静默掉粒子）。
+- **不需要额外同步玩家位移**：`Entity.push` 会置 `hasImpulse`，而 `ServerEntity.sendChanges` 在 `hasImpulse` 分支就会发 `ClientboundSetEntityMotionPacket`，被上抛的玩家客户端能看到。复核时一度加过 `hurtMarked = true`，核对 1.20.1 字节码后删掉了——那是多余的。
+- `TreasureVillagers` 更名为 `TreasureEvents`（它现在也处理玩家携带者的反击）。
+
+### 顺带修掉的两处偏差（复核发现）
+
+| 位置 | 现象 | 修复 |
+|---|---|---|
+| `TreasureEvents.settleDeath` | 不清理 `treasure` / `seal` 标签。`LivingDeathEvent` 可被其它模组取消，取消后村民复活且仍带着宝物，可再掉一件（或再炸一次） | 结算前先移除两个标签 |
+| `Technomancy.onLivingDeath` | 上游门控是 `damageType == "player"`（**仅近战**）；端口用 `getEntity() instanceof Player`，于是玩家的箭、玩家点燃的爆炸也计入 existence | 改为要求 `DamageTypes.PLAYER_ATTACK` |
+
+另有两处只是注释失准（`EventPriority` 的作用、火宝石与金翼同为 75 时严格比较让前者胜出），已改正。
+
+### 新增回归测试
+
+`technom_s3_treasure` 批次 8 条 GameTest（`S3TreasureGameTests`），直接调 `applyWard` / `settleDeath`（监听器只是"配置开关 + 类型分派"），不依赖 1/50 的随机掷骰：
+
+| 测试 | 断言 |
+|---|---|
+| `fireGemCarrierSwallowsFireAndIgnitesTheAttacker` | 近战不被取消且攻击者着火；火焰伤害被取消 |
+| `powerPlateCarrierTakesTheHitUnharmed` | 抗性 V 为 1 tick / amplifier 4，且**实际** `hurt(5)` 后血量不变，对照村民掉 5 点 |
+| `goldenWingCarrierLaunchesTheAttacker` | 攻击者 `delta.y > 1`，持有者自己没被抛 |
+| `sealedCarrierDoesNotRetaliate` | 上一对的负半边：封印携带者不反击 |
+| `unsealedCarrierIsDestroyedNotDropped` | 放置的玻璃块与空气都变黑曜石、标签被清、附近没有掉落 |
+| `sealedCarrierDropsItsTreasure` | 恰好掉 1 件正确宝物、玻璃块未被改写、标签被清 |
+| `goldenWingCarrierDeathLaunchesNearbyEntities` | 旁观者被上抛且不掉落 |
+| `treasureNamesMapToTheirAffinities` | 三个名字→属性映射正确，未知名字返回 null / 空栈 |
+
+第一版测试有两个"空洞"被复核抓出并改掉：`powerPlate` 只断言效果实例（把整段减伤删掉照样绿），以及所有受击测试都直接调 `onUserHit`、没有一条走 `applyWard`（把 `applyWard` 里那行调用删掉，六条全绿）。现在每个受击场景都是"未封印必反应 / 封印必不反应"的一对。
+
+### 本轮实际执行
+
+| 命令 | 结果 |
+|---|---|
+| `gradlew.bat build` | BUILD SUCCESSFUL；**JUnit 245 通过 / 0 失败**（30 个测试类） |
+| `gradlew.bat runGameTestServer` | **105/105 required tests passed**（97 + 8） |
+
+### 本轮未验证 / 仍未处理
+
+- 火宝石的**半径 30 爆炸**没有写成断言：它会炸穿测试结构并波及邻格（结构网格列距只有 5 格），实机也没点过。
+- **玩家携带者**的受击分支仍无测试：GameTest 里没有玩家实体。
+- **摧毁级联**：火宝石爆炸若炸死另一名携带者，会在同一 tick 递归触发第二次爆炸。上游同样如此（上游的 `entityDeath` 也会被爆炸杀死触发），端口照搬、未加护栏；N 名携带者聚集时会一次性打出 N 次半径 30 爆炸。
+- 力量板的 1331 次 `setBlock(…, 3)` 与可能触发的相邻区块同步加载，同样按上游保留。
+- `seal` 的 80 tick 自动清除仍未移植（见上文第 2 条）。
