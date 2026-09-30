@@ -1024,7 +1024,7 @@ this.lootTableSupplier = () -> {
 - 子代理还报了一批**尚未处理**的差异，按影响排序记录在案（掉落表与能力这两类已闭环，下面是其余）：宝藏的命中/摧毁副作用完全没搬（`ItemTreasure.onUserHit` / `onTreasureDestroyed`，全仓没有 `LivingHurtEvent` 监听）；击杀与仪式激活不再给 Existence 能量（上游 `EventRegister.java:179-188`、`TileCatalyst.java:56-58`），亲和/被动效果因此几乎不可达；`seal` 标记永不清除（上游 80 tick 冷却后清），被封印的村民无法再封印或失去宝藏；宝藏村民每次区块加载都重掷（上游无条件写 `treasureAttempt=true` 防重掷），实际发生率远高于标称的 1/50；没有 HUD 开关且 HUD 固定画在 (6,6)（上游 `showHUD` 默认 false）；配置面约 7 项 vs 上游约 35 方块 / 15 物品 / HUD / recipes.bonus / renderers.fancy / machines.blacklist / Rate 的 8 项能耗；`EldritchConsumerBlockEntity` 把整个 tick 卡在 40 tick 的 `cooldown` 上（上游只拿它驱动动画，吞吐被砍到约 1/40）；`BoProcessorBlockEntity` 用了 TC 处理器那套法力定价（约为上游 `multiplier*150 + 1500*reprocess` 的 1/4～1/5）；收割者不扣补种种子（每次多掉一份）；燃烧器与三台 Existence 机器丢了 `RedstoneControl` 门控；`EssentiaFusorBlockEntity.addEssentia` 多要求 `fullyMarked()`；`CatalystBlockEntity` 命中第一个仪式就 `break`（上游没有 `break`）；`ConsumerRange` 多扫一层；`basalt` 既无配方也无世界生成来源；`creative_jar` 不可破坏且无掉落表（上游硬度 1、自掉落），而 `S2StorageGameTests.java:114` 把这个偏差断言死了。
 - 方块硬度/抗性偏差：`crystal_*` 0.3 vs 上游 2.0；`quantum_jar` 0.5 vs 1.0；`mana_exchanger` 3.0/6.0 vs 2.0/10.0。`processor_bo` 没有自己的掉落表（只掉内容物）；`adv_decon_table` / `essentia_reservoir` 不在任何可挖掘标签里。
 - 死资源（低优先级，多为改名遗留）：26 个无人引用的方块模型、4 个死物品模型（`coilcoupler` / `existencegem` / `itemboost` / `ritualtome`，贴图仍被正确命名的模型使用）、约 35 张无人引用的贴图，以及重名资产（`coil_coupler` vs `coilcoupler`、`neutronized_metal` vs `neutronizedmetal`）。
-- 仍需搬到 `TechneModel` 的渲染器：`node_dynamo` 浮动线、`eldritch_consumer`（14 盒）、`electric_bellows`（5 盒，128×64 图集）、`biome_morpher`（22 盒）、`mana_fabricator`（14 盒）、`adv_decon_table`（9 盒）、`crystal`（`getStage()`）、`catalyst`（`textLoc`）、`existence_burner` 立方体、`essentia_dynamo` 的 `renderFacing`、`flower_dynamo`。
+- 仍需搬到 `TechneModel` 的渲染器：`node_dynamo` 浮动线、`eldritch_consumer`（30 盒）、`electric_bellows`（5 盒，128×64 图集）、`biome_morpher`（14 盒）、`mana_fabricator`（14 盒）、`adv_decon_table`（9 盒）、`crystal`（`getStage()`）、`catalyst`（`textLoc`）、`existence_burner` 立方体、`essentia_dynamo` 的 `renderFacing`、`flower_dynamo`。（该清单七台已在第五轮落地，见文末；`mana_fabricator` / `catalyst` / `essentia_dynamo` 的 `renderFacing` / `flower_dynamo` 仍未移植。此处的盒数已在第五轮复核时更正：`eldritch_consumer` 是 30 盒不是 14，`biome_morpher` 实绘 14 盒不是 22。）
 - `docs/FEATURE_MATRIX.zh-CN.md` 仍把"事件副作用"和"配置关闭 HUD"列为验收项，而代码并不满足；这两项在补齐之前应标注为未达成。
 
 ## 第二轮子代理对照审计：十处上游偏差（2026-09-30 第三轮）
@@ -1076,7 +1076,7 @@ this.lootTableSupplier = () -> {
 1. ~~**宝藏的受击/摧毁副作用完全没搬**~~：**已在第四轮闭环**——`ItemTreasure.onUserHit` 与 `onTreasureDestroyed` 全部落地，与它耦合的掉落语义也一并定了（见下文"宝物受击/摧毁副作用"）。
 2. **`seal` 语义冲突（部分闭环）**：第四轮把 `seal` 定义成"宝物被保住"——封印的携带者死亡时**掉落**宝物，未封印则**摧毁**——所以这个开关现在有实际用途。但上游的 80 tick（4 秒）自动清除**仍未移植**：端口里封印是永久的。改成临时窗会让"封印后立刻打死取宝"变成限时操作，是设计决策，单独留着。
 3. **`basalt` 在端口里不可获得**：无配方、无世界生成。上游唯一来源是缺失的 `RitualOfFireT3`（在 50×90×50 区域内填充玄武岩）；端口只有 T1/T2。需要先确认端口有没有 `AreaProtocolBuilder` 的等价物。
-4. **六台机器的渲染器未移植**，目前渲染成普通立方体：`crystal`（3 阶段生长，是玩法提示）、`existence_burner`（4 盒）、`biome_morpher`（22 盒，最大件）、`electric_bellows`（5 盒 + 风箱袋动画，128×64 图集）、`adv_decon_table`（9 盒）、`eldritch_consumer`（14 盒）。`node_dynamo` 另缺 4 盒。模板与 API 已定位：整机样板 `client/render/NodeFabricatorRenderer`，建模用 `client/render/model/TechneModel`（`builder(texW,texH)` → `.part(name).uv(u,v).mirror(b).at(x,y,z).rotate(rx,ry,rz).box(x,y,z,w,h,d)…end()` → `.build()`），贴图已在 `assets/technom/textures/entity/` 就位，无需重新导出。
+4. ~~**六台机器的渲染器未移植**~~：**已在第五轮闭环**——六台（连同 `node_dynamo` 另缺的 4 盒，共七台）代码渲染器全部落地，各自的物品渲染器与邪术吞噬器面板动画一并补齐（见下文"七台代码渲染器与吞噬器面板动画"）。
 5. **`blood_dynamo` / `blood_fabricator` 方块本身未移植**（渲染器与方块都没有）。
 6. **`creative_jar` 不可破坏且无掉落**（上游硬度 1、破坏掉自身）：这是**有意偏离**，`CreativeJarBlock` 的 javadoc 与 `S2StorageGameTests:112/114` 两条断言把它固化住了。属设计决策，不是事故。
 7. 配置面仍远小于上游（约 7 项 vs 上游约 35 方块 / 15 物品 / HUD / recipes.bonus / renderers.fancy / machines.blacklist / Rate 的 8 项能耗）；HUD 没有开关且固定画在 (6,6)，上游 `showHUD` 默认 false。
@@ -1155,3 +1155,139 @@ this.lootTableSupplier = () -> {
 - **摧毁级联**：火宝石爆炸若炸死另一名携带者，会在同一 tick 递归触发第二次爆炸。上游同样如此（上游的 `entityDeath` 也会被爆炸杀死触发），端口照搬、未加护栏；N 名携带者聚集时会一次性打出 N 次半径 30 爆炸。
 - 力量板的 1331 次 `setBlock(…, 3)` 与可能触发的相邻区块同步加载，同样按上游保留。
 - `seal` 的 80 tick 自动清除仍未移植（见上文第 2 条）。
+
+## 七台代码渲染器与吞噬器面板动画（2026-09-30 第五轮）
+
+这是任务 #68 的收尾：把上游**用代码画、而不是用 JSON 模型画**的七台方块渲染器移植过来，并补掉邪术吞噬器面板动画的缺口。做法同前几轮——先读上游源码，再逐行落到端口，最后做源码级的几何 / uv / 旋转 / 渲染顺序比对。
+
+### 上游基线
+
+`../Technomancy`（1.7.10）的 `37bf9a56fe1f713258f298d7ef392b104ccae88f`。相关文件：`client/tiles/Tile*Renderer.java`、`client/models/Model*.java`、`client/blocks/Block*Renderer.java`。
+
+### 七台渲染器
+
+| 机器 | 上游模型 | 声明盒数 | 实绘盒数 |
+|---|---|---|---|
+| `crystal`（水晶，3 阶段生长） | `ModelCrystal` | 3 | 3 |
+| `existence_burner`（含 dynamic 变体） | `ModelExistenceBurner` | 4 | 4 |
+| `biome_morpher` | `ModelBiomeMorpher` | 22 | **14** |
+| `electric_bellows` | `ModelElectricBellows` | 5 | 5 |
+| `adv_decon_table` | `ModelAdvDeconTable` | 9 | 9 |
+| `eldritch_consumer` | `ModelEldritchConsumer` | 30（含 20 段手臂） | 30 |
+| `node_dynamo`（另补此前缺的 4 盒） | `ModelNodeDynamo` | 22 | 22 |
+
+这七台上游的 `renderWorldBlock` 全部 `return false`，所以每台方块的全部像素都来自特殊渲染器。移植后对应的 blockstate 模型被缩成空壳：`{"parent":"minecraft:block/block","textures":{"particle":"technom:…"}}`，与工程里既有的 `node_fabricator.json` 是同一个做法（空壳只保留破坏粒子）。被改的 12 个 JSON：`adv_decon_table`、`biome_morpher`、`crystal_earth`/`fire`/`water`/`light`/`dark`、`eldritch_consumer`、`electric_bellows`、`existence_burner`、`existence_dynamic_burner`、`node_dynamo`（`node_dynamo.json` 从 22058 字节降到 104 字节）。
+
+### Techne → PoseStack 变换约定
+
+标准链是 `translate(x,y,z); scale(-1,-1,1); translate(-.5F,-1.5F,.5F)`，把 Techne 模型点 `(mx,my,mz)` 映射到方块局部坐标 **`(0.5 - mx/16, 1.5 - my/16, 0.5 + mz/16)`**。这条约定先用 `ModelBiomeMorpher` 反向验证过。
+
+三台机器**偏离**了这条约定，且都是有原因的，不是笔误：
+
+- `existence_burner` 用裸 `translate(.5F, 0, .5F)`、不带 scale → `(0.5 + mx/16, my/16, 0.5 + mz/16)`；
+- `electric_bellows` 用它自己的 `translateFromOrientation`；
+- `eldritch_consumer` **省略了第二个 translate**，只保留 `scale(-1,-1,1)` → `(-mx/16, -my/16, mz/16)`。这正是让它的底座（模型 x −16..0、z 0..16 的 16×6×16 盒）恰好铺满方块 x/z 的 0..1、支脚落在 y=0 的原因；两个负轴保持绕序为正，所以不需要关剔除。
+
+### 物品渲染器
+
+七台各有一个物品渲染器，做法是 `BlockEntityWithoutLevelRenderer` + 内嵌 `public static final class Extensions implements IClientItemExtensions`，通过 `Item.initializeClient` 交出去。**关键事实**：这个 Forge 版本里**没有** `RegisterClientExtensionsEvent`（扫过 mapped jar 确认只有 `IClientItemExtensions`，没有那个事件类），所以只能用 `initializeClient`。相应新增了七个 `BlockItem` 子类（`CrystalItem`、`ExistenceBurnerItem`、`BiomeMorpherItem`、`ElectricBellowsItem`、`AdvDeconTableItem`、`EldritchConsumerItem`、`NodeDynamoItem`），`TechnomBlocks` 的注册也改成带物品工厂的重载。
+
+### 六台机器的几何审计结论
+
+逐个比对上游与端口的盒子列表、uv、mirror 标志、旋转点、旋转角、贴图尺寸与**渲染顺序**，六台全部一致：`existence_burner` 4/4、`biome_morpher` 14/14、`electric_bellows` 5/5、`adv_decon_table` 9/9、`eldritch_consumer` 30/30、`node_dynamo` 22/22。旋转的施加顺序也一致（1.7.10 是 `translate → rotateZ → rotateY → rotateX`，`ModelPart` 同序），mirror 七台全为 `false`（上游统一用两参 `new ModelRenderer(this, u, v)`）。`biome_morpher` 上游声明 22 个 `addBox`，其中 8 个 `CenterTop*` / `CenterBottom*` 在构造器与 `render()` 里都被注释掉、从未构建，实际绘制 14 盒，端口即按这 14 盒移植。（第一遍比对曾因为 `-1` 与 `-1.0` 的字符串格式差异报出假 DIFF，把每个参数按 `'%.4f'` 归一化后全部 OK。）
+
+渲染顺序另有一处独立复核确认：`node_dynamo` / `biome_morpher` / `adv_decon_table` 三台的 `addBox` 序列被逐字段程序化比对，报告 `IDENTICAL`；其余四台人工逐一核对。七台的 `TechneModel` 声明顺序都等于上游 `render()` 的调用序。
+
+### 本轮自查抓到的两个真缺陷（都不在本轮计划里）
+
+这一轮收尾时又跑了两次独立检查——一次是主代理的逐参数比对，一次是一个只读子代理的对照复核——抓到两个编译、JUnit、GameTest 全都看不见的问题。
+
+**一、12 个物品模型的父级指向空壳，物品图标会是空白。** 方块模型缩成空壳之后，这些机器的 `models/item/*.json` 仍然写着 `"parent": "technom:block/<空壳>"`。`ItemRenderer` 只在烘焙出的模型 `isCustomRenderer()` 为真时才会去问 `IClientItemExtensions.getCustomRenderer()`，而唯一能产生这种模型的是 `ModelBakery` 的 `builtin/entity` 标记（读 mapped jar 字节码确认：`ItemRenderer.render` 在偏移 122 调 `isCustomRenderer()`，为真才跳到 455 调 `getCustomRenderer()`）。父级是空壳的模型走普通路径，而空壳没有 `elements`，于是什么也不画。工程里既有的两个正确样板 `flux_lamp.json` 与 `node_fabricator.json` 都是 `"parent": "builtin/entity"` + 显式 `display` 块，这 12 个漏了。已全部改成同样的形状。
+
+顺带确认了一件事：`ItemRenderer` 在把 PoseStack 交给 `renderByItem` **之前**先施加 `display` 变换、再 `translate(-0.5, -0.5, -0.5)`。所以物品渲染器的职责是把模型的包围盒中心放到方块局部的 `(0.5, 0.5, 0.5)`——七台都是这么写的（水晶正好占满方块所以不用补偿，`eldritch_consumer` 补 0.0292 的抬高，`node_dynamo` 另外乘 `1/1.1035534`）。
+
+**二、风箱的循环表根本不是周期，每 20 秒相位跳变一次。** 振荡器只在**结构上**有周期：`0.075F` 与 `0.025F` 都不是精确二进制小数，每跑一圈漂移约 4e-7，两圈永远不可能逐位相等。初版的周期搜索用的是 `!=`，于是 1..128 内找不到任何周期，函数回退成把整段 400 tick 的暖机序列当成"周期"——锯齿波因此每 400 tick（20 秒）断一次。周期搜索改成容差比较（`1e-4F`，而一个周期内相邻两点至少差 0.025，不可能误判）后，检测出的周期是**恰好 35 tick**，稳态从 `0.375` 升到 `1.025` 再回落；用 float32 模拟 200000 tick 验证过 tick 数不会漂移。原先 javadoc 里"周期约 36 tick"的说法是错的，已改。
+
+### 新增两条回归守卫
+
+这两类问题都属于"没有报错、只有客户端看得见"，所以补了测试而不是只改代码：
+
+| 测试 | 断言 |
+|---|---|
+| `assets/ItemModelGuardTest`（3 条） | 每个物品模型要么声明几何、要么 `builtin/entity`；每个 `builtin/entity` 模型必须有 `display.gui`；其 `particle` 贴图必须在 classpath 上。规则写在模型本身而不是一张名字清单上，以后再加一台代码绘制的机器会自动被它管到 |
+| `client/render/ElectricBellowsCycleTest`（4 条） | 表的长度恰好是 `CYCLE_TICKS`；表首尾相接处的落差不超过周期内最大落差（无缝）；上下界落在 0.375 / 1.025 的半步之内；周期内恰好两次转向 |
+
+`ItemModelGuardTest` 第一版写宽了——它把 40 个 `parent: minecraft:item/generated` 的普通材质物品也判成"空白"（这类模型的几何是 `ItemModelGenerator` 从 `layer0` 现生成的，JSON 里本来就没有 `elements`）。补上 `minecraft:item/*` 与 `builtin/generated` 是程序化几何之后，40 个误报全部消失，而真正的问题（那 12 个）依然会被抓到。
+
+### 电动风箱：贴图尺寸与动画
+
+- `electricbellows.png` 是 **128×64 RGBA**。证明方式是贴图布局：喷嘴的 `uv (0,36)` 配 12×6 的展开需要第 36–42 行，这些行只在 64 高的图集上存在；风箱袋的 `uv (48,0)` 配 80×44 的展开恰好到第 128 列。上游导出代码里的 `setTextureSize(64,32)` 是导出残留，128×64 是唯一能让五个部件全部落在图内的尺寸。
+- 动画：上游 `TileElectricBellows.updateEntity` 跑的是一个**无状态振荡器**，初值 `0.35F + rand.nextFloat()*0.55F`，然后每 tick：
+
+```java
+if (inf > 0.35 && !dir) inf -= 0.075F;
+if (inf <= 0.35 && !dir) dir = true;
+if (inf < 1.0 && dir) inf += 0.025F;
+if (inf >= 1.0 && dir) dir = false;
+```
+
+用 Python 模拟（带 float32 舍入）得到锯齿波 `0.375 → 1.025 → 0.375`，**周期恰好 35 tick**。端口没有每 tick 重跑这个递推，而是启动时把整条循环展开成一张 `CYCLE` 表，用 `level.getGameTime() + pos.hashCode()` 取模索引——结果与上游逐 tick 相同，但没有每实例的隐藏状态。（初版端口错用了物品栏分支里的 `sin` 脉冲，本轮已改掉；周期搜索本身也曾失效，见下文"本轮自查抓到的两个真缺陷"第二条。）
+
+上游的 `direction` 初值是 `false`、`inflation` 初值 `1.0F`，第一次 `updateEntity` 才用 `0.35F + rand.nextFloat()*0.55F` 覆盖；`rand` 只决定瞬态有多长，稳态与种子无关。端口固定用最低的那个种子，因此所有风箱共用同一张表，相位差由 `pos.hashCode()` 提供——这比上游更强：上游每个客户端各自掷一次 `rand`，两个客户端看到的袋子相位本来就不一致。
+
+### 水晶：一个上游颜色 bug 与两次用户拍板
+
+上游 `ModelCrystal` 里写的是 `GL11.glColor4f(c.getRed(), c.getGreen(), c.getBlue(), alpha)`——把 0–255 的通道值传给了期望 0.0–1.0 的接口，于是 OpenGL 把每个通道都钳到 1.0。实际效果：自然 `0x00DD00`→绿、火 `0xDD0000`→红、水 `0x0000DD`→蓝，但**光 `0x111111`→白、暗 `0xDDDDDD`→白**，光和暗在上游根本区分不出来。
+
+**用户拍板：修正这个截断 bug**，采用上游作者**本意**的颜色（自然绿 / 火红 / 水蓝 / 光近黑 `0x111111` / 暗浅灰 `0xDDDDDD`），而不是复刻上游"两者都是白"的渲染结果。这属于"上游已知缺陷，端口刻意修正"，是用户决策。
+
+**用户第二个拍板**：水晶用 **BlockEntity + 代码渲染器** 实现——新增一个纯标记用的 `CrystalBlockEntity`，把 `CrystalBlock` 从 `Block` 改成 `BaseEntityBlock`（`getRenderShape` 返回 `INVISIBLE`，`newBlockEntity` 返回该 BE），用 `CrystalRenderer` 画。理由是 `blockcrystal.png` 是 **64×64 的 RGB 贴图、没有 alpha 通道**，所以单靠 `render_type: translucent` 做不出 0.6 的透明，`BlockColors` 处理器也做不到（原版会丢弃方块着色色的 alpha）。0.6 的 alpha 只能靠代码渲染走 `RenderType.entityTranslucent` 才活得下来。
+
+### 邪术吞噬器：面板动画（本轮唯一的"修缺口"）
+
+上游 `TileEldritchConsumer` 把 `cooldown` 和 `panelRotation` 都是 public 字段，`writeSyncData` 把 `cooldown` 发给客户端、倒计时期间每 tick 调一次 `markBlockForUpdate`，客户端半边做缓动：
+
+```java
+if (cooldown > 0) { panelRotation = Math.min((float)-Math.PI / 4, panelRotation -= 0.02F); }
+else {
+    if (panelRotation > 0) { panelRotation = Math.min(0, panelRotation -= 0.02F); }
+    else { panelRotation = Math.max(0, panelRotation += 0.02F); }
+}
+```
+
+端口的 `cooldown` 是私有的、只在服务端递减，而且 `getTicker` 在客户端**返回 null**，所以之前渲染器只能永远画静止姿态（渲染器里原本留了一段"需要 BE 访问器"的注释）。
+
+本轮改法：服务端继续拥有 `cooldown`，客户端拥有 `panelRotation`，中间**只发一个 `working` 布尔量、且只在状态翻转时发**（`getUpdateTag` / `handleUpdateTag` / `getUpdatePacket` / `onDataPacket`），而不是上游那样每 tick 一个包——因为客户端读的只是 `cooldown > 0`。`getTicker` 现在两侧都注册。渲染器改读 `machine.panelRotation()` 与 `machine.working()`。上游那条 `panelRotation > 0` 的分支**永远不可达**（另外两个分支把值钳在 `[-π/4, 0]`），端口按原样保留并加了注释说明，以便和上游对读。
+
+### 独立复核的结论与它留下的三条
+
+一个只读子代理重做了比对，并且专门去找主代理那一遍**没有覆盖**的东西（渲染顺序、旋转施加序、mirror、旋转点符号、动画、物品栏空间、贴图、空壳粒子）。它的结论：几何 / 顺序 / 贴图层面七台与上游零差异，唯一的可见偏离是水晶着色（即上文那条用户拍板）。
+
+它同时报出三件仍未做的事，都记在这里而不是顺手做掉：
+
+1. **电动风箱每周期顶点的音效没搬。** 上游 `TileElectricBellows.updateEntity` 在 `inflation >= 1.0F && direction` 那一格里除了翻向外还播一次 `mob.ghast.fireball`（音量 `0.01F`、音调 `0.5F ± 0.2F`），即每 35 tick 一次。这是本轮之前就缺的（风箱机器本身是 S4 落地的），不是本轮引入的回归。补它需要给 `ElectricBellowsBlockEntity` 加客户端 ticker，而"当前是否在顶点"要读振荡器——振荡器现在住在渲染器里，公共侧的 BE 不能引用客户端类，所以先把那张表挪到 `common/` 才是干净做法。
+2. **`node_dynamo` 的浮动线不是"丢了"，是上游本来就画不出来。** 上游 `TileNodeDynamo` 的 `draining` / `sourceX/Y/Z` / `color` 都没进 `writeSyncData`，客户端读到的恒为初值，所以那条线在 1.7.10 里也从未出现。端口改用一条尘埃轨迹表示"正在抽取"，这是替代而非缺口，但它是**端口新增**，不是复刻。
+3. **`node_dynamo` 的物品图标被有意缩小。** 上游 `renderInventoryBlock` 只有 `translate(-.5,-.5,-.5)`、没有缩放，图标在 ±z 方向会溢出约 5%；端口乘了 `1/1.1035534` 让它正好装下。这是刻意偏离，记在这里以便将来有人对着上游"纠正"回去。
+
+复核还提了两条存疑，本轮已就地核掉：`biome_morpher` 玻璃的 `uv(30,-14)` 负 v 依赖 `GL_REPEAT`——端口用 `RenderType.entityTranslucent(贴图)`，绑定的是独立贴图、走默认的 `GL_REPEAT`，与上游的 GL 默认一致，**不成立**；`adv_decon_table` 上游那次 `glDisable(GL_CULL_FACE)` 只包住**悬浮物品**那一段（模型本身是带着剔除画的），端口模型不关剔除、悬浮物品走 `ItemRenderer.renderStatic(…, GROUND, …)`，与上游的两段结构一致，**不成立**。
+
+### 本轮实际执行
+
+| 命令 | 结果 |
+|---|---|
+| `gradlew.bat build` | BUILD SUCCESSFUL；**JUnit 252 通过 / 0 失败**（32 个测试类） |
+| `gradlew.bat runGameTestServer` | **106/106 required tests passed**（105 + 本轮新增 1 条） |
+| `python tools/validate_technom_data.py` | **OK: no errors**（16 warning / 1 skip），131 个文件、1900 项检查 |
+
+新增的 GameTest 是 `EldritchConsumerGameTests.aPassRaisesTheWorkingFlagForTheWholeCooldown`（批次 `technom_s2_consumer`）：一次成功吞噬后 `working()` 必须为真，并且要**恰好**撑满 `COOLDOWN_TICKS`（40 tick）之后才转假——太早清空会让面板在机器仍在尾期时提前抬起。
+
+JUnit 从 245 涨到 252、测试类从 30 涨到 32，全部来自上面那两条新守卫（`ItemModelGuardTest` 3 条 + `ElectricBellowsCycleTest` 4 条，共 7 条）。
+
+### 本轮未验证
+
+- 七台渲染器**都没有人眼确认过**（也没有跑 Rosetta 客户端探针）；本轮只有几何 / uv / 旋转 / 渲染顺序的源码级比对。
+- 水晶的 0.6 半透明、五种颜色在实机里的观感未确认。
+- 邪术吞噬器的面板动画只有服务端标志位的 GameTest，没有客户端视觉验证。
+- 电动风箱的锯齿波只在 Python 与 JUnit 里验证过表本身，游戏内节奏未实测。
+- **修掉的那 12 个物品图标没有实机看过**：`ItemModelGuardTest` 只能证明模型形状对了，证明不了图标长什么样。
+- 本轮**只跑了默认运行时**的 `runGameTestServer`，没有跑 `-PwithGtceu=true` / `-PwithBotania=false` / `-PwithJade=false`，也没有重跑 Rosetta 探针。

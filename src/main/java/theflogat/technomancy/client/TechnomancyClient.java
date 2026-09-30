@@ -5,6 +5,8 @@ import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import theflogat.technomancy.client.fx.TechnomClientFx;
+import theflogat.technomancy.client.render.CrystalRenderer;
+import theflogat.technomancy.client.render.ExistenceBurnerRenderer;
 import theflogat.technomancy.client.render.ExistenceFountainRenderer;
 import theflogat.technomancy.client.render.NodeFabricatorRenderer;
 import theflogat.technomancy.client.render.QuantumJarRenderer;
@@ -56,6 +58,12 @@ public final class TechnomancyClient {
         // The fountain's body is a JSON model; only the tinted liquid ring needs code.
         event.registerBlockEntityRenderer(TechnomBlockEntities.EXISTENCE_FOUNTAIN.get(),
                 ExistenceFountainRenderer::new);
+        // A crystal's whole body is code-drawn: a 0.6-alpha tinted cube that no JSON model can
+        // express, because the sheet has no alpha channel and BlockColors drops alpha.
+        event.registerBlockEntityRenderer(TechnomBlockEntities.CRYSTAL.get(), CrystalRenderer::new);
+        // One block entity behind both burners, so the renderer picks the variant itself.
+        event.registerBlockEntityRenderer(TechnomBlockEntities.EXISTENCE_BURNER.get(),
+                ExistenceBurnerRenderer::new);
         S2MachinesClient.registerRenderers(event);
     }
 }

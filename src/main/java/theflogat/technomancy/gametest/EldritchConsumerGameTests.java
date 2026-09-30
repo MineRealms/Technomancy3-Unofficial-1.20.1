@@ -23,7 +23,8 @@ import theflogat.technomancy.common.tiles.machines.EldritchConsumerBlockEntity;
 /**
  * In-world behaviour of the eldritch consumer: it spends energy to eat, it stops when it cannot
  * pay, it spares unbreakable blocks and block-entity blocks, a broken block yields aspects but
- * not drops, and the aspect it gathers leaves through every face.
+ * not drops, the aspect it gathers leaves through every face, and a pass raises the working flag
+ * the client's panel animation is driven by.
  *
  * <p>Ranges and positions are absolute. The machine sits one block above its food so the scans
  * only ever see what each test placed.</p>
@@ -70,8 +71,34 @@ public final class EldritchConsumerGameTests {
         helper.succeed();
     }
 
-    /** A block yields its aspect, and is removed without spawning the drops it would have. */
-    @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH, timeoutTicks = 300)
+    /**
+     * A pass raises the working flag and the flag survives exactly the 40-tick cooldown. The
+     * client reads nothing else: {@code working} is what the renderer passes to the model's
+     * {@code go} argument, so if it cleared early the panel would rise while the machine was still
+     * in its tail.
+     */
+    @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH, timeoutTicks = 400)
+    public static void aPassRaisesTheWorkingFlagForTheWholeCooldown(GameTestHelper helper) {
+        EldritchConsumerBlockEntity consumer = place(helper, ConsumerRange.SMALL);
+        fill(consumer, COST * 8);
+        helper.assertFalse(consumer.working(), "the consumer was already working before it ate");
+        spawnItem(helper, new ItemStack(Items.IRON_INGOT, 1));
+
+        // One tick is a whole pass: the ingot is eaten and the cooldown starts.
+        run(helper, consumer, 1);
+        helper.assertTrue(consumer.working(), "a successful pass did not raise the working flag");
+        helper.assertTrue(consumer.panelRotation() == 0.0F,
+                "the server-side panel moved, which only the client may do");
+
+        // The flag must outlive the pass itself by the whole cooldown, and no longer.
+        run(helper, consumer, EldritchConsumerBlockEntity.COOLDOWN_TICKS - 1);
+        helper.assertTrue(consumer.working(), "the flag cleared before the cooldown ran out");
+        run(helper, consumer, 1);
+        helper.assertFalse(consumer.working(), "the flag outlived the cooldown");
+        helper.succeed();
+    }
+
+    /** A block yields its aspect, and is removed without spawning the drops it would have. */    @GameTest(template = GameTestTemplates.EMPTY_5X5X5, batch = BATCH, timeoutTicks = 300)
     public static void aBlockYieldsItsAspectButNotItsDrops(GameTestHelper helper) {
         EldritchConsumerBlockEntity consumer = place(helper, ConsumerRange.SMALL);
         fill(consumer, COST * 8);

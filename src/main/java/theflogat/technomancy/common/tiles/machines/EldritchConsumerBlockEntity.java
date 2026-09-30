@@ -16,6 +16,10 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -61,6 +65,15 @@ import theflogat.technomancy.config.TechnomancyConfig;
  * <p>The container holds at most four aspects of four units each, the original
  * {@code canFillList} limit. Unlike the original's {@code getEssentiaType}, which indexed an
  * empty array and crashed, every query answers safely when the store is empty.</p>
+ *
+ * <p>The panel animation is synced, as it was upstream. The original kept {@code cooldown} and
+ * {@code panelRotation} as public fields on the tile, pushed {@code cooldown} to the client in
+ * {@code writeSyncData}, called {@code markBlockForUpdate} while it counted down, and eased
+ * {@code panelRotation} in the client half of {@code updateEntity}. The port keeps the same
+ * split - the server owns {@code cooldown}, the client owns {@code panelRotation} - but ships a
+ * single {@link #working} flag on the transitions instead of a packet per tick, because the only
+ * thing the client reads is {@code cooldown > 0}. {@link #working()} and
+ * {@link #panelRotation()} are what {@code EldritchConsumerRenderer} draws from.</p>
  */
 public final class EldritchConsumerBlockEntity extends BlockEntity implements EssentiaTransport, AspectContainerView, EnergyHolder {
 
@@ -89,6 +102,7 @@ public final class EldritchConsumerBlockEntity extends BlockEntity implements Es
     private static final String TAG_ESSENTIA = "Essentia";
     private static final String TAG_COOLDOWN = "cooldown";
     private static final String TAG_RETRY = "time";
+    private static final String TAG_WORKING = "working";
     private static final int SCHEMA_VERSION = 1;
 
     private final MachineEnergy energy;
@@ -98,6 +112,10 @@ public final class EldritchConsumerBlockEntity extends BlockEntity implements Es
     private ConsumerRange range = ConsumerRange.LARGE;
     private int cooldown;
     private int retry;
+    /** Synced: {@code cooldown > 0}, the original's {@code go} argument to the model. */
+    private boolean working;
+    /** Client only: the arm segments' X rotation in radians. Never saved; the server has none. */
+    private float panelRotation;
 
     public EldritchConsumerBlockEntity(BlockPos pos, BlockState state) {
         super(TechnomBlockEntities.ELDRITCH_CONSUMER.get(), pos, state);
@@ -114,6 +132,47 @@ public final class EldritchConsumerBlockEntity extends BlockEntity implements Es
     public static void serverTick(Level level, BlockPos pos, BlockState state,
             EldritchConsumerBlockEntity consumer) {
         consumer.tick(level, pos);
+        // After the tick, so none of its early returns can skip the transition.
+        consumer.syncWorking();
+    }
+
+    /**
+     * The client half of the original's {@code updateEntity}: the {@code else} branch that eased
+     * the panel by 0.02 radians a tick toward {@code -pi/4} while working and back toward 0 while
+     * idle.
+     */
+    public static void clientTick(Level level, BlockPos pos, BlockState state,
+            EldritchConsumerBlockEntity consumer) {
+        consumer.easePanel();
+    }
+
+    private void easePanel() {
+        if (working) {
+            panelRotation = Math.min((float) -Math.PI / 4, panelRotation - 0.02F);
+        } else if (panelRotation > 0) {
+            // Unreachable - the other two branches clamp panelRotation into [-pi/4, 0] - and kept
+            // anyway so a diff against the original stays honest.
+            panelRotation = Math.min(0.0F, panelRotation - 0.02F);
+        } else {
+            panelRotation = Math.max(0.0F, panelRotation + 0.02F);
+        }
+    }
+
+    /**
+     * Pushes the working flag when it flips. The original called {@code markBlockForUpdate} every
+     * tick of the countdown and synced {@code cooldown} itself; the client only ever asks
+     * {@code cooldown > 0}, so one packet per transition carries the same information.
+     */
+    private void syncWorking() {
+        boolean now = cooldown > 0;
+        if (now == working) {
+            return;
+        }
+        working = now;
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
     }
 
     private void tick(Level level, BlockPos pos) {
@@ -276,6 +335,19 @@ public final class EldritchConsumerBlockEntity extends BlockEntity implements Es
 
     // ---- ranges ----
 
+    /**
+     * Whether the machine is inside the 40-tick tail that follows a pass: the original's
+     * {@code cooldown > 0}, which is what set the rotor spinning and held the panel down.
+     */
+    public boolean working() {
+        return working;
+    }
+
+    /** Client only: the arm segments' current X rotation. 0 on the server and in an inventory. */
+    public float panelRotation() {
+        return panelRotation;
+    }
+
     public ConsumerRange range() {
         return range;
     }
@@ -430,5 +502,38 @@ public final class EldritchConsumerBlockEntity extends BlockEntity implements Es
         tag.putInt(TAG_COOLDOWN, cooldown);
         tag.putInt(TAG_RETRY, retry);
         range.save(tag);
+    }
+
+    // ---- animation sync ----
+
+    /**
+     * One boolean, and only because the client draws from it. The original shipped the whole
+     * {@code cooldown} here; nothing on the client reads its value, only whether it is above zero,
+     * so the flag is what the renderer's {@code go} argument wants.
+     */
+    @Override
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean(TAG_WORKING, working);
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        working = tag.getBoolean(TAG_WORKING);
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    /** Not the inherited {@code load}: the update tag is a fragment, not a full save. */
+    @Override
+    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleUpdateTag(tag);
+        }
     }
 }

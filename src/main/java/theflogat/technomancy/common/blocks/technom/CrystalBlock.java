@@ -1,13 +1,17 @@
 package theflogat.technomancy.common.blocks.technom;
 
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import theflogat.technomancy.common.rituals.Ritual;
+import theflogat.technomancy.common.tiles.technom.CrystalBlockEntity;
 
 /**
  * One crystal of a ritual frame ({@code BlockCrystal}): three stacking stages, one per kind.
@@ -17,10 +21,18 @@ import theflogat.technomancy.common.rituals.Ritual;
  * The numbering (nature, fire, water, light, dark) is still {@link Ritual.Type}'s 0..4 order.</p>
  *
  * <p>The shape narrows as crystals stack: a lone crystal fills its block, one with a crystal
- * under it is a 0.25..0.75 column, and one two crystals up is 0.375..0.625. The stage is a pure
- * neighbour query, so the block has no block entity.</p>
+ * under it is a 0.25..0.75 column, and one two crystals up is 0.375..0.625. The stage stays a pure
+ * neighbour query, so the block entity below holds nothing and never ticks.</p>
+ *
+ * <p>Everything visible is drawn by code, so the render shape is {@code INVISIBLE} - the same
+ * effect as upstream's {@code BlockCrystalRenderer.renderWorldBlock} returning {@code false}. The
+ * blockstate model survives only as an empty shell carrying the break-particle texture; it is
+ * never drawn. The reason a renderer is needed at all is that the crystal is a 0.6-alpha tinted
+ * cube and {@code blockcrystal.png} is an RGB sheet with no alpha channel, so no combination of
+ * {@code render_type} and a block colour handler can reproduce it - vanilla drops the alpha of a
+ * {@code BlockColors} result on the floor.</p>
  */
-public class CrystalBlock extends Block {
+public class CrystalBlock extends BaseEntityBlock {
 
     private static final VoxelShape STAGE_0 = Shapes.box(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
     private static final VoxelShape STAGE_1 = Shapes.box(0.25, 0.0, 0.25, 0.75, 1.0, 0.75);
@@ -56,5 +68,16 @@ public class CrystalBlock extends Block {
             case 2 -> STAGE_2;
             default -> STAGE_0;
         };
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.INVISIBLE;
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new CrystalBlockEntity(pos, state);
     }
 }

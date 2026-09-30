@@ -2,11 +2,11 @@
 
 这是独立的 Technomancy Forge 1.20.1 移植工程。**先读本文，再按“先读这些文件”顺序读**。不要把“能编译/测试通过”理解为玩法完成。
 
-## 当前进度（核对日期 2026-09-28）
+## 当前进度（核对日期 2026-09-30）
 
 - **S0（工程/构建/文档）**：完成。
 - **S1（TC4 精华闭环）**：完成（量子罐、源质发电机、能量凝聚器、S1-B 配方/研究）。
-- **S2（核心机器）**：完成（节点机器、线圈、法杖/工具、储库/创造罐/净化器/分解台/吞噬器/融合器，以及两台补做的机器）。
+- **S2（核心机器）**：完成（节点机器、线圈、法杖/工具、储库/创造罐/净化器/分解台/吞噬器/融合器，以及两台补做的机器）。**本轮新增**：上游用代码画而非 JSON 画的**七台**方块渲染器已全部移植——`crystal`、`existence_burner`（含 dynamic 变体）、`biome_morpher`、`electric_bellows`、`adv_decon_table`、`eldritch_consumer`、`node_dynamo`（本轮另补上此前缺的 4 个盒体）；七台上游 `renderWorldBlock` 全部 `return false`，对应的 12 个 blockstate 模型随之缩成只保留破坏粒子的空壳。其中水晶改用新增的 `CrystalBlockEntity` + 代码渲染器（`blockcrystal.png` 是无 alpha 的 RGB 贴图，`render_type: translucent` 与 `BlockColors` 都做不出 0.6 的半透明），并**修正上游 `ModelCrystal` 的颜色截断 bug**（把 0–255 传给期望 0.0–1.0 的 `glColor4f`，导致光和暗两种水晶在上游都是白色、区分不出来），按上游作者本意用回真实颜色；邪术吞噬器补齐了此前完全没动的面板动画（服务端保留 `cooldown`、客户端缓动 `panelRotation` 到 −π/4，中间只发一个 `working` 布尔量且只在状态翻转时发，`getTicker` 两侧都注册）。
 - **S3（仪式联动）**：完成（本轮补齐了此前只有创造栏一条路径的部分）：
   - 核心方块（水晶×5、催化器×5、玄武岩、假空气光源）。
   - 仪式 **16/16**、仪式手册 + Screen。
@@ -22,16 +22,17 @@
   - **电动风箱** `technom:electric_bellows`：吹 1–2 格外的奥术炼金炉或 1 格外的原版熔炉；原版熔炉写不进燃料，改为一次充能买 80 tick 推进（等价于原版的 `burnTime=80` + 每 2 tick +1）。
   - **生态转换器** `technom:biome_morpher`：公开 `TaintSpreadLogic.setSpecialBiomeColumn`，无需 Mixin；右键切换魔法森林/阴森/污染之地。
   - **融合焦点恢复“吸收节点→右键空地再造节点”**（潜行右键吸收、空地右键立起，节点只存在于世界或焦点之一，不会复制或丢失）。
-  - 三台机器都有配方、研究（`FLUXLAMP`/`ELECTRICBELLOWS`/`BIOMEMORPHER`）与模型，均**未实机验证**。
+  - 三台机器都有配方、研究（`FLUXLAMP`/`ELECTRICBELLOWS`/`BIOMEMORPHER`）与模型，均**未实机验证**；其中电动风箱与生态转换器的代码渲染器已于本轮补齐（电动风箱 5 盒 + 风箱袋动画、生态转换器 14 盒），稳定灯（`flux_lamp`）的渲染器此前已移植、本轮未动。
 - **S5**：部分完成。GameTest 已验证服务端 `/reload` 数据包重载；**Jade/JEI/KubeJS 三处联动已实现**（见 [COMPAT 第 7 节](docs/COMPAT.zh-CN.md)）：Jade 覆盖 15 个方块实体、JEI 一个源质燃料值类别、KubeJS 只绑定 `Technom` 只读全局且默认不进运行时。专用服务器长期运行/多人/跨维度/死亡重生/守恒总验收仍未做。
 
 ## 最近一次全量验证（2026-09-30）
 
-- `build`：**JUnit 245 通过 / 0 失败**（30 个测试类）。2026-09-29 时是 238/28。
-- `runGameTestServer`（默认运行时）：**105/105 通过**（97 + 新增的 `technom_s3_treasure` 批次 8 条；守卫日志：`40 loot tables present, 4 blocks opted out`、`10 energy machines expose their buffer`、`31 tool-requiring blocks are all mineable`）。2026-09-29 的 95 个曾在默认 / `-PwithGtceu=true` / `-PwithBotania=false` 三种运行时各跑一遍；**本轮只跑了默认运行时**。
+- `build`：**JUnit 252 通过 / 0 失败**（32 个测试类）。第四轮时是 245/30，2026-09-29 时是 238/28。
+- `runGameTestServer`（默认运行时）：**106/106 通过**（97 + `technom_s3_treasure` 批次 8 条 + 本轮新增的 1 条；守卫日志：`40 loot tables present, 4 blocks opted out`、`10 energy machines expose their buffer`、`31 tool-requiring blocks are all mineable`）。2026-09-29 的 95 个曾在默认 / `-PwithGtceu=true` / `-PwithBotania=false` 三种运行时各跑一遍；**本轮只跑了默认运行时**。
 - `python tools/validate_technom_data.py`：**OK: no errors**（16 warning / 1 skip；本轮修复前是 45 errors）。
-- Rosetta 客户端探针（带 GTCEu + KubeJS）：**10/10 通过**（`probes/client/`）。其中 `10_`/`11_` 这一对是真正的渲染器检查：10 在**集成服务端**放置全部 44 个方块（旧版用 `mc.level.setBlock`，`ClientLevel` 根本不接受写入，所以此前从未通过），11 等 3 秒后确认客户端看到 44/44 方块、36 个方块实体、3 个已注册渲染器。两者通过 JVM 系统属性传递原点，因为测试世界是虚空、玩家会掉落，位置不能各自重算。`12_`/`14_` 从烘焙模型与顶点捕获取证（不依赖人眼），`40_`/`41_` 覆盖三处联动与 TC4R 的要素来源页。首轮 8/10 的两个失败都不是回归：`11_` 是世界同步竞态（`--attach` 重跑 44/44），`14_` 是探针自身的颜色常量写反。
+- Rosetta 客户端探针（带 GTCEu + KubeJS）：**10/10 通过**（`probes/client/`）。其中 `10_`/`11_` 这一对是真正的渲染器检查：10 在**集成服务端**放置全部 44 个方块（旧版用 `mc.level.setBlock`，`ClientLevel` 根本不接受写入，所以此前从未通过），11 等 3 秒后确认客户端看到 44/44 方块、36 个方块实体、3 个已注册渲染器。两者通过 JVM 系统属性传递原点，因为测试世界是虚空、玩家会掉落，位置不能各自重算。`12_`/`14_` 从烘焙模型与顶点捕获取证（不依赖人眼），`40_`/`41_` 覆盖三处联动与 TC4R 的要素来源页。首轮 8/10 的两个失败都不是回归：`11_` 是世界同步竞态（`--attach` 重跑 44/44），`14_` 是探针自身的颜色常量写反（第五轮未重跑探针）。
 - 2026-09-29 至 2026-09-30 三轮上游对照审计共修复 27 处缺陷（含 24 个此前缺失的方块掉落表、21 个“要工具却无 mineable 标签”的方块，以及第四轮补上的宝物受击/摧毁副作用与顺带修掉的 2 处偏差），逐条记录在 [VALIDATION](docs/VALIDATION.zh-CN.md) 的对应小节。
+- 本轮（2026-09-30 第五轮，第四轮审计之后的渲染器轮）把上游**七台**用代码画的方块渲染器全部移植（`crystal`/`existence_burner`/`biome_morpher`/`electric_bellows`/`adv_decon_table`/`eldritch_consumer`/`node_dynamo`），接线邪术吞噬器的面板动画，并把水晶改为 `CrystalBlockEntity` + 代码渲染器、修正上游颜色截断 bug（用户拍板：用上游作者本意的颜色，使光/暗水晶可区分）。本轮只更新文档并跑了默认运行时的 `build` 与 `runGameTestServer`，**未跑 Rosetta 探针**，也未跑其它运行时。详见 [VALIDATION](docs/VALIDATION.zh-CN.md) 的「七台代码渲染器与吞噬器面板动画（2026-09-30 第五轮）」小节。
 
 ## 先读这些文件（按顺序）
 
@@ -46,8 +47,8 @@
 ## 下一步（按优先级）
 
 1. **S5 总验收（现在是唯一剩下的阶段）**：专用服务器长期运行、多人联机、跨维度/死亡重生、持久化往返、守恒总账、研究/配方可达性全链、无 Botania 客户端（`-PwithBotania=false runClient` 未跑）；服务端 `/reload` 已由 GameTest 验证。Jade/JEI/KubeJS 联动已实现并有探针覆盖，但**仍未被人在游戏里看过排版**。
-2. **人眼验收**：S4 三台机器的实机行为（尤其稳定灯对真实祭坛、风箱对真实炼金炉）、客户端几何/朝向、魔力流体与桶、Jade 提示行与 JEI 燃料页的排版。节点创建闪电与仪式光效已实现（数值/颜色有 JUnit 与 Rosetta 探针覆盖），但仍未被人眼确认过观感。
-3. 全部完成后：`build` + `runGameTestServer`（有/无 GTCEu/无 Botania）+ Rosetta 客户端探针，并更新 FEATURE_MATRIX 与 VALIDATION。
+2. **人眼验收**：S4 三台机器的实机行为（尤其稳定灯对真实祭坛、风箱对真实炼金炉）、**本轮移植的七台代码渲染器**（重点：水晶的半透明与五色区分、电动风箱的风箱袋动画、邪术吞噬器的面板动画）、客户端几何/朝向、魔力流体与桶、Jade 提示行与 JEI 燃料页的排版。节点创建闪电与仪式光效已实现（数值/颜色有 JUnit 与 Rosetta 探针覆盖），但仍未被人眼确认过观感。
+3. 全部完成后：`build` + `runGameTestServer`（有/无 GTCEu/无 Botania）+ Rosetta 客户端探针，并更新 FEATURE_MATRIX 与 VALIDATION。**第五轮只更新了文档，并跑了默认运行时的 `build` 与 `runGameTestServer`；探针与其它运行时均未重跑，因此本项尚未完成。**
 4. 工程卫生：`main` 领先 `origin/main` 的提交需要推送；`s1x/assets`、`s2/coils`、`s2/machines`、`s2/nodes-wands` 四个分支已全部合并（0 ahead），但挂在另一个 worktree 上，不要删。
 
 ## 已确定的方向（不可随意改）

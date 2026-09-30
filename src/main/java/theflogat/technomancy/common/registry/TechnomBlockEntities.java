@@ -111,6 +111,20 @@ public final class TechnomBlockEntities {
                             TechnomBlocks.CATALYST_DARK.get())
                     .build(null));
 
+    /**
+     * One type for the five crystal blocks, matching {@code CATALYST} above. The crystal's block
+     * entity is a pure marker - it holds nothing and does not tick - and exists only because a
+     * {@code BlockEntityRenderer} needs something to be registered against. See
+     * {@link theflogat.technomancy.common.tiles.technom.CrystalBlockEntity}.
+     */
+    public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.technom.CrystalBlockEntity>> CRYSTAL =
+            TYPES.register("crystal", () -> BlockEntityType.Builder
+                    .of(theflogat.technomancy.common.tiles.technom.CrystalBlockEntity::new,
+                            TechnomBlocks.CRYSTAL_EARTH.get(), TechnomBlocks.CRYSTAL_FIRE.get(),
+                            TechnomBlocks.CRYSTAL_WATER.get(), TechnomBlocks.CRYSTAL_LIGHT.get(),
+                            TechnomBlocks.CRYSTAL_DARK.get())
+                    .build(null));
+
     // ---- end S3 ritual core blocks ----
 
     public static final RegistryObject<BlockEntityType<theflogat.technomancy.common.tiles.air.FakeAirLightBlockEntity>> FAKE_AIR_LIGHT =

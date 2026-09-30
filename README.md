@@ -1,8 +1,8 @@
 # Technomancy Unofficial — Forge 1.20.1
 
-基于官方 Forge MDK 初始化的现代移植工程。**S0–S4 已落地**：S1 精华闭环、S2 机器/线圈/节点/法杖/工具、S3 仪式 16/16 与 Existence 全套（含合成配方与 Existence 宝石）、S4 注魔稳定灯/电动风箱/生态转换器与节点创建。S4 三台机器有配方、研究与测试，但**尚未人工实机验收**；**S5** 已开始，服务端 GameTest 已覆盖 `/reload`，Jade/JEI/KubeJS 联动已实现（见[兼容分析](docs/COMPAT.zh-CN.md)第 7 节），专用服务器长期运行、多人、跨维度、守恒总账与无 Botania 客户端仍未完成。逐项证据见[功能矩阵](docs/FEATURE_MATRIX.zh-CN.md)与[验证记录](docs/VALIDATION.zh-CN.md)。
+基于官方 Forge MDK 初始化的现代移植工程。**S0–S4 已落地**：S1 精华闭环、S2 机器/线圈/节点/法杖/工具、S3 仪式 16/16 与 Existence 全套（含合成配方与 Existence 宝石）、S4 注魔稳定灯/电动风箱/生态转换器与节点创建。S4 三台机器有配方、研究与测试，但**尚未人工实机验收**；上游用代码画的**七台方块渲染器已全部移植**（含水晶改用 `CrystalBlockEntity` + 代码渲染器、修正上游颜色截断 bug），但**未人眼确认**；**S5** 已开始，服务端 GameTest 已覆盖 `/reload`，Jade/JEI/KubeJS 联动已实现（见[兼容分析](docs/COMPAT.zh-CN.md)第 7 节），专用服务器长期运行、多人、跨维度、守恒总账与无 Botania 客户端仍未完成。逐项证据见[功能矩阵](docs/FEATURE_MATRIX.zh-CN.md)与[验证记录](docs/VALIDATION.zh-CN.md)。
 
-目标是恢复 Technomancy 的 TC4 玩法，使用 TC4R 20721，移除 Thermal Expansion 和 CoFH RF 依赖，提供 Forge Energy 与 GTCEu EU 兼容。Botania 和 Blood Magic 作为后续可选模块。
+目标是恢复 Technomancy 的 TC4 玩法，使用 TC4R 20721，移除 Thermal Expansion 和 CoFH RF 依赖，提供 Forge Energy 与 GTCEu EU 兼容。Botania 保留为 S3 选装模块；**Blood Magic 相关一律不做**（用户明确排除，见 [CLAUDE.md](CLAUDE.md)）。
 
 ## 开始开发
 
@@ -30,7 +30,7 @@ Set-Location 'H:\MinecraftMods\Technomancy-1.20.1'
 .\gradlew.bat runData
 ```
 
-`runGameTestServer` 现有 105 个必跑 GameTest（批次见 `src/main/java/theflogat/technomancy/gametest/`）；2026-09-30 在默认开发运行时 **105/105 通过**（此前的 97 个曾在默认、`-PwithGtceu=true`、`-PwithBotania=false`、`-PwithJade=false` 四种运行时跑过）。它们覆盖注册、守恒、方向、服务端 `/reload` 与安全边界，仍不等于人工实机验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
+`runGameTestServer` 现有 106 个必跑 GameTest（批次见 `src/main/java/theflogat/technomancy/gametest/`）；2026-09-30 在默认开发运行时 **106/106 通过**（此前的 97 个曾在默认、`-PwithGtceu=true`、`-PwithBotania=false`、`-PwithJade=false` 四种运行时跑过）。它们覆盖注册、守恒、方向、服务端 `/reload` 与安全边界，仍不等于人工实机验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
 
 ## 客户端实机探针
 

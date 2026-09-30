@@ -43,9 +43,13 @@ public class EldritchConsumerBlock extends BaseEntityBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
-        return level.isClientSide ? null
-                : createTickerHelper(type, TechnomBlockEntities.ELDRITCH_CONSUMER.get(),
-                        EldritchConsumerBlockEntity::serverTick);
+        // Both sides tick. The original's updateEntity had a client half that eased the arm
+        // segments toward -pi/4 while the machine worked; without a client ticker here the panel
+        // would sit at rest no matter what the server did.
+        return createTickerHelper(type, TechnomBlockEntities.ELDRITCH_CONSUMER.get(),
+                level.isClientSide
+                        ? EldritchConsumerBlockEntity::clientTick
+                        : EldritchConsumerBlockEntity::serverTick);
     }
 
     @Override

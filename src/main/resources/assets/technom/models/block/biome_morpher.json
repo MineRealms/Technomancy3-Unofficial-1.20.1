@@ -1,7 +1,6 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/block",
   "textures": {
-    "all": "technom:block/biomemorpher",
     "particle": "technom:block/biomemorpher"
   }
 }

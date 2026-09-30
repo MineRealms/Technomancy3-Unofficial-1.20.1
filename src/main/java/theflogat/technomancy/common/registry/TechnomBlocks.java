@@ -125,7 +125,9 @@ public final class TechnomBlocks {
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()
-                    .isValidSpawn((state, level, pos, type) -> false)));
+                    .isValidSpawn((state, level, pos, type) -> false)),
+            // Drawn by code, so the block model is an empty shell and the item needs the hook.
+            theflogat.technomancy.common.items.nodes.NodeDynamoItem::new);
 
     /**
      * {@code nodeGenerator}. The controller of a 1x3x3 node fabricator; see
@@ -197,7 +199,8 @@ public final class TechnomBlocks {
                     .requiresCorrectToolForDrops()
                     .noOcclusion()
                     .isValidSpawn((state, level, pos, type) -> false)
-                    .isRedstoneConductor((state, level, pos) -> false)));
+                    .isRedstoneConductor((state, level, pos) -> false)),
+            theflogat.technomancy.common.items.machines.AdvDeconTableItem::new);
 
     /**
      * {@code eldritchConsumer}: a powered pit that eats mobs, drops and blocks below it and
@@ -211,7 +214,8 @@ public final class TechnomBlocks {
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()
-                    .isValidSpawn((state, level, pos, type) -> false)));
+                    .isValidSpawn((state, level, pos, type) -> false)),
+            theflogat.technomancy.common.items.machines.EldritchConsumerItem::new);
 
     /**
      * {@code fakeAirNG}. Registered without a {@link BlockItem} and without a loot table: a
@@ -288,7 +292,10 @@ public final class TechnomBlocks {
                         .isValidSpawn((state, level, pos, entity) -> false)
                         .isRedstoneConductor((state, level, pos) -> false)
                         .isSuffocating((state, level, pos) -> false)
-                        .isViewBlocking((state, level, pos) -> false)));
+                        .isViewBlocking((state, level, pos) -> false)),
+                // The crystal is drawn by code, so its JSON model is an empty shell and the item
+                // needs the renderer hook to avoid a blank icon.
+                theflogat.technomancy.common.items.technom.CrystalItem::new);
     }
 
     private static RegistryObject<Block> catalyst(Ritual.Type type) {
@@ -320,11 +327,13 @@ public final class TechnomBlocks {
     public static final RegistryObject<Block> EXISTENCE_BURNER = register("existence_burner",
             () -> new theflogat.technomancy.common.blocks.technom.existence.ExistenceBurnerBlock(false,
                     BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(3.0F, 9.0F)
-                            .sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                            .sound(SoundType.STONE).requiresCorrectToolForDrops()),
+            theflogat.technomancy.common.items.machines.ExistenceBurnerItem::new);
     public static final RegistryObject<Block> EXISTENCE_DYNAMIC_BURNER = register("existence_dynamic_burner",
             () -> new theflogat.technomancy.common.blocks.technom.existence.ExistenceBurnerBlock(true,
                     BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(3.0F, 9.0F)
-                            .sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                            .sound(SoundType.STONE).requiresCorrectToolForDrops()),
+            theflogat.technomancy.common.items.machines.ExistenceBurnerItem::new);
     public static final RegistryObject<Block> EXISTENCE_PYLON_BASIC = pylon("existence_pylon_basic",
             theflogat.technomancy.common.tiles.technom.existence.ExistenceTier.BASIC);
     public static final RegistryObject<Block> EXISTENCE_PYLON_ADVANCED = pylon("existence_pylon_advanced",
@@ -386,7 +395,8 @@ public final class TechnomBlocks {
                             .sound(SoundType.WOOD)
                             .requiresCorrectToolForDrops()
                             .noOcclusion()
-                            .isValidSpawn((state, level, pos, entity) -> false)));
+                            .isValidSpawn((state, level, pos, entity) -> false)),
+            theflogat.technomancy.common.items.machines.ElectricBellowsItem::new);
 
     /** {@code biomeMorpher}: rewrites the biome around it, one column per half charge. */
     public static final RegistryObject<Block> BIOME_MORPHER = register("biome_morpher",
@@ -397,7 +407,8 @@ public final class TechnomBlocks {
                             .sound(SoundType.METAL)
                             .requiresCorrectToolForDrops()
                             .noOcclusion()
-                            .isValidSpawn((state, level, pos, entity) -> false)));
+                            .isValidSpawn((state, level, pos, entity) -> false)),
+            theflogat.technomancy.common.items.machines.BiomeMorpherItem::new);
 
     // ---- end S4 deep TC ----
 

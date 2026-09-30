@@ -7,9 +7,14 @@ import net.minecraft.world.item.Item;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
+import theflogat.technomancy.client.render.AdvDeconTableRenderer;
+import theflogat.technomancy.client.render.BiomeMorpherRenderer;
 import theflogat.technomancy.client.render.CreativeJarRenderer;
+import theflogat.technomancy.client.render.EldritchConsumerRenderer;
+import theflogat.technomancy.client.render.ElectricBellowsRenderer;
 import theflogat.technomancy.client.render.EssentiaFusorRenderer;
 import theflogat.technomancy.client.render.FluxLampRenderer;
+import theflogat.technomancy.client.render.NodeDynamoRenderer;
 import theflogat.technomancy.client.screen.ProcessorScreen;
 import theflogat.technomancy.common.items.PureOreItem;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
@@ -42,6 +47,19 @@ final class S2MachinesClient {
         event.registerBlockEntityRenderer(TechnomBlockEntities.ESSENTIA_FUSOR.get(), EssentiaFusorRenderer::new);
         // The lamp's thirteen boxes, its per-side nozzles and its fill tint are all code-drawn.
         event.registerBlockEntityRenderer(TechnomBlockEntities.FLUX_LAMP.get(), FluxLampRenderer::new);
+        // These five machines are the same story: upstream's ISimpleBlockRenderingHandler returned
+        // false from renderWorldBlock, so the blockstate model is an empty shell and every pixel
+        // comes from the renderer. See each class for why a JSON model cannot stand in.
+        event.registerBlockEntityRenderer(TechnomBlockEntities.ADV_DECON_TABLE.get(),
+                AdvDeconTableRenderer::new);
+        event.registerBlockEntityRenderer(TechnomBlockEntities.ELDRITCH_CONSUMER.get(),
+                EldritchConsumerRenderer::new);
+        event.registerBlockEntityRenderer(TechnomBlockEntities.ELECTRIC_BELLOWS.get(),
+                ElectricBellowsRenderer::new);
+        event.registerBlockEntityRenderer(TechnomBlockEntities.BIOME_MORPHER.get(),
+                BiomeMorpherRenderer::new);
+        event.registerBlockEntityRenderer(TechnomBlockEntities.NODE_DYNAMO.get(),
+                NodeDynamoRenderer::new);
     }
 
     /**

@@ -40,7 +40,7 @@
 | 必需魔法依赖 | TC4R Maven 坐标 `dev.tc4port:thaumcraft-forge:0.1.0-20721` |
 | 基础电力协议 | Forge Energy，使用 Forge 自带接口 |
 | 可选工业集成 | GTCEu Modern 7.5.3，原生 EU 输入和输出 |
-| 后续可选魔法模块 | Botania、Blood Magic，分别核对其 1.20.1 API 后实施 |
+| 后续可选魔法模块 | Botania，核对其 1.20.1 API 后实施 |
 
 精确版本以 [gradle.properties](../gradle.properties)、[build.gradle](../build.gradle)、[Gradle Wrapper 配置](../gradle/wrapper/gradle-wrapper.properties) 和 [mods.toml](../src/main/resources/META-INF/mods.toml) 为构建权威。升级版本必须重新核对本指南中有版本约束的 API，尤其是 TC4R 内部桥接和 GTCEu capability。
 
@@ -50,13 +50,15 @@ TC4R 的 Maven 制品版本与游戏内模组版本不同：当前运行依赖�
 
 - 移除 Thermal Expansion、CoFH Redstone Flux 的源码/API/运行依赖，重新设计原来使用其部件的配方。
 - 需要 RF 的原版设备迁为 FE，并增加按电压和安培工作的 GTCEu EU 接口。
-- 精华、节点 Vis、法杖 Vis、Mana、LP、Existence 是独立玩法资源。替换 RF 不等于取消这些资源，也不等于所有机器都改成纯电力机器。
+- 精华、节点 Vis、法杖 Vis、Mana、Existence 是独立玩法资源。替换 RF 不等于取消这些资源，也不等于所有机器都改成纯电力机器。（LP 不在列：Blood Magic 永久不做，见 1.3。）
 - 原生 EU 兼容包括 Technomancy 发电机向 GT 电网送电、耗能设备从 GT 电网受电、方向和电压约束；仅让 GT 的 FE 包装器识别设备不足以证明这些要求全部满足。
-- Botania/Blood Magic 缺席时，基础 TC4R + FE 路线应完整可玩；涉及缺席模组的研究、物品和配方不能形成不可达前置。
+- Botania 缺席时，基础 TC4R + FE 路线应完整可玩；涉及缺席模组的研究、物品和配方不能形成不可达前置。Blood Magic 一律不做，其类型永远不会被加载，公共代码更不得链接。
 
 ### 1.3 暂不承诺的范围
 
 当前不承诺旧 1.7.10/1.12 存档可直接打开，不承诺其他 TC4R 构建号或 GTCEu 8.x 兼容，不把未注册的原版实验内容自动列为正式移植范围。上述能力只能在各自实现、验证后增加到发布说明。
+
+以上都是"暂不承诺"——条件满足后可以重新评估。**Blood Magic 不属于这一类**：它是**永久排除**，任何阶段都不在范围内，其类型永不加载，公共代码更不得链接（见 1.2 末条）。范围与理由见 [CLAUDE.md](../CLAUDE.md) 的「已确定的方向（不可随意改）」一节。
 
 ## 2. 来源取舍与可追溯性
 
@@ -161,7 +163,7 @@ theflogat.technomancy
     tc4.internal              少量有版本边界的内部适配
     gtceu                     可选 EU 能力和网络输出
     botania                   后续可选模块
-    bloodmagic                后续可选模块
+    bloodmagic                不做（Blood Magic 超出范围）
     jei                       配方展示
     jade                      机器状态展示
   network                     包定义、校验和处理
@@ -170,7 +172,7 @@ theflogat.technomancy
   gametest                    服务端行为验证
 ```
 
-依赖方向：机器逻辑依赖自有存储与明确的资源接口；FE/GT/TC 协议层把外部请求转换为存储操作；客户端只读取同步后的展示状态。公共能源、基础 BE、注册对象和入口字段不要出现 GTCEu/Botania/Blood Magic 类型，以保证缺席时类加载安全。
+依赖方向：机器逻辑依赖自有存储与明确的资源接口；FE/GT/TC 协议层把外部请求转换为存储操作；客户端只读取同步后的展示状态。公共能源、基础 BE、注册对象和入口字段不要出现 GTCEu/Botania 等可选模组类型，Blood Magic 类型更是一律不得出现（该模块永不加载），以保证缺席时类加载安全。
 
 TC4R 是必需依赖，允许本模块明确使用其公开 API；仍应把领域转换收拢到少数适配类，避免每台机器都复制 Aspect ID、Vis 单位和错误处理代码。不要为了模拟旧继承树重新建立巨型 `TileTechnomancy`；可组合的存储、朝向、红石、升级和运行状态更容易验证。
 
@@ -193,7 +195,7 @@ TC4R 是必需依赖，允许本模块明确使用其公开 API；仍应把领�
 | 稳定灯/电风箱 | 注魔矩阵/熔炉深度联动 | TC4R 扩展点不足，须 API 补充或受控 Mixin |
 | 群系改造 | 三种目标群系、区域更新、污染恢复历史 | quart 群系、同步、有界成本与可恢复性 |
 | 仪式/Existence | 玩家数据、仪式注册、世界扫描、同步 | 与核心 TC 迁移分期；跨维度、重生和重连验证 |
-| Botania/Blood Magic | 各自能源转换、处理器和资料展示 | 缺席安全、资源守恒、原版平衡与现代 API 逐项核对 |
+| Botania | 能源转换、处理器和资料展示 | 缺席安全、资源守恒、原版平衡与现代 API 逐项核对 |
 
 ### 5.2 必须成组处理的隐藏依赖
 
@@ -309,7 +311,7 @@ GT 类型只出现在隔离的集成类；公共入口经存在性检查调用�
 
 ### 8.1 各资源保留自己的账本
 
-精华按 `AspectId → amount` 储存，节点与法杖 Vis 使用 TC4R 对应类型和单位，Mana/LP/Existence 各用自身协议。不能为了复用能源容器把所有资源塞进同一个 long，导致无来源转换或过滤失效。
+精华按 `AspectId → amount` 储存，节点与法杖 Vis 使用 TC4R 对应类型和单位，Mana/Existence 各用自身协议。不能为了复用能源容器把所有资源塞进同一个 long，导致无来源转换或过滤失效。
 
 TC4R 法杖相关公开 API 存在 whole Vis 与 centivis 的单位区别；逐个读取参数契约。`WandRodSpec` 容量为 whole Vis，而 `CustomWandSpec.capacityCentivis` 和部分转移接口明确使用 centivis。将单位写进变量名与边界测试，避免 100 倍误差。
 
@@ -325,7 +327,7 @@ TC4R 法杖相关公开 API 存在 whole Vis 与 centivis 的单位区别；逐�
 
 每条加工记录至少回答：输入是什么、哪种魔法资源付费、是否允许再次经同模块处理、其他模块是否可接续、最大轮数/倍率、最终熔炼产量是什么。GT 高产矿链加入后必须做全链收益表，防止 Technomancy 的乘法倍率在多个模块间无限重复。
 
-Botania 1.12 分支的“空桶 + 50,000 Mana → 1,000 mB 魔力桶”是可评估的配方增量；Blood Magic 加工成本从公式变常数 16 是平衡变化。两者都应单独决定并记录，不能标为无争议兼容修复。
+Botania 1.12 分支的“空桶 + 50,000 Mana → 1,000 mB 魔力桶”是可评估的配方增量，应单独决定并记录，不能标为无争议兼容修复。Blood Magic 加工成本从公式变常数 16 属该模块的平衡变化；Blood Magic 不做，因此不在本期范围内。
 
 ## 9. TC4R API 对照和扩展边界
 
@@ -411,7 +413,7 @@ src/main/resources/
 
 建立研究依赖表：研究 key、父项、触发物、所需物品/机器、展示配方和可选模组条件。对每个正式功能，从新玩家获得基础研究到成品做一次路径检查。
 
-Botania/Blood Magic 内容要按实际加载条件生成/过滤；不能只隐藏 JEI 而保留阻断主线的研究前置。禁用配置也必须处理对应页面、配方、能力与已有存档对象的行为，不使用“注册一半 null 字段”模式。
+Botania 内容要按实际加载条件生成/过滤；不能只隐藏 JEI 而保留阻断主线的研究前置。禁用配置也必须处理对应页面、配方、能力与已有存档对象的行为，不使用“注册一半 null 字段”模式。
 
 数据重载后失效的进行中配方应暂停或清理待处理状态，按已提交/未提交资源边界处理，不能重算成本后重复产出。数据生成的输出纳入版本控制时，检查重复 ID、失效 tags、缺模型/贴图/语言以及配方引用闭环。
 
@@ -473,8 +475,8 @@ Botania/Blood Magic 内容要按实际加载条件生成/过滤；不能只隐�
 
 | 旧问题 | 证据位置（相邻原仓库内） | 迁移要求 |
 |---|---|---|
-| 血液制造器满槽仍扣能回归 | `Technomancy-2/.../TileBloodFabricator.java:30` | 按实际可填充量结算，满槽测试 |
-| BM/BO 自动化空实现 | `Technomancy-2/.../TileBMProcessor.java:43`、`TileBOProcessor.java:100` | 重写侧面 item handler，验证漏斗/管道 |
+| 血液制造器满槽仍扣能回归 | `Technomancy-2/.../TileBloodFabricator.java:30` | 不做（Blood Magic 超出范围） |
+| BO 自动化空实现（BM 侧不做） | `Technomancy-2/.../TileBOProcessor.java:100` | 重写侧面 item handler，验证漏斗/管道 |
 | Existence 客户端同步未接通 | `Technomancy-2/.../network/PacketHandler.java:34` | 登录、重生、维度与变化同步 |
 | 连接工具只剩字段 | 1.12 注册和配方链 | 与所有无线设备一起恢复并验交互 |
 | 多原料被写成一个候选 ingredient | `Technomancy-2/.../CraftingHandler.java:147` | 重建配方语义，缺任何必需原料不能合成 |
@@ -532,9 +534,9 @@ Botania/Blood Magic 内容要按实际加载条件生成/过滤；不能只隐�
 
 ### S3：仪式和可选魔法联动
 
-范围：仪式/Existence、Botania/Blood Magic 模块及它们的加工链、研究/手册和资源转换。按实际确认的子范围逐批纳入，原版未注册实验仪式不自动加入本期。
+范围：仪式/Existence、Botania 模块及其加工链、研究/手册和资源转换。按实际确认的子范围逐批纳入，原版未注册实验仪式不自动加入本期。
 
-验收：玩家状态在登录、死亡、换维度和重启后正确；可选模组缺席/存在各自可玩；Mana/LP/Existence 和电力闭环不增益；多玩家仪式、负高度和区块边界场景通过。
+验收：玩家状态在登录、死亡、换维度和重启后正确；可选模组缺席/存在各自可玩；Mana/Existence 和电力闭环不增益；多玩家仪式、负高度和区块边界场景通过。
 
 ### S4：深层 TC 联动
 
@@ -557,7 +559,6 @@ Botania/Blood Magic 内容要按实际加载条件生成/过滤；不能只隐�
 | TC4R + 必需依赖 + Technomancy | 客户端、专用服务器、基础研究/配方/FE 工作 |
 | 上述组合 + GTCEu 7.5.3 及依赖 | 原生 EU 输入/输出、GT/FE 双暴露、过压和安培限制 |
 | 基础 + Botania（实现该模块后） | Mana 路线、桶/流体转换、处理链和手册 |
-| 基础 + Blood Magic（实现该模块后） | LP/血液路线、满槽、所有者和处理链 |
 | 全部已支持可选模组 | 循环转换、配方冲突、混合自动化、研究可达 |
 | 无 JEI/Jade 和有 JEI/Jade | 展示集成不成为主线或类加载硬依赖 |
 | 单机与至少两名玩家的服务器 | 菜单、节点、工具和研究同步无共享状态问题 |
