@@ -34,6 +34,7 @@
 - 2026-09-29 至 2026-09-30 三轮上游对照审计共修复 27 处缺陷（含 24 个此前缺失的方块掉落表、21 个“要工具却无 mineable 标签”的方块，以及第四轮补上的宝物受击/摧毁副作用与顺带修掉的 2 处偏差），逐条记录在 [VALIDATION](docs/VALIDATION.zh-CN.md) 的对应小节。
 - 本轮（2026-09-30 第五轮，第四轮审计之后的渲染器轮）把上游**七台**用代码画的方块渲染器全部移植（`crystal`/`existence_burner`/`biome_morpher`/`electric_bellows`/`adv_decon_table`/`eldritch_consumer`/`node_dynamo`），接线邪术吞噬器的面板动画，并把水晶改为 `CrystalBlockEntity` + 代码渲染器、修正上游颜色截断 bug（用户拍板：用上游作者本意的颜色，使光/暗水晶可区分）。本轮只更新文档并跑了默认运行时的 `build` 与 `runGameTestServer`，**未跑 Rosetta 探针**，也未跑其它运行时。详见 [VALIDATION](docs/VALIDATION.zh-CN.md) 的「七台代码渲染器与吞噬器面板动画（2026-09-30 第五轮）」小节。
 - 第六轮（2026-09-30，用户实机报告 + 按用户要求跑 Rosetta 探针）修掉第五轮留下的两个**只在客户端可见**的缺陷：① 两台存在燃烧器漏了 `.noOcclusion()`，邻居朝向它的面被剔除、露出空壳模型的空洞（上游 `isOpaqueCube()` 为 false）；② 五颗水晶的 `particle` 指向 `technom:entity/blockcrystal`，那是渲染器直接绑定的模型表、不进方块图集，于是粒子是 missingno（上游 `BlockCrystal` 注册的是 `catalyst_0..4`）。新增三条守卫，且每条都先人为退掉修复、确认会失败再恢复。详见 [VALIDATION](docs/VALIDATION.zh-CN.md) 的「代码渲染方块的遮挡与水晶粒子（2026-09-30 第六轮）」小节。
+- 第七轮（2026-09-30，用户实机报告）修仪式书的布局：上游 `GuiTomeTemplate` 把「条目列表」和「打开的条目页面」做成互斥，端口两个都画了，而列表与左页正文都从 `(30, 12)` 起、行距都是 10，于是章节标题与正文逐行重合；已按上游改成互斥（含点击命中区）。顺带修掉 `RitualTomePage` 把页内坐标二次乘以 `scale` 的问题（`scale == 1` 时是 no-op）。**这条没有任何自动守卫** —— 重叠只能靠人眼，详见 [VALIDATION](docs/VALIDATION.zh-CN.md) 的「仪式书的章节标题与正文重叠（2026-09-30 第七轮）」小节。
 
 ## 先读这些文件（按顺序）
 

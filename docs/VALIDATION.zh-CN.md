@@ -1363,3 +1363,51 @@ JUnit 从 245 涨到 252、测试类从 30 涨到 32，全部来自上面那两�
 - 水晶的碰撞箱同样没按堆叠阶段设置：上游 `setBlockBoundsBasedOnState` 按阶段给整格 / 0.25..0.75 / 0.375..0.625，端口没有对应逻辑。
 - 遮挡修复与水晶粒子都**没有人眼确认**：前者由 GameTest 断言 `canOcclude()`，后者由探针断言 `getParticleIcon()` 不是 missingno —— 两者都只证明标志位 / 精灵对了，不证明观感。
 - 本轮只跑了默认运行时的 `runGameTestServer`，没有跑 `-PwithGtceu=true` / `-PwithBotania=false` / `-PwithJade=false`。
+
+## 仪式书的章节标题与正文重叠（2026-09-30 第七轮）
+
+用户在实机里报告：仪式书（`technom:ritual_tome`）里**章节标题和正文文本叠在一起，第一行**。
+
+### 1. 条目列表与页面内容本该互斥
+
+上游 `GuiTomeTemplate.drawScreen` 的结构是二选一：
+
+```java
+if (activeEntry != -1) { entry.drawPage(this, left, top, activePage); ... }
+else if (activeTab != -1) { drawTabs(left, top, activeTab, x, y); }
+```
+
+也就是说：**没打开条目时画标签页的条目列表，打开了就只画那个条目的页面**，两者从不同时出现。
+
+端口把条目列表的循环写在了 `activeEntry` 判断之外，无条件绘制；而两处原点完全一致：
+
+- 条目列表：上游 `entry.setYX(np > 15 ? 50 : 30, 12 + (np * 8))`，端口 `x = i > 15 ? 50 : 30`、`y = 12 + i * (lineHeight + 1)`
+- 左半页正文：上游 `top + gui.startTextY + line*(FONT_HEIGHT+1)`，`startTextY = 12`；端口 `halfTop = top + 12`、`halfLeft = left + 30`
+
+两者都从 `(30, 12)` 起、行距都是 10，所以是**逐行重合**，不只是第一行。
+
+**修复**：按上游把两段做成互斥（`if (activeEntry < 0) { 列表; return; }` 然后才是页面），`mouseClicked` 的条目命中测试同样加上 `activeEntry < 0` 守卫 —— 否则列表隐藏后它的点击区还在，会吞掉页面区域的点击。
+
+顺带一处：列表原本把**当前打开**的条目标蓝，但列表现在只在没有条目打开时可见，这个高亮永远不可能触发。改为上游的做法 —— 高亮**鼠标悬停**的那一条。
+
+### 2. 顺手发现的第二处：页内坐标被二次缩放
+
+改这一处时读到 `RitualTomePage`：它把每个坐标都乘了 `scale`（`Math.round(x * scale)`、`Math.round(18 * scale)`、`Math.round(imageOffsetX * scale)` …）。
+
+但调用方 `RitualTomeScreen.render` 已经 `g.pose().scale(scale, scale, 1)` 了；同一个 pose 里 `drawBookBackground`、`drawTabStrip`、条目列表**全都用未缩放的书本坐标**，而且显示正常。所以 `RitualTomePage` 是那个不一致的一方：在 `scale < 1`（窗口小于 272×272，`computeScale` 封顶 1.0）时，页内内容会朝页面左上角塌陷 `scale` 倍，正文列挤在一起。
+
+**修复**：去掉 `RitualTomePage` 里所有的 `* scale`，并从三个私有方法上摘掉已经用不到的 `scale` 参数（`render` 的公开签名也跟着少了这个参数）。**在 `scale == 1` 下这是纯粹的 no-op**，所以它不可能改变用户当前看到的样子，只会修好小窗口。
+
+### 本轮实际执行
+
+| 命令 | 结果 |
+|---|---|
+| `gradlew.bat build` | BUILD SUCCESSFUL；**JUnit 253 通过 / 0 失败**（32 个测试类） |
+| `gradlew.bat runGameTestServer` | **107/107 required tests passed** |
+| Rosetta 客户端探针（`--attach`） | **10/10 通过**（`11_` 按已知同步竞态重跑一次后 44/44；`13_` 输出 `ritual tome screen built and initialised`） |
+
+### 本轮未验证 / 说明
+
+- **这一条没有任何自动守卫。** 探针 `13_client_surface` 只做到 `new RitualTomeScreen()` + `init(...)` + `removed()`，能抓 init 里的异常，抓不到"两段文字画在同一行"。要断言重叠得把屏幕渲染进帧缓冲再比像素，代价和脆弱度都不划算。所以这个 bug 是**人眼发现、也只能靠人眼确认修好**的。
+- 我**没有**亲眼看到修复后的书页；本轮只有编译、GameTest 与探针。
+- 条目行距端口用的是 `lineHeight + 1`（10），上游是固定 8 —— 上游的字高是 9，所以上游的条目行之间本来就差 1 像素地互相压着。这是上游自身的问题，端口没照抄，**未改**。

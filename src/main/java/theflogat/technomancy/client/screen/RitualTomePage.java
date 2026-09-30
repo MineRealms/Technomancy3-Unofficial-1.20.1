@@ -69,17 +69,24 @@ public final class RitualTomePage {
         return new RitualTomePage(right, Kind.RECIPE, List.of(), null, 0, 0, result);
     }
 
-    public void render(Font font, GuiGraphics g, int left, int top, float scale) {
+    /**
+     * Draws this half-page. {@code left}/{@code top} are the book's origin; the caller has already
+     * scaled the pose to fit the window, so everything here is in book units and must not be
+     * multiplied by that scale a second time. (It used to be, which pushed the page's contents
+     * towards its top-left corner by a factor of {@code scale} whenever the window was too small
+     * for the book's 256×256 design size.)
+     */
+    public void render(Font font, GuiGraphics g, int left, int top) {
         int halfLeft = left + (right ? 136 : 30);
         int halfTop = top + 12;
         switch (kind) {
-            case TEXT -> renderText(font, g, halfLeft, halfTop, scale);
-            case IMAGE -> renderImage(g, halfLeft, top, scale);
-            case RECIPE -> renderRecipe(font, g, halfLeft, top, scale);
+            case TEXT -> renderText(font, g, halfLeft, halfTop);
+            case IMAGE -> renderImage(g, halfLeft, top);
+            case RECIPE -> renderRecipe(font, g, halfLeft, top);
         }
     }
 
-    private void renderText(Font font, GuiGraphics g, int halfLeft, int halfTop, float scale) {
+    private void renderText(Font font, GuiGraphics g, int halfLeft, int halfTop) {
         int maxLength = 100;
         int lineHeight = font.lineHeight + 1;
         int y = 0;
@@ -93,22 +100,18 @@ public final class RitualTomePage {
                     y += lineHeight;
                     x = 0;
                 }
-                int dx = Math.round(x * scale);
-                int dy = Math.round(y * scale);
-                g.drawString(font, word, halfLeft + dx, halfTop + dy, 0x000000);
+                g.drawString(font, word, halfLeft + x, halfTop + y, 0x000000);
                 x += w + font.width(" ");
             }
             y += lineHeight;
         }
     }
 
-    private void renderImage(GuiGraphics g, int halfLeft, int top, float scale) {
-        int ix = halfLeft + Math.round(imageOffsetX * scale);
-        int iy = top + Math.round(imageOffsetY * scale);
-        g.blit(image, ix, iy, 0, 0, 32, 32, 32, 32);
+    private void renderImage(GuiGraphics g, int halfLeft, int top) {
+        g.blit(image, halfLeft + imageOffsetX, top + imageOffsetY, 0, 0, 32, 32, 32, 32);
     }
 
-    private void renderRecipe(Font font, GuiGraphics g, int halfLeft, int top, float scale) {
+    private void renderRecipe(Font font, GuiGraphics g, int halfLeft, int top) {
         Level level = Minecraft.getInstance().level;
         if (level == null || result == null || result.isEmpty()) {
             return;
@@ -117,11 +120,11 @@ public final class RitualTomePage {
         if (recipe == null) {
             return;
         }
-        int cell = Math.round(18 * scale);
-        int gridLeft = halfLeft + Math.round(0 * scale);
-        int gridTop = top + Math.round(82 * scale);
-        int resultLeft = halfLeft + Math.round(74 * scale);
-        int resultTop = top + Math.round(100 * scale);
+        int cell = 18;
+        int gridLeft = halfLeft;
+        int gridTop = top + 82;
+        int resultLeft = halfLeft + 74;
+        int resultTop = top + 100;
         if (recipe instanceof ShapedRecipe shaped) {
             int w = shaped.getWidth();
             int h = shaped.getHeight();

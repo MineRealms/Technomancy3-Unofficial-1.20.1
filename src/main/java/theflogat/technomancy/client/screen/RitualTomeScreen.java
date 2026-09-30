@@ -145,8 +145,9 @@ public final class RitualTomeScreen extends Screen {
             }
         }
 
-        // Entry list (only when a tab is active): text at (30, 12 + line*N) or (50, ...).
-        if (activeTab >= 0) {
+        // Entry list (only while a tab is active and nothing is open - once an entry is open the
+        // list is replaced by its pages, so it must not swallow clicks either).
+        if (activeTab >= 0 && activeEntry < 0) {
             int y = 12;
             Tab t = tabs.get(activeTab);
             for (int i = 0; i < t.entries.size(); i++) {
@@ -216,23 +217,35 @@ public final class RitualTomeScreen extends Screen {
             return;
         }
         Tab tab = tabs.get(activeTab);
-        int y = 12;
-        for (int i = 0; i < tab.entries.size(); i++) {
-            int x = i > 15 ? 50 : 30;
-            Entry e = tab.entries.get(i);
-            int color = (i == activeEntry) ? 0x3366FF : 0x000000;
-            g.drawString(font, e.label, x, y, color);
-            y += font.lineHeight + 1;
-        }
-        if (activeEntry >= 0 && activeEntry < tab.entries.size()) {
-            Entry e = tab.entries.get(activeEntry);
-            if (!e.spreads.isEmpty()) {
-                RitualTomePage[] spread = e.spreads.get(Math.floorMod(activePage, e.spreads.size()));
-                spread[0].render(font, g, 0, 0, scale);
-                spread[1].render(font, g, 0, 0, scale);
-                String indicator = (activePage + 1) + " / " + e.spreads.size();
-                g.drawString(font, indicator, BOOK_SIZE / 2 - font.width(indicator) / 2, 240, 0x404040);
+        // The entry list and an open entry's pages are mutually exclusive, as they were upstream:
+        // GuiTomeTemplate.drawScreen did `if (activeEntry != -1) entry.drawPage(...) else
+        // drawTabs(...)`. They also share an origin - the list starts at (30, 12) and so does the
+        // left page's text - so drawing both put every chapter label on top of a line of the
+        // entry's own body text.
+        if (activeEntry < 0) {
+            int bx = toBookX(mouseX, left, scale);
+            int by = toBookY(mouseY, top, scale);
+            int y = 12;
+            for (int i = 0; i < tab.entries.size(); i++) {
+                int x = i > 15 ? 50 : 30;
+                Entry e = tab.entries.get(i);
+                int height = font.lineHeight + 1;
+                // Upstream tinted the entry under the cursor. There is no longer a "current"
+                // entry to tint: the list is only up while nothing is open.
+                boolean hovered = bx >= x && bx < x + font.width(e.label)
+                        && by >= y && by < y + height;
+                g.drawString(font, e.label, x, y, hovered ? 0x3366FF : 0x000000);
+                y += height;
             }
+            return;
+        }
+        Entry e = tab.entries.get(activeEntry);
+        if (!e.spreads.isEmpty()) {
+            RitualTomePage[] spread = e.spreads.get(Math.floorMod(activePage, e.spreads.size()));
+            spread[0].render(font, g, 0, 0);
+            spread[1].render(font, g, 0, 0);
+            String indicator = (activePage + 1) + " / " + e.spreads.size();
+            g.drawString(font, indicator, BOOK_SIZE / 2 - font.width(indicator) / 2, 240, 0x404040);
         }
     }
 
