@@ -1,7 +1,7 @@
 {
   "parent": "builtin/entity",
   "textures": {
-    "particle": "technom:entity/blockcrystal"
+    "particle": "technom:block/catalyst_3"
   },
   "display": {
     "gui": {

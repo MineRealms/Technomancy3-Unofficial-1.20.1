@@ -59,6 +59,11 @@ for (net.minecraft.resources.ResourceLocation id : net.minecraft.core.registries
             mc.getItemRenderer().getModel(stack, mc.level, null, 0);
     if (baked == missing) {
         bad.add("no item model for " + id);
+    } else if (baked.getParticleIcon().contents().name().getPath().contains("missingno")) {
+        // The same atlas rule as the blocks above, which the item side used to be left out of:
+        // a builtin/entity item model goes through the block model loader, so its particle has
+        // to name a texture the block atlas stitches. The five crystals named textures/entity/.
+        bad.add("missing particle texture on item " + id);
     }
 }
 out.append("items=").append(items).append("\n");

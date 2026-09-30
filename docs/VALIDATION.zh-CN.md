@@ -1291,3 +1291,75 @@ JUnit 从 245 涨到 252、测试类从 30 涨到 32，全部来自上面那两�
 - 电动风箱的锯齿波只在 Python 与 JUnit 里验证过表本身，游戏内节奏未实测。
 - **修掉的那 12 个物品图标没有实机看过**：`ItemModelGuardTest` 只能证明模型形状对了，证明不了图标长什么样。
 - 本轮**只跑了默认运行时**的 `runGameTestServer`，没有跑 `-PwithGtceu=true` / `-PwithBotania=false` / `-PwithJade=false`，也没有重跑 Rosetta 探针。
+
+## 代码渲染方块的遮挡与水晶粒子（2026-09-30 第六轮）
+
+第六轮从用户在实机里报告的一个症状开始：`existence_burner` / `existence_dynamic_burner` 放进世界后，**与它相邻的方块朝向它的那一面会变成空白**；用户同时指出"这个又不是 100% 不透明贴图方块"。随后按用户要求跑 Rosetta 探针，又抓到第二个同类缺陷（水晶粒子的贴图不进方块图集）。
+
+两个缺陷都是**上一轮引入或遗留**的，而且都只在客户端可见：服务端 GameTest、数据校验、`javac` 全都不会报。
+
+### 1. 存在燃烧器遮挡了邻居的面
+
+上游 `BlockExistenceBurner.isOpaqueCube()` 返回 `false`；端口 `BlockBehaviour.Properties` 里**漏了 `.noOcclusion()`**。
+
+链路用映射 jar 反汇编确认，不是推测：
+
+- `BlockBehaviour.Properties.noOcclusion()` 只做一件事 —— `canOcclude = false`。
+- `BlockBehaviour$BlockStateBase.isSolidRender(...)` 的第一条分支就是 `if (state.canOcclude())`，为假时直接返回 false。
+- 邻居的面剔除读的就是 `isSolidRender`。
+
+于是燃烧器被当作实心方块，四周邻居把朝向它的那一面剔掉；而燃烧器自己的模型是**空壳**（上游 `renderWorldBlock` 返回 `false`，像素全部由 `BlockEntityRenderer` 提供），那个位置什么都没有，看上去就是邻居被挖掉一个洞。
+
+七台代码渲染方块里其余六台都写了 `.noOcclusion()`，只有这两台漏了。
+
+**修复**：`EXISTENCE_BURNER` 与 `EXISTENCE_DYNAMIC_BURNER` 补上 `.noOcclusion()` 与 `.isValidSpawn(...) -> false`。
+
+### 2. 水晶粒子的贴图不在方块图集里
+
+`00_models_and_sprites` 对五颗水晶全部报 `particle icon is missingno`。
+
+第五轮把水晶改成代码渲染时，方块模型与物品模型的 `particle` 都写成了 `technom:entity/blockcrystal`。`textures/entity/` 是渲染器**直接绑定**的模型表，从不进方块图集；方块图集只拼 `textures/block/`。所以 JSON 合法、模型能烘焙、服务端测试全绿，只有客户端拿到 missingno。
+
+这**正是**第五轮文档里已经记过的同类问题（`existence_fountain` 引用 `entity/` 贴图）—— 当时只修了那一处，没有把规则抽出来，于是水晶又踩了一遍。
+
+**修复**：上游 `BlockCrystal.registerBlockIcons` 注册的是 `Names.catalyst + "_" + meta`，而端口里 `block/catalyst_0..4.png` 本来就在（`models/block/catalyst_*.json` 已在用）。把 10 个水晶模型（5 方块 + 5 物品）的 `particle` 改为 `technom:block/catalyst_<n>`，映射与既有 `catalyst_*.json` 一致：earth→0、fire→1、water→2、light→3、dark→4。
+
+### 3. 三条新守卫（都验证过"会失败"）
+
+| 守卫 | 位置 | 抓什么 |
+|---|---|---|
+| `everyCodeDrawnBlockIsNonOccluding` | GameTest，批次 `technom_code_drawn` | 物品模型是 `builtin/entity` 的方块（= 代码渲染家族，由模型文件**推导**而非写死名单）必须 `!canOcclude()` |
+| `everyBlockAtlasModelOnlyNamesTexturesFromTheBlockDirectory` | JUnit `ItemModelGuardTest` | 会进方块图集的模型（`models/block/*` + `builtin/entity` 物品模型）只能引用 `technom:block/` 下的贴图 |
+| 物品粒子检查 | 探针 `00_models_and_sprites` | 物品模型的 `getParticleIcon()` 不得是 missingno（此前只查了方块侧） |
+
+三条都按本项目"测试不能是空洞的"的规矩，先人为退掉修复、确认它们**确实会失败并报出准确的文件名 / id**，再恢复：
+
+- 退掉 `existence_burner` 的 `.noOcclusion()` → `everycodedrawnblockisnonoccluding failed! technom:existence_burner is drawn by code (its item model is builtin/entity) but still occludes ...`，`1 required tests failed`，BUILD FAILED。
+- 把 `crystal_earth` 的 `particle` 改回 `entity/` → `ItemModelGuardTest > everyBlockAtlasModelOnlyNamesTexturesFromTheBlockDirectory() FAILED`，报出 `assets/technom/models/block/crystal_earth.json -> particle = "technom:entity/blockcrystal"`，`253 tests completed, 1 failed`。
+
+### 本轮实际执行
+
+| 命令 | 结果 |
+|---|---|
+| `gradlew.bat build` | BUILD SUCCESSFUL；**JUnit 253 通过 / 0 失败**（32 个测试类） |
+| `gradlew.bat runGameTestServer` | **107/107 required tests passed** |
+| Rosetta 客户端探针（`--attach`，GTCEu + KubeJS，世界 `New World`） | **10/10 通过**（`11_` 按已知的世界同步竞态重跑一次，见下） |
+| `python tools/validate_technom_data.py` | **OK: no errors**（16 warning / 1 skip） |
+
+探针这一轮跑了四次，过程记在这里，以免被当成一次干净通过：
+
+| # | 时点 | 结果 | 说明 |
+|---|---|---|---|
+| 1 | 修复前 | 8/10 | 输出被 `tail -60` 截断，失败项**未留证**，不作为结论 |
+| 2 | 修复前，完整落盘 | 9/10 | 唯一失败是 `00_models_and_sprites`：五颗水晶 `particle icon is missingno` |
+| 3 | 修复后 | 9/10 | `00_` 转为 PASS；唯一失败是 `11_renderers_verify`：44 个方块全部 `the client never saw …` |
+| 4 | 修复后，只重跑 `10_` + `11_` | 2/2 | `client saw 44/44 block(s)` |
+
+第 3 次那个失败是 `11_` 的已知世界同步竞态（第五轮也出现过，README 里就写着"`11_` 是世界同步竞态，`--attach` 重跑 44/44"）：`10_` 在集成服务端放好方块就返回，不等客户端收到区块；重跑时区块已在，44/44 一次通过。它**不是**本轮的回归。
+
+### 本轮未验证 / 已知偏差
+
+- **存在燃烧器的碰撞箱仍是整格。** 上游 `BlockExistenceBurner.onBlockPlacedBy` 写了 `setBlockBounds(0.25F, 0, 0.25F, 0.75F, 1, 0.75F)`，端口用默认整格；而模型只占 x/z 0.25..0.75，所以玩家会撞到一层看不见的碰撞。这是**独立于本次渲染修复**的行为差异，未改，留待确认。
+- 水晶的碰撞箱同样没按堆叠阶段设置：上游 `setBlockBoundsBasedOnState` 按阶段给整格 / 0.25..0.75 / 0.375..0.625，端口没有对应逻辑。
+- 遮挡修复与水晶粒子都**没有人眼确认**：前者由 GameTest 断言 `canOcclude()`，后者由探针断言 `getParticleIcon()` 不是 missingno —— 两者都只证明标志位 / 精灵对了，不证明观感。
+- 本轮只跑了默认运行时的 `runGameTestServer`，没有跑 `-PwithGtceu=true` / `-PwithBotania=false` / `-PwithJade=false`。

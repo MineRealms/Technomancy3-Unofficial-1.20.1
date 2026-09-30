@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "technom:entity/blockcrystal"
+    "particle": "technom:block/catalyst_4"
   }
 }

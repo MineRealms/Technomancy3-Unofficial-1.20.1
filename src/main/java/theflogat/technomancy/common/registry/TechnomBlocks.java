@@ -324,15 +324,20 @@ public final class TechnomBlocks {
 
     // ---- S3 Existence network ----
 
+    // Drawn by code, and upstream's BlockExistenceBurner returns isOpaqueCube() == false. Without
+    // noOcclusion() the block occludes, so every neighbour culls the face it shares with it and the
+    // gap shows through where the (empty-shell) model draws nothing.
     public static final RegistryObject<Block> EXISTENCE_BURNER = register("existence_burner",
             () -> new theflogat.technomancy.common.blocks.technom.existence.ExistenceBurnerBlock(false,
                     BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(3.0F, 9.0F)
-                            .sound(SoundType.STONE).requiresCorrectToolForDrops()),
+                            .sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()
+                            .isValidSpawn((state, level, pos, entity) -> false)),
             theflogat.technomancy.common.items.machines.ExistenceBurnerItem::new);
     public static final RegistryObject<Block> EXISTENCE_DYNAMIC_BURNER = register("existence_dynamic_burner",
             () -> new theflogat.technomancy.common.blocks.technom.existence.ExistenceBurnerBlock(true,
                     BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(3.0F, 9.0F)
-                            .sound(SoundType.STONE).requiresCorrectToolForDrops()),
+                            .sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()
+                            .isValidSpawn((state, level, pos, entity) -> false)),
             theflogat.technomancy.common.items.machines.ExistenceBurnerItem::new);
     public static final RegistryObject<Block> EXISTENCE_PYLON_BASIC = pylon("existence_pylon_basic",
             theflogat.technomancy.common.tiles.technom.existence.ExistenceTier.BASIC);

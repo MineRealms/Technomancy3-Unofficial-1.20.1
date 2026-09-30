@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
@@ -40,6 +41,7 @@ import org.junit.jupiter.api.Test;
  */
 class ItemModelGuardTest {
 
+    private static final String BLOCK_DIR = "assets/technom/models/block";
     private static final String ITEM_DIR = "assets/technom/models/item";
     private static final String CUSTOM_RENDERER = "builtin/entity";
     /** A parent chain longer than this is a cycle or a mistake; the loader caps it too. */
@@ -114,6 +116,49 @@ class ItemModelGuardTest {
     }
 
     // ---- resolution ----
+
+    /**
+     * A model that the block atlas stitches may only name textures from {@code textures/block/}.
+     *
+     * <p>{@code textures/entity/} holds renderer sheets, bound directly by a {@code RenderType}
+     * and never atlased. A block model that points at one - usually through {@code particle},
+     * which is the icon breaking and running into the block use - still parses, still bakes and
+     * still passes every server-side test; the sprite simply comes out as the purple-and-black
+     * missing texture. The five crystals did exactly that, and only the client probe caught it.</p>
+     *
+     * <p>Code-drawn item models are included because {@code builtin/entity} sends them through
+     * the block model loader, so their textures are stitched the same way. An ordinary item model
+     * is not atlased at all and is left alone.</p>
+     */
+    @Test
+    void everyBlockAtlasModelOnlyNamesTexturesFromTheBlockDirectory() throws IOException {
+        List<String> bad = new ArrayList<>();
+        for (String dir : new String[] {BLOCK_DIR, ITEM_DIR}) {
+            for (String name : jsonNames(dir)) {
+                JsonObject json = read(dir, name);
+                if (ITEM_DIR.equals(dir) && !isCustomRenderer(json)) {
+                    continue;
+                }
+                JsonObject textures = json.has("textures") ? json.getAsJsonObject("textures") : null;
+                if (textures == null) {
+                    continue;
+                }
+                for (Map.Entry<String, JsonElement> entry : textures.entrySet()) {
+                    JsonElement value = entry.getValue();
+                    if (!value.isJsonPrimitive() || !value.getAsString().startsWith("technom:")) {
+                        continue;
+                    }
+                    String path = value.getAsString().substring("technom:".length());
+                    if (!path.startsWith("block/")) {
+                        bad.add(dir + "/" + name + " -> " + entry.getKey() + " = " + value);
+                    }
+                }
+            }
+        }
+        assertTrue(bad.isEmpty(), "these models name a technom texture outside textures/block/,"
+                + " which the block atlas never stitches, so the sprite bakes to the missing"
+                + " texture: " + bad);
+    }
 
     private static boolean isCustomRenderer(JsonObject json) {
         String parent = string(json, "parent");

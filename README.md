@@ -30,7 +30,7 @@ Set-Location 'H:\MinecraftMods\Technomancy-1.20.1'
 .\gradlew.bat runData
 ```
 
-`runGameTestServer` 现有 106 个必跑 GameTest（批次见 `src/main/java/theflogat/technomancy/gametest/`）；2026-09-30 在默认开发运行时 **106/106 通过**（此前的 97 个曾在默认、`-PwithGtceu=true`、`-PwithBotania=false`、`-PwithJade=false` 四种运行时跑过）。它们覆盖注册、守恒、方向、服务端 `/reload` 与安全边界，仍不等于人工实机验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
+`runGameTestServer` 现有 107 个必跑 GameTest（批次见 `src/main/java/theflogat/technomancy/gametest/`）；2026-09-30 在默认开发运行时 **107/107 通过**（此前的 97 个曾在默认、`-PwithGtceu=true`、`-PwithBotania=false`、`-PwithJade=false` 四种运行时跑过）。它们覆盖注册、守恒、方向、服务端 `/reload` 与安全边界，仍不等于人工实机验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
 
 ## 客户端实机探针
 
@@ -53,6 +53,7 @@ python .\tools\client_probe.py probes\client --attach                        # P
 - `tools/client_probe.py <探针> [--attach]`：每个探针是一段 Java 方法体，经桥在客户端线程执行并自带 PASS/FAIL；`--attach` 只跑探针，不开、不关客户端。
 - 该流程首次运行即抓到 `technom:node_dynamo` 的模型引用了不存在的 `technom:models/nodedynamo`（粒子图标为 missingno），已改为 `technom:block/nodedynamo`。
 - S3/Botania 资产重跑又抓到三个同类问题：`fake_air_light` 的 JSON 带 BOM、`existence_fountain` 引用了不会进方块图集的 `entity/` 贴图、`mana_fabricator` 用了非法的 `±15/±30` 旋转角，均已修复（见 [VALIDATION](docs/VALIDATION.zh-CN.md)）。
+- 2026-09-30 第六轮重跑探针，又抓到同一类：五颗水晶的 `particle` 指向 `technom:entity/blockcrystal`（`entity/` 不进方块图集，粒子是 missingno），已改为上游 `BlockCrystal` 实际注册的 `technom:block/catalyst_0..4`。规则现已由 `ItemModelGuardTest` 与探针 `00_` 双侧守住。
 - JEI 现在固定在 **`15.56.0.205`**（TC4R 那一侧），不再降到 `15.20.0.115`。TC4R 的 JEI 插件按 15.56+ 的 API 写（`ISubtypeInterpreter`、`ITextWidget.setPosition`），降版会让 Thaumcraft 丢掉物品子类型与整个 `thaumcraft:aspect_sources` 类别；GTCEu 7.5.3 的 `jei.FluidHelperMixin` 则要 `<= 15.35.0.175`。两者无交集，由 `GtceuJeiFluidHelperMixin` 把 GTCEu 要找的那个 `getTooltip` 重载补成空壳（priority 900，先于 GTCEu 的 1000），客户端因此能启动。`tools/jei_api_matrix.py` / `jei_link_check.py` 是这条结论的度量工具。
 - 探针目录 `probes/client/` 现在有 **10 个探针**：`40_compat_plugins` 核对 Jade/JEI/KubeJS 三处联动（Jade provider uid 与登记数量、JEI 类别页数与燃料表逐行一致、`kubejs.plugins.txt` 与插件类资源），`14_flux_lamp_and_coil` 用顶点捕获证明稳定灯空罐是白、满罐是洋红，并把模型变换链的四个喷嘴面钉死。KubeJS 不进开发运行时，所以它那一半只查发现文件与类资源，不加载任何 KubeJS 类。
 - `-PwithJade=false` 是 Jade 的缺席路径：`@WailaPlugin` 注解扫描不会加载插件类，因此整个 `compat/jade` 包在无 Jade 时不被解析。
