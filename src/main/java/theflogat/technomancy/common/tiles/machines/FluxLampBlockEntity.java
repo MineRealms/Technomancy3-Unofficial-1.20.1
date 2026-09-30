@@ -10,6 +10,9 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -67,6 +70,7 @@ public final class FluxLampBlockEntity extends BlockEntity implements EssentiaTr
     private static final String TAG_MATRIX = "Matrix";
     private static final String TAG_COUNT = "count";
     private static final String TAG_STABILISE = "stabilise";
+    private static final String TAG_PLACED = "Placed";
 
     private final EssentiaStore store = new EssentiaStore(EssentiaLimits.jar(ORDO_CAPACITY));
     private final FluidTank tank = new FluidTank(TANK_CAPACITY,
@@ -74,6 +78,7 @@ public final class FluxLampBlockEntity extends BlockEntity implements EssentiaTr
         @Override
         protected void onContentsChanged() {
             setChanged();
+            syncTank();
         }
     };
     private final LazyOptional<IFluidHandler> fluidView = LazyOptional.of(() -> tank);
@@ -82,6 +87,10 @@ public final class FluxLampBlockEntity extends BlockEntity implements EssentiaTr
     private BlockPos matrix;
     private int count;
     private boolean stabilise;
+    /** {@code TileFluxLamp.placed}: set by the block, and read only by the renderer. */
+    private boolean placed;
+    /** The fill the client was last told about, so the renderer's tint only costs a packet when it moves. */
+    private int syncedTank = -1;
 
     public FluxLampBlockEntity(BlockPos pos, BlockState state) {
         super(TechnomBlockEntities.FLUX_LAMP.get(), pos, state);
@@ -153,6 +162,50 @@ public final class FluxLampBlockEntity extends BlockEntity implements EssentiaTr
 
     public FluidTank tank() {
         return tank;
+    }
+
+    /** How full the tank is, which is the whole of what the renderer's tint reads. */
+    public int tankAmount() {
+        return tank.getFluidAmount();
+    }
+
+    /**
+     * {@code TileFluxLamp.placed}, which {@code BlockFluxLamp.onBlockPlacedBy} set. A lamp that
+     * never went through a player's placement keeps it false and draws no nozzles, as upstream.
+     */
+    public boolean placed() {
+        return placed;
+    }
+
+    public void setPlaced(boolean value) {
+        if (placed != value) {
+            placed = value;
+            setChanged();
+            sendUpdate();
+        }
+    }
+
+    /**
+     * Sends the fill to the client when it moves.
+     *
+     * <p>Upstream put the tank in {@code writeSyncData}, so the tint followed the tank for free.
+     * Here the tank is a Forge capability with no sync of its own, so the renderer would only ever
+     * see an empty lamp. Guarded against the client side because {@code readFromNBT} fires the same
+     * callback while applying a packet.</p>
+     */
+    private void syncTank() {
+        if (level == null || level.isClientSide || tank.getFluidAmount() == syncedTank) {
+            return;
+        }
+        syncedTank = tank.getFluidAmount();
+        sendUpdate();
+    }
+
+    private void sendUpdate() {
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
+                    net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+        }
     }
 
     // ---- essentia ----
@@ -277,6 +330,7 @@ public final class FluxLampBlockEntity extends BlockEntity implements EssentiaTr
         tag.put(TAG_TANK, tank.writeToNBT(new CompoundTag()));
         tag.putInt(TAG_COUNT, count);
         tag.putBoolean(TAG_STABILISE, stabilise);
+        tag.putBoolean(TAG_PLACED, placed);
         if (matrix != null) {
             tag.putIntArray(TAG_MATRIX, new int[] {matrix.getX(), matrix.getY(), matrix.getZ()});
         }
@@ -289,11 +343,23 @@ public final class FluxLampBlockEntity extends BlockEntity implements EssentiaTr
         tank.readFromNBT(tag.getCompound(TAG_TANK));
         count = tag.getInt(TAG_COUNT);
         stabilise = tag.getBoolean(TAG_STABILISE);
+        placed = tag.getBoolean(TAG_PLACED);
         if (tag.contains(TAG_MATRIX)) {
             int[] at = tag.getIntArray(TAG_MATRIX);
             if (at.length == 3) {
                 matrix = new BlockPos(at[0], at[1], at[2]);
             }
         }
+    }
+
+    /** The renderer reads the fill and the placement flag, so both ride the update packet. */
+    @Override
+    public CompoundTag getUpdateTag() {
+        return saveWithoutMetadata();
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 }

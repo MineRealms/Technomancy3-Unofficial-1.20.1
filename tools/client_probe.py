@@ -79,6 +79,9 @@ def main() -> int:
                         help="run against an already-running client's bridge (started detached) "
                              "instead of launching one and closing it")
     parser.add_argument("--keep", action="store_true", help="leave the client running afterwards")
+    parser.add_argument("-P", "--property", action="append", default=[], metavar="KEY=VALUE",
+                        help="extra Gradle property for the launch, e.g. -P withGtceu=true. "
+                             "Repeatable. Ignored with --attach, which launches nothing.")
     args = parser.parse_args()
 
     files = harness.probe_files(args.probes)
@@ -92,7 +95,9 @@ def main() -> int:
     harness.require_bridge(RUN_DIR)
     ensure_world(args.world)
 
-    client = harness.launch(["runClient", f"-PquickPlay={args.world}"], LOG)
+    gradle_args = ["runClient", f"-PquickPlay={args.world}"]
+    gradle_args += [f"-P{prop}" for prop in args.property]
+    client = harness.launch(gradle_args, LOG)
     try:
         print(f"starting the client, quick-joining {args.world!r}, waiting for its bridge (log: {LOG})")
         harness.wait_for_bridge(client, LOG, args.timeout, "the client")

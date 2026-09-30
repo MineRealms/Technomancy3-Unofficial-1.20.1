@@ -5,6 +5,8 @@ import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import theflogat.technomancy.client.fx.TechnomClientFx;
+import theflogat.technomancy.client.render.ExistenceFountainRenderer;
+import theflogat.technomancy.client.render.NodeFabricatorRenderer;
 import theflogat.technomancy.client.render.QuantumJarRenderer;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 
@@ -30,6 +32,7 @@ public final class TechnomancyClient {
         modBus.addListener(TechnomancyClient::clientSetup);
         modBus.addListener(TechnomancyClient::registerRenderers);
         S2MachinesClient.init(modBus);
+        S3ExistenceClient.init(modBus);
         BotaniaClient.init(modBus);
         ExistenceHud.init(modBus);
         TechnomClientFx.init(modBus);
@@ -47,6 +50,12 @@ public final class TechnomancyClient {
     private static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
         // Only the essentia level and the label need drawing in code; the shell is a JSON model.
         event.registerBlockEntityRenderer(TechnomBlockEntities.QUANTUM_JAR.get(), QuantumJarRenderer::new);
+        // The fabricator's whole body is code-drawn: spinning core, 45 degree plate, alpha boards.
+        event.registerBlockEntityRenderer(TechnomBlockEntities.NODE_FABRICATOR.get(),
+                NodeFabricatorRenderer::new);
+        // The fountain's body is a JSON model; only the tinted liquid ring needs code.
+        event.registerBlockEntityRenderer(TechnomBlockEntities.EXISTENCE_FOUNTAIN.get(),
+                ExistenceFountainRenderer::new);
         S2MachinesClient.registerRenderers(event);
     }
 }

@@ -24,7 +24,22 @@ public class FluxLampBlock extends BaseEntityBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
+        // The lamp's whole body is code-drawn - see FluxLampRenderer - so the JSON model is an
+        // empty shell that only carries the break particle.
         return RenderShape.MODEL;
+    }
+
+    /**
+     * {@code BlockFluxLamp.onBlockPlacedBy}: the renderer only draws the six nozzles once the lamp
+     * has been placed by a player, so a lamp spawned by a structure or {@code /setblock} stays bare.
+     */
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state,
+            @Nullable net.minecraft.world.entity.LivingEntity placer, net.minecraft.world.item.ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof FluxLampBlockEntity lamp) {
+            lamp.setPlaced(true);
+        }
     }
 
     @Nullable

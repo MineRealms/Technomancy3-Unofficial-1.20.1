@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import theflogat.technomancy.Technomancy;
 import theflogat.technomancy.common.blocks.dynamo.EssentiaDynamoBlock;
@@ -137,7 +138,8 @@ public final class TechnomBlocks {
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()
-                    .isValidSpawn((state, level, pos, type) -> false)));
+                    .isValidSpawn((state, level, pos, type) -> false)),
+            theflogat.technomancy.common.items.nodes.NodeFabricatorItem::new);
 
     // ---- S2 machines and storage ----
 
@@ -370,7 +372,8 @@ public final class TechnomBlocks {
                             .lightLevel(state -> 10)
                             .noOcclusion()
                             .requiresCorrectToolForDrops()
-                            .isValidSpawn((state, level, pos, entity) -> false)));
+                            .isValidSpawn((state, level, pos, entity) -> false)),
+            theflogat.technomancy.common.items.machines.FluxLampItem::new);
 
     /** {@code electricBellows}: blows into the furnace it faces without being cranked. */
     public static final RegistryObject<Block> ELECTRIC_BELLOWS = register("electric_bellows",
@@ -405,8 +408,17 @@ public final class TechnomBlocks {
     }
 
     private static RegistryObject<Block> register(String name, Supplier<Block> block) {
+        return register(name, block, BlockItem::new);
+    }
+
+    /**
+     * For the blocks whose item needs a class of its own - currently only the node fabricator,
+     * whose item is drawn by the block's renderer through {@code Item.initializeClient}.
+     */
+    private static RegistryObject<Block> register(String name, Supplier<Block> block,
+            BiFunction<Block, Item.Properties, Item> item) {
         RegistryObject<Block> registered = BLOCKS.register(name, block);
-        TechnomItems.ITEMS.register(name, () -> new BlockItem(registered.get(), new Item.Properties()));
+        TechnomItems.ITEMS.register(name, () -> item.apply(registered.get(), new Item.Properties()));
         return registered;
     }
 

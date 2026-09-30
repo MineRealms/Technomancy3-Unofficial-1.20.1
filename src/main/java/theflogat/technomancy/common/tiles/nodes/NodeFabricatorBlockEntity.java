@@ -1,5 +1,6 @@
 package theflogat.technomancy.common.tiles.nodes;
 
+import theflogat.technomancy.common.energy.EnergyHolder;
 import dev.tc4port.thaumcraft.api.ThaumcraftApiHelper;
 import dev.tc4port.thaumcraft.api.aspect.AspectAmounts;
 import theflogat.technomancy.common.rituals.RitualFx;
@@ -70,7 +71,7 @@ import theflogat.technomancy.common.tiles.base.RedstoneControl;
  * two unconnected steps, with no check that the first had done anything, and it created a node
  * before charging for it.</p>
  */
-public final class NodeFabricatorBlockEntity extends BlockEntity implements EssentiaTransport, AspectContainerView {
+public final class NodeFabricatorBlockEntity extends BlockEntity implements EssentiaTransport, AspectContainerView, EnergyHolder {
 
     /** {@code super(50000000, RedstoneSet.LOW)}. */
     public static final long ENERGY_CAPACITY = 50_000_000;
@@ -96,6 +97,7 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
     private static final String TAG_RUNNING = "Running";
     private static final String TAG_STEP = "Step";
     private static final String TAG_INITIATOR = "Initiator";
+    private static final String TAG_ACTIVE = "Active";
     private static final int SCHEMA_VERSION = 1;
 
     private final EssentiaStore store = new EssentiaStore(EssentiaLimits.jar(ESSENTIA_CAPACITY));
@@ -112,9 +114,22 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
     /** Whether this controller was the one a wand clicked, so only it builds the node. */
     private boolean initiator;
     private boolean syncedActive;
+    private boolean syncedRunning;
     private int syncedAmount = -1;
     @Nullable
     private AspectId syncedAspect;
+
+    /**
+     * Client-only: the angle of the spinning core, and the ritual tick the client has counted
+     * itself.
+     *
+     * <p>{@code TileNodeGenerator} advanced a synced {@code rotation} in {@code updateEntity},
+     * which ran on both sides. Nothing needs the server's copy, so here the client keeps its own
+     * counter and the server sends only the two booleans that gate it - see
+     * {@link #clientTick}. That is two packets per ritual instead of two hundred.</p>
+     */
+    private float spin;
+    private int clientStep;
 
     public NodeFabricatorBlockEntity(BlockPos pos, BlockState state) {
         super(TechnomBlockEntities.NODE_FABRICATOR.get(), pos, state);
@@ -181,6 +196,32 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
             }
         }
         machine.syncIfChanged();
+    }
+
+    /**
+     * Advances the core's spin on the client.
+     *
+     * <p>{@code TileNodeGenerator.updateEntity} did {@code rotation += 1 + step / 5} while
+     * {@code active}, so the core turns slowly when the pair is merely formed and winds up to
+     * roughly forty degrees a tick as the ritual nears its end. {@code active} and {@code running}
+     * are the only inputs, both already synced, and {@code step} restarts at zero exactly when
+     * {@code running} goes true, so counting it here reproduces the original curve without
+     * shipping a tick counter over the wire.</p>
+     */
+    public static void clientTick(Level level, BlockPos pos, BlockState state, NodeFabricatorBlockEntity machine) {
+        if (!machine.active) {
+            machine.clientStep = 0;
+            return;
+        }
+        machine.spin = (machine.spin + 1.0F + machine.clientStep / 5.0F) % 360.0F;
+        if (machine.running) {
+            machine.clientStep++;
+        }
+    }
+
+    /** The core's angle for this frame, in degrees. */
+    public float spin(float partialTick) {
+        return (spin + partialTick * (1.0F + clientStep / 5.0F)) % 360.0F;
     }
 
     /**
@@ -724,11 +765,13 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
     private void syncIfChanged() {
         AspectId aspect = store.dominantAspect();
         int amount = store.total();
-        if (amount == syncedAmount && active == syncedActive && java.util.Objects.equals(aspect, syncedAspect)) {
+        if (amount == syncedAmount && active == syncedActive && running == syncedRunning
+                && java.util.Objects.equals(aspect, syncedAspect)) {
             return;
         }
         syncedAmount = amount;
         syncedActive = active;
+        syncedRunning = running;
         syncedAspect = aspect;
         sendUpdate();
     }
@@ -763,6 +806,7 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
         running = tag.getBoolean(TAG_RUNNING);
         step = tag.getInt(TAG_STEP);
         initiator = tag.getBoolean(TAG_INITIATOR);
+        active = tag.getBoolean(TAG_ACTIVE);
         redstone.load(tag);
     }
 
@@ -776,6 +820,8 @@ public final class NodeFabricatorBlockEntity extends BlockEntity implements Esse
         tag.putBoolean(TAG_RUNNING, running);
         tag.putInt(TAG_STEP, step);
         tag.putBoolean(TAG_INITIATOR, initiator);
+        // Only here so the client can animate the core; the server recomputes it every tick.
+        tag.putBoolean(TAG_ACTIVE, active);
         redstone.save(tag);
     }
 

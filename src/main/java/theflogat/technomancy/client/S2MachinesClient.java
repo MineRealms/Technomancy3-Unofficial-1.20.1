@@ -9,6 +9,7 @@ import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import theflogat.technomancy.client.render.CreativeJarRenderer;
 import theflogat.technomancy.client.render.EssentiaFusorRenderer;
+import theflogat.technomancy.client.render.FluxLampRenderer;
 import theflogat.technomancy.client.screen.ProcessorScreen;
 import theflogat.technomancy.common.items.PureOreItem;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
@@ -39,6 +40,8 @@ final class S2MachinesClient {
         event.registerBlockEntityRenderer(TechnomBlockEntities.CREATIVE_JAR.get(), CreativeJarRenderer::new);
         // The fusor's whole configuration is invisible without this.
         event.registerBlockEntityRenderer(TechnomBlockEntities.ESSENTIA_FUSOR.get(), EssentiaFusorRenderer::new);
+        // The lamp's thirteen boxes, its per-side nozzles and its fill tint are all code-drawn.
+        event.registerBlockEntityRenderer(TechnomBlockEntities.FLUX_LAMP.get(), FluxLampRenderer::new);
     }
 
     /**

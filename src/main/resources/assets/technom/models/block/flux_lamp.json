@@ -1,8 +1,6 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "render_type": "minecraft:cutout",
+  "parent": "minecraft:block/block",
   "textures": {
-    "all": "technom:block/fluxlamp",
     "particle": "technom:block/fluxlamp"
   }
 }

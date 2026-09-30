@@ -96,9 +96,8 @@ public class NodeFabricatorBlock extends BaseEntityBlock implements WandInteract
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null
-                : createTickerHelper(type, TechnomBlockEntities.NODE_FABRICATOR.get(),
-                        NodeFabricatorBlockEntity::serverTick);
+        return createTickerHelper(type, TechnomBlockEntities.NODE_FABRICATOR.get(),
+                level.isClientSide ? NodeFabricatorBlockEntity::clientTick : NodeFabricatorBlockEntity::serverTick);
     }
 
     /** The shells go up as soon as the controller exists, not on its first tick. */
