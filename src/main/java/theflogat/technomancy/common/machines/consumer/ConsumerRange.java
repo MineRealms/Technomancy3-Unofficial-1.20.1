@@ -48,8 +48,24 @@ public enum ConsumerRange {
         return id;
     }
 
-    /** The lowest y that belongs to {@code originY}, inclusive. */
-    public int lowestY(int originY, int minBuildHeight) {
+    /**
+     * The lowest y of the block scan for {@code originY}, inclusive.
+     *
+     * <p>Upstream's loop runs {@code yy > y - h - 1}, so a finite height scans exactly {@code h}
+     * layers starting at {@code y - 1}. Stopping at {@code y - h - 1} made the scan one layer too
+     * deep - TINY ate two layers instead of one.</p>
+     */
+    public int blockFloorY(int originY, int minBuildHeight) {
+        return height < 0 ? minBuildHeight : Math.max(minBuildHeight, originY - height);
+    }
+
+    /**
+     * The lowest y of the entity box for {@code originY}, inclusive.
+     *
+     * <p>Upstream's box starts one layer below its block scan ({@code y - h - 1}), so an entity
+     * standing in the bottom-most scanned layer is still inside it.</p>
+     */
+    public int entityFloorY(int originY, int minBuildHeight) {
         return height < 0 ? minBuildHeight : Math.max(minBuildHeight, originY - height - 1);
     }
 

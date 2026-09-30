@@ -1026,3 +1026,58 @@ this.lootTableSupplier = () -> {
 - 死资源（低优先级，多为改名遗留）：26 个无人引用的方块模型、4 个死物品模型（`coilcoupler` / `existencegem` / `itemboost` / `ritualtome`，贴图仍被正确命名的模型使用）、约 35 张无人引用的贴图，以及重名资产（`coil_coupler` vs `coilcoupler`、`neutronized_metal` vs `neutronizedmetal`）。
 - 仍需搬到 `TechneModel` 的渲染器：`node_dynamo` 浮动线、`eldritch_consumer`（14 盒）、`electric_bellows`（5 盒，128×64 图集）、`biome_morpher`（22 盒）、`mana_fabricator`（14 盒）、`adv_decon_table`（9 盒）、`crystal`（`getStage()`）、`catalyst`（`textLoc`）、`existence_burner` 立方体、`essentia_dynamo` 的 `renderFacing`、`flower_dynamo`。
 - `docs/FEATURE_MATRIX.zh-CN.md` 仍把"事件副作用"和"配置关闭 HUD"列为验收项，而代码并不满足；这两项在补齐之前应标注为未达成。
+
+## 第二轮子代理对照审计：十处上游偏差（2026-09-30 第三轮）
+
+第二轮同样是对照上游 `37bf9a56`，做法是四个只读子代理分头扫（宝物与事件 / 机器方块实体 / 方块属性与配方 / 渲染器），每条结论都回到两端源码复核后才动手。上一节记的"仍未处理"清单里，本轮闭环了十项。
+
+### 先记三条**被驳回**的指控
+
+复核的价值一半在这里——如果照单全收，就会把本来正确的地方改坏：
+
+- **`processor_bo` 没有掉落表**：不成立。`loot_tables/blocks/processor_bo.json` 存在且掉自身；方块实体内容也会掉（`ProcessorBlock.onRemove` → `ProcessorBlockEntity.dropContents`）。上游把内容塞进掉落物 NBT（像潜影盒），端口散落成实体——是行为差异，不是缺失。
+- **`CatalystBlockEntity` 命中第一个仪式就 `break`**：上游确实没有 `break`，但逐条核对 16 个已注册仪式的 `(core, frame)` 组合后，**不存在两台同时匹配的可达场景**（`isFrameComplete` 要求超出 frame 长度的层必须为空，把每个组合都锁死了）。`break` 不改变任何可达行为。
+- **`EssentiaFusorBlockEntity.addEssentia` 多要求 `fullyMarked()`**：上游 `canInputFrom` 与 `getSuctionAmount` 同样要求 fullyMarked，所以未标记满时 suction 为 0、管道本就不会推送。只有"直接调 API"这条路径不同，管道路径两边一致。保留端口的严格检查。
+
+### 修复的十处
+
+| 位置 | 现象 | 上游 | 修复 |
+|---|---|---|---|
+| `EldritchConsumerBlockEntity.tick` | 整个 tick 被 40 tick 的 `cooldown` 门控，吞吐只有上游的 **1/41 ≈ 2.4%** | 门控是 `time <= 0`；`cooldown` 只驱动客户端面板动画，工作分支照常每 tick 跑 | 冷却不再 `return`，只递减 |
+| `BoProcessorBlockEntity.payTick` | 用了 TC 的公式 `max(1, stage + 2*passes) * 150`：首遍 300、二遍 750 | `multiplier * 150 + 1500 * reprocess`：首遍 1500、二遍 3150（约便宜 4～5 倍） | `payTick` 改收整个 `Job`，按 stage 与 passes 计价 |
+| `ExistenceUserBlockEntity.harvest` | 免费补种，每次收获多掉一份 | `TileExistenceHarvester` 从掉落里扣掉一个"方块自身的物品形态"（小麦扣小麦、胡萝卜扣胡萝卜）来付补种的钱 | 扣掉那一个 |
+| 三台机器的红石门控 | 静态燃烧器、催熟器、收割者完全不查红石 | 这三台上游都查 `set.canRun(this)`（`RedstoneSet.LOW`）；**封存器与动态燃烧器不查** | 补 `RedstoneControl`（默认 LOW）+ 方块右键编程 + 破坏退还编程物品；门控按上游只加在这三台上 |
+| `Technomancy.onLivingDeath` | 只有"充能宝石"一条分支 | `if(hasItem(exGem)) 充能 else 掷 existence` | 补 else 分支。判定沿用上游 `hasItem` 语义：**满的宝石也算持有**，所以带着满宝石击杀不会涨 existence——这是上游行为 |
+| `ConsumerRange` | 方块扫描多扫一层（TINY 吃 2 层） | 循环是 `yy > y - h - 1`，即 `h` 层；实体盒比它低一层 | 拆成 `blockFloorY`（`y - h`）与 `entityFloorY`（`y - h - 1`） |
+| `TreasureVillagers.onVillagerJoin` | 掷失败什么都不写，村民每次区块加载重掷；加载 10 次后携带率约 18%，而非标称的 2% | 先无条件写 `treasureAttempt`，一生只掷一次 | 先写标记；同时改为上游的三类型独立掷骰（`{75,50,75}` / 10000，最稀有的 powerPlate 中则胜出） |
+| 方块硬度/抗性 | `crystal_*` 0.3、`quantum_jar` 0.5、`mana_exchanger` 3.0/6.0、`basalt` 2.5/8.0 | 2.0、1.0、2.0/10.0、2.0（分别是 `BlockContainerBase`/`BlockBase` 的 `setHardness(2F)`、`BlockEssentiaContainer` 的 1F、`BlockManaExchanger` 的 2.0/10.0） | 改回上游数字。注意 1.20.1 的 `strength(x)` 是**硬度与抗性都设为 x**，不是"抗性默认 0" |
+| `adv_decon_table` / `essentia_reservoir` 的挖掘标签 | 不在任何 `mineable/*` 标签里，任何工具都拿不到速度加成；上游是 `Material.iron`，本来还要求镐 | 补 `pickaxe` 标签 + `requiresCorrectToolForDrops()`（后者必须与前者的守卫配套，否则 `everyToolRequiringBlockIsMineable` 会红）。守卫计数 29 → **31** |
+| `CatalystBlockEntity.activate` | 少了 `TileCatalyst` 在 `addAffinity` 之后的那一次 existence 掷骰 | `addAffinity` 之后紧跟 `PlayerData.addExistencePower` | 补一行 |
+
+### 新增守卫
+
+`ConsumerRangeTest`（JUnit）：逐范围断言方块扫描层数恰为 `height`、实体盒恰低一层、无界高度落到底、机器贴近世界底时被钳制。这条 off-by-one 正是"看起来没问题、实际多吃一层"的类型，值得钉死。
+
+### 本轮实际执行
+
+| 命令 | 结果 |
+|---|---|
+| `gradlew.bat build` | BUILD SUCCESSFUL；**JUnit 245 通过 / 0 失败**（30 个测试类） |
+| `gradlew.bat runGameTestServer` | **97/97 required tests passed**；`31 tool-requiring blocks are all mineable`、`40 loot tables present, 4 blocks opted out`、`10 energy machines expose their buffer` |
+
+### 本轮未验证
+
+- 除 `ConsumerRangeTest` 外，其余九处改动都**没有专门的回归测试**：`payTick` 的定价、harvester 的扣种子、红石门控、existence 掷骰、宝藏重掷、硬度与标签都只过了"整体不回归"级别的验证。
+- 红石编程交互（右键三种编程物品、破坏退还）**没有实机点过**；它照抄的是工程里已有的 `RedstoneControl` 模式，但没有新测试覆盖这三台机器。
+- 宝藏掷骰改成上游分布后，**没有统计验证**（只按源码逐行对齐）。
+
+### 仍未处理（按影响排序，已开成任务）
+
+1. **宝藏的受击/摧毁副作用完全没搬**：`ItemTreasure.onUserHit`（命中者被点燃/得抗性/被击退）与 `onTreasureDestroyed`（半径 30 爆炸、半径 5 变黑曜石、半径 25 击退）全无，全仓也没有任何 `LivingHurtEvent` 监听。注意端口"村民死亡掉宝物"本身也是新增行为——上游村民死亡不掉物品，宝物只能靠 Extraction 仪式取出。
+2. **`seal` 语义冲突**：上游是 80 tick（4 秒）的临时保护窗，到点自动清除；端口把 `seal` 当成"永久不再掉落"的开关，且没有任何清除处。修它会改变掉落行为，属设计决策，与第 1 条耦合。
+3. **`basalt` 在端口里不可获得**：无配方、无世界生成。上游唯一来源是缺失的 `RitualOfFireT3`（在 50×90×50 区域内填充玄武岩）；端口只有 T1/T2。需要先确认端口有没有 `AreaProtocolBuilder` 的等价物。
+4. **六台机器的渲染器未移植**，目前渲染成普通立方体：`crystal`（3 阶段生长，是玩法提示）、`existence_burner`（4 盒）、`biome_morpher`（22 盒，最大件）、`electric_bellows`（5 盒 + 风箱袋动画，128×64 图集）、`adv_decon_table`（9 盒）、`eldritch_consumer`（14 盒）。`node_dynamo` 另缺 4 盒。模板与 API 已定位：整机样板 `client/render/NodeFabricatorRenderer`，建模用 `client/render/model/TechneModel`（`builder(texW,texH)` → `.part(name).uv(u,v).mirror(b).at(x,y,z).rotate(rx,ry,rz).box(x,y,z,w,h,d)…end()` → `.build()`），贴图已在 `assets/technom/textures/entity/` 就位，无需重新导出。
+5. **`blood_dynamo` / `blood_fabricator` 方块本身未移植**（渲染器与方块都没有）。
+6. **`creative_jar` 不可破坏且无掉落**（上游硬度 1、破坏掉自身）：这是**有意偏离**，`CreativeJarBlock` 的 javadoc 与 `S2StorageGameTests:112/114` 两条断言把它固化住了。属设计决策，不是事故。
+7. 配置面仍远小于上游（约 7 项 vs 上游约 35 方块 / 15 物品 / HUD / recipes.bonus / renderers.fancy / machines.blacklist / Rate 的 8 项能耗）；HUD 没有开关且固定画在 (6,6)，上游 `showHUD` 默认 false。
+8. 死资源（低优先级，多为改名遗留）：26 个无人引用的方块模型、4 个死物品模型（`coilcoupler` / `existencegem` / `itemboost` / `ritualtome`）、约 35 张无人引用的贴图，以及重名资产（`coil_coupler` vs `coilcoupler`、`neutronized_metal` vs `neutronizedmetal`）。

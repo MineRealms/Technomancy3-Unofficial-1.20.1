@@ -6,6 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -14,8 +15,10 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import theflogat.technomancy.common.items.technom.Treasures;
+import theflogat.technomancy.common.machines.RedstoneMode;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.rituals.earth.RitualExtraction;
+import theflogat.technomancy.common.tiles.base.RedstoneControl;
 
 /**
  * The three Existence users ({@code TileExistenceCropAccelerator}, {@code TileExistenceHarvester}
@@ -42,19 +45,28 @@ public final class ExistenceUserBlockEntity extends BlockEntity implements IExis
      */
     private static final int CROP_FLOOR = 605;
     private static final String TAG_POWER = "power";
+    /** {@code TileExistenceCropAccelerator} / {@code TileExistenceHarvester}: {@code RedstoneSet.LOW}. */
+    private static final RedstoneMode DEFAULT_REDSTONE = RedstoneMode.LOW;
 
     private int power;
     private final Mode mode;
+    private final RedstoneControl redstone = new RedstoneControl(DEFAULT_REDSTONE);
 
     public ExistenceUserBlockEntity(BlockPos pos, BlockState state) {
         super(TechnomBlockEntities.EXISTENCE_USER.get(), pos, state);
         this.mode = state.getBlock()
                 instanceof theflogat.technomancy.common.blocks.technom.existence.ExistenceUserBlock user
                 ? user.mode() : Mode.CROP;
+        redstone.setListener(this::setChanged);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ExistenceUserBlockEntity user) {
         if (!(level instanceof ServerLevel server)) {
+            return;
+        }
+        // The crop accelerator and the harvester check set.canRun upstream; the sealing device
+        // (TileExistenceSealingDevice) does not, so the sealer keeps running under any signal.
+        if (user.mode != Mode.SEAL && !user.redstone.canRun(level, pos)) {
             return;
         }
         switch (user.mode) {
@@ -99,7 +111,18 @@ public final class ExistenceUserBlockEntity extends BlockEntity implements IExis
                 }
                 List<ItemStack> drops = Block.getDrops(crop, level, cropPos, null);
                 level.setBlock(cropPos, crop.getBlock().defaultBlockState(), 3);
+                // TileExistenceHarvester takes one item back out of the drops to pay for the
+                // replant: whichever drop is the block's own item form (the wheat, the carrot),
+                // because that is what it puts back in the ground. Replanting for free handed the
+                // player one extra crop every harvest.
+                Item replant = crop.getBlock().asItem();
                 for (ItemStack drop : drops) {
+                    if (drop.is(replant)) {
+                        drop.shrink(1);
+                    }
+                    if (drop.isEmpty()) {
+                        continue;
+                    }
                     level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1.0,
                             pos.getZ() + 0.5, drop));
                 }
@@ -157,15 +180,21 @@ public final class ExistenceUserBlockEntity extends BlockEntity implements IExis
         return true;
     }
 
+    public RedstoneControl redstone() {
+        return redstone;
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putInt(TAG_POWER, power);
+        redstone.save(tag);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         power = tag.getInt(TAG_POWER);
+        redstone.load(tag);
     }
 }

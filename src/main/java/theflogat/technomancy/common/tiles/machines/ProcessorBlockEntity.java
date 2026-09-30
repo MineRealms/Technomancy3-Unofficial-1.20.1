@@ -110,9 +110,16 @@ public abstract class ProcessorBlockEntity extends BlockEntity implements MenuPr
     /**
      * Spends one working tick's worth of this machine's resource.
      *
+     * <p>The whole {@link OreProcessing.Job} is handed over rather than just its
+     * {@code tickCost}, because the two upstream processors price a tick differently: the
+     * Thaumcraft one charges {@code max(1, multiplier + 2 * reprocess)} and the Botania one
+     * {@code multiplier * 150 + 1500 * reprocess}. The shared cost unit cannot be scaled back
+     * into those two, so each machine derives its own price from the stage and pass count.</p>
+     *
+     * @param job the planned job; never {@code null} when this is called
      * @return {@code true} if the whole cost was paid; a partial payment is never allowed
      */
-    protected abstract boolean payTick(int cost);
+    protected abstract boolean payTick(OreProcessing.Job job);
 
     /** Resource held, for the menu. */
     public abstract int fuelAmount();
@@ -141,7 +148,7 @@ public abstract class ProcessorBlockEntity extends BlockEntity implements MenuPr
         cycle.adopt(job);
         boolean fits = job != null && OreProcessing.fits(items.getStackInSlot(SLOT_OUTPUT), job);
         ProcessorCycle.Outcome outcome =
-                cycle.tick(job, fits, job == null ? 1 : job.tickCost(), this::payTick);
+                cycle.tick(job, fits, job == null ? 1 : job.tickCost(), cost -> payTick(job));
         if (outcome == ProcessorCycle.Outcome.COMPLETED) {
             complete(job);
         }

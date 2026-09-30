@@ -19,7 +19,9 @@ import theflogat.technomancy.common.energy.EnergyHolder;
 import theflogat.technomancy.common.energy.EnergyLimits;
 import theflogat.technomancy.common.energy.EnergyPorts;
 import theflogat.technomancy.common.energy.MachineEnergy;
+import theflogat.technomancy.common.machines.RedstoneMode;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
+import theflogat.technomancy.common.tiles.base.RedstoneControl;
 
 /**
  * {@code TileExistenceBurner} and {@code TileExistenceDynamicBurner}: kills the living around it and
@@ -43,8 +45,11 @@ public final class ExistenceBurnerBlockEntity extends BlockEntity
     private static final long DYNAMIC_ENERGY_PER_KILL = 10_000;
     private static final String TAG_POWER = "power";
     private static final String TAG_ENERGY = "Energy";
+    /** {@code TileExistenceBurner}: {@code super(RedstoneSet.LOW)}. */
+    private static final RedstoneMode DEFAULT_REDSTONE = RedstoneMode.LOW;
 
     private final MachineEnergy energy;
+    private final RedstoneControl redstone = new RedstoneControl(DEFAULT_REDSTONE);
     private int power;
     private final boolean dynamic;
 
@@ -60,10 +65,16 @@ public final class ExistenceBurnerBlockEntity extends BlockEntity
         energy = new MachineEnergy(this,
                 EnergyLimits.fe(DYNAMIC_ENERGY_CAPACITY, DYNAMIC_ENERGY_CAPACITY, 0),
                 dynamic ? EnergyPorts.consumer(EnergyPorts.mask(Direction.DOWN)) : EnergyPorts.NONE);
+        redstone.setListener(this::setChanged);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ExistenceBurnerBlockEntity burner) {
         if (burner.power >= burner.getPowerCap()) {
+            return;
+        }
+        // Only the static burner is redstone-sensitive upstream: TileExistenceBurner checks
+        // set.canRun before its sweep, while TileExistenceDynamicBurner never does.
+        if (!burner.dynamic && !burner.redstone.canRun(level, pos)) {
             return;
         }
         AABB box = new AABB(pos.getX() - 3, pos.getY() - 3, pos.getZ() - 3,
@@ -108,6 +119,10 @@ public final class ExistenceBurnerBlockEntity extends BlockEntity
 
     public MachineEnergy energy() {
         return energy;
+    }
+
+    public RedstoneControl redstone() {
+        return redstone;
     }
 
     @Override
@@ -164,6 +179,7 @@ public final class ExistenceBurnerBlockEntity extends BlockEntity
         super.saveAdditional(tag);
         tag.putInt(TAG_POWER, power);
         tag.put(TAG_ENERGY, energy.save());
+        redstone.save(tag);
     }
 
     @Override
@@ -171,5 +187,6 @@ public final class ExistenceBurnerBlockEntity extends BlockEntity
         super.load(tag);
         power = tag.getInt(TAG_POWER);
         energy.load(tag.getCompound(TAG_ENERGY));
+        redstone.load(tag);
     }
 }

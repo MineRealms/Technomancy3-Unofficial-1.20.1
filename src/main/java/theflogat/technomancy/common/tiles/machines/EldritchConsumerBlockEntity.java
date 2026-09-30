@@ -68,7 +68,7 @@ public final class EldritchConsumerBlockEntity extends BlockEntity implements Es
     public static final long ENERGY_CAPACITY = 1_000_000;
     /** {@code TileMachineRedstone(Rate.consumerCost * 50, RedstoneSet.HIGH)}. */
     public static final RedstoneMode DEFAULT_REDSTONE = RedstoneMode.HIGH;
-    /** {@code cooldown = 40} after any successful pass. */
+    /** {@code cooldown = 40} after any successful pass: drives the client panel, gates nothing. */
     public static final int COOLDOWN_TICKS = 40;
     /** {@code time = 80} before retrying when there was nothing to eat. */
     public static final int RETRY_TICKS = 80;
@@ -117,9 +117,12 @@ public final class EldritchConsumerBlockEntity extends BlockEntity implements Es
     }
 
     private void tick(Level level, BlockPos pos) {
+        // The original decrements cooldown *outside* its work branch: it only drives the client
+        // panel animation, while the real retry gate is `time` (our retry, 80 ticks after an idle
+        // pass). Returning here as well capped the machine at one pass per 41 ticks instead of one
+        // per tick, so it ran at about 2% of its intended rate.
         if (cooldown > 0) {
             cooldown--;
-            return;
         }
         if (retry > 0) {
             retry--;
@@ -204,7 +207,7 @@ public final class EldritchConsumerBlockEntity extends BlockEntity implements Es
         if (!(level instanceof ServerLevel serverLevel)) {
             return false;
         }
-        for (int y = pos.getY() - 1; y >= range.lowestY(pos.getY(), level.getMinBuildHeight()); y--) {
+        for (int y = pos.getY() - 1; y >= range.blockFloorY(pos.getY(), level.getMinBuildHeight()); y--) {
             for (int dx = -range.radius(); dx <= range.radius(); dx++) {
                 for (int dz = -range.radius(); dz <= range.radius(); dz++) {
                     BlockPos target = new BlockPos(pos.getX() + dx, y, pos.getZ() + dz);
@@ -245,7 +248,7 @@ public final class EldritchConsumerBlockEntity extends BlockEntity implements Es
 
     /** The box below the machine it scans, at most once per tick. */
     private AABB area(Level level, BlockPos pos) {
-        int minY = range.lowestY(pos.getY(), level.getMinBuildHeight());
+        int minY = range.entityFloorY(pos.getY(), level.getMinBuildHeight());
         return new AABB(
                 pos.getX() - range.radius(), minY, pos.getZ() - range.radius(),
                 pos.getX() + range.radius() + 1.0, pos.getY(), pos.getZ() + range.radius() + 1.0);

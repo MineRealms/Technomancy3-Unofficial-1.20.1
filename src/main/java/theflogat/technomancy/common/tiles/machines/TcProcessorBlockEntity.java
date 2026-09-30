@@ -20,6 +20,7 @@ import theflogat.technomancy.common.essentia.EssentiaLimits;
 import theflogat.technomancy.common.essentia.EssentiaPorts;
 import theflogat.technomancy.common.essentia.EssentiaStore;
 import theflogat.technomancy.common.essentia.EssentiaSuction;
+import theflogat.technomancy.common.machines.processing.OreProcessing;
 import theflogat.technomancy.common.machines.processing.ProcessingModule;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 
@@ -72,9 +73,9 @@ public final class TcProcessorBlockEntity extends ProcessorBlockEntity
     }
 
     @Override
-    protected boolean payTick(int cost) {
+    protected boolean payTick(OreProcessing.Job job) {
         // All-or-nothing: a partial payment would advance the cycle without covering it.
-        return store.takeExact(IGNIS, cost, false);
+        return store.takeExact(IGNIS, job.tickCost(), false);
     }
 
     @Override

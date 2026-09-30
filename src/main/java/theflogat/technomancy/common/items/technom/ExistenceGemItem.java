@@ -45,6 +45,20 @@ public final class ExistenceGemItem extends Item {
     }
 
     /**
+     * {@code inventory.hasItem(exGem)}: the original counted any gem, full or not, and so does
+     * this. It is the gate that decides between charging a gem and rolling for Existence power,
+     * so a player carrying a full gem gains no power - which is what the original did.
+     */
+    public static boolean hasAny(Player player) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.getItem() instanceof ExistenceGemItem) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Pours a kill into the first gem in the player's inventory that still has room
      * ({@code EventRegister} filled one gem per kill, in inventory order, and so does this).
      */

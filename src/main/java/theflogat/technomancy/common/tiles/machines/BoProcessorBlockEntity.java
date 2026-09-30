@@ -12,6 +12,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import vazkii.botania.api.BotaniaForgeCapabilities;
 import vazkii.botania.api.mana.ManaPool;
 import vazkii.botania.api.mana.ManaReceiver;
+import theflogat.technomancy.common.machines.processing.OreProcessing;
 import theflogat.technomancy.common.machines.processing.ProcessingModule;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 
@@ -20,17 +21,19 @@ import theflogat.technomancy.common.registry.TechnomBlockEntities;
  * buffer it fills itself from every {@link ManaPool} in its 9x9 layer at up to 5,000 a tick, then
  * the shared 60-tick ore cycle paid per working tick.
  *
- * <p>The original charged {@code multiplier * 150 + 1500 * reprocess} per tick, where the
- * multiplier is the ore's stage. This port's shared cycle already reduces the stage and pass
- * counts to its own cost unit, so the per-tick price here is {@value #MANA_PER_COST} Mana times
- * that unit, which keeps the fee proportional to the upstream figure; the total per job is the
- * product over 60 ticks.</p>
+ * <p>The fee per tick is the original's {@code multiplier * 150 + 1500 * reprocess} - the
+ * result's stage and its pass count for this module - and not the Thaumcraft processor's
+ * {@code max(1, multiplier + 2 * reprocess)} the shared cycle computes. A raw ore therefore
+ * costs 60 x 1,500 = 90,000 Mana and a second pass 60 x 3,150 = 189,000.</p>
  */
 public final class BoProcessorBlockEntity extends ProcessorBlockEntity implements ManaReceiver {
 
     public static final int MANA_CAPACITY = 1_000_000;
     public static final int PULL_PER_TICK = 5_000;
-    public static final int MANA_PER_COST = 150;
+    /** {@code TileBOProcessor.getFuel}: {@code multiplier * 150}. */
+    public static final int MANA_PER_STAGE = 150;
+    /** {@code TileBOProcessor.getFuel}: {@code 1500 * reprocess}. */
+    public static final int MANA_PER_REPROCESS = 1_500;
     public static final int PULL_RADIUS = 4;
 
     private static final String TAG_MANA = "Mana";
@@ -79,8 +82,13 @@ public final class BoProcessorBlockEntity extends ProcessorBlockEntity implement
     }
 
     @Override
-    protected boolean payTick(int cost) {
-        int price = cost * MANA_PER_COST;
+    protected boolean payTick(OreProcessing.Job job) {
+        // TileBOProcessor.getFuel: `multiplier * 150 + 1500 * reprocess`, where the original passed
+        // the result's damage as the multiplier and its new pass count for this module as
+        // reprocess. The shared cycle's tickCost is the Thaumcraft formula, so scaling it by 150 -
+        // the first cut here - charged 300 where upstream charged 1,500 on a raw ore, and 750
+        // where upstream charged 3,150 on the second pass.
+        int price = job.stage() * MANA_PER_STAGE + job.progress().passes(module()) * MANA_PER_REPROCESS;
         if (price <= 0 || mana < price) {
             return false;
         }

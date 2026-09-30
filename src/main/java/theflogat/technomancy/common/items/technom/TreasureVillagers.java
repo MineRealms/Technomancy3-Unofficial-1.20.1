@@ -22,8 +22,11 @@ import theflogat.technomancy.config.TechnomancyConfig;
 public final class TreasureVillagers {
 
     private static final String[] NAMES = {Treasures.FIRE_GEM, Treasures.POWER_PLATE, Treasures.GOLDEN_WING};
-    /** One villager in this many is a carrier. */
-    private static final int RARITY = 50;
+    /** {@code ItemTreasure.rarity}: each type passes on {@code (rarity + 1) / 10000}. */
+    private static final int[] RARITY = {75, 50, 75};
+    private static final int RARITY_DENOMINATOR = 10_000;
+    /** {@code getEntityData().setBoolean("treasureAttempt", true)}, written before the roll. */
+    private static final String ATTEMPTED = "treasureAttempt";
 
     public static void register() {
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(TreasureVillagers::onVillagerJoin);
@@ -42,11 +45,27 @@ public final class TreasureVillagers {
             return;
         }
         CompoundTag data = villager.getPersistentData();
-        if (data.contains(RitualExtraction.TREASURE_TAG)) {
+        if (data.contains(RitualExtraction.TREASURE_TAG) || data.contains(ATTEMPTED)) {
             return;
         }
-        if (level.random.nextInt(RARITY) == 0) {
-            data.putString(RitualExtraction.TREASURE_TAG, NAMES[level.random.nextInt(NAMES.length)]);
+        // The original wrote treasureAttempt *before* rolling, so a villager got exactly one
+        // chance in its life. Writing the marker only on success meant every chunk load rolled
+        // again, and the effective rate grew with however many times the chunk was loaded - at ten
+        // loads a villager was a carrier 18% of the time instead of the intended 2%.
+        data.putBoolean(ATTEMPTED, true);
+        int chosen = -1;
+        for (int i = 0; i < RARITY.length; i++) {
+            if (level.random.nextInt(RARITY_DENOMINATOR) > RARITY[i]) {
+                continue;
+            }
+            // The original kept the rarest type of those that passed. powerPlate (50) is strictly
+            // the rarest, so it wins whenever it passes, and the other two split the rest.
+            if (chosen == -1 || RARITY[i] < RARITY[chosen]) {
+                chosen = i;
+            }
+        }
+        if (chosen != -1) {
+            data.putString(RitualExtraction.TREASURE_TAG, NAMES[chosen]);
         }
     }
 

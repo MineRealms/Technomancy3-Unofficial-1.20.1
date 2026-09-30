@@ -10,6 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import theflogat.technomancy.common.player.PlayerAffinity;
 import theflogat.technomancy.common.registry.TechnomBlockEntities;
 import theflogat.technomancy.common.rituals.IRitualEffectHandler;
 import theflogat.technomancy.common.rituals.Ritual;
@@ -85,6 +86,9 @@ public final class CatalystBlockEntity extends BlockEntity {
             if (level instanceof ServerLevel server) {
                 if (player != null) {
                     ritual.addAffinity(server, player);
+                    // TileCatalyst rolled for Existence power a second time, on top of the
+                    // 25 * tier loop the ritual itself already runs in addAffinity.
+                    PlayerAffinity.addExistencePower(server.getRandom(), player);
                 }
                 // The effect already changed the world; say so where a player can see it.
                 RitualFx.ritualFired(server, worldPosition, ritual.core());

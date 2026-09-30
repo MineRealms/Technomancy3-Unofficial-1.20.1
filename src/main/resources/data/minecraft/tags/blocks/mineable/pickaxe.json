@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
+    "technom:adv_decon_table",
     "technom:basalt",
     "technom:biome_morpher",
     "technom:catalyst_dark",
@@ -12,6 +13,7 @@
     "technom:energy_condenser",
     "technom:essentia_dynamo",
     "technom:essentia_fusor",
+    "technom:essentia_reservoir",
     "technom:existence_burner",
     "technom:existence_crop_accelerator",
     "technom:existence_dynamic_burner",

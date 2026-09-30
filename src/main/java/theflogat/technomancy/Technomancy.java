@@ -83,13 +83,20 @@ public final class Technomancy {
     }
 
     /**
-     * A player kill charges the first unfinished Existence gem in their inventory, which is the
-     * only way to fill one ({@code EventRegister} in 1.7.10 did the same on the same event).
+     * {@code EventRegister.entityDeath}: a player carrying an Existence gem charges it, and a
+     * player without one rolls for Existence power. Only the first half was ported, so the
+     * affinity path - which needs {@code existencelevel} to reach 20 - was unreachable in play.
      */
     private static void onLivingDeath(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
         if (event.getSource().getEntity() instanceof net.minecraft.world.entity.player.Player player
                 && !player.level().isClientSide) {
-            theflogat.technomancy.common.items.technom.ExistenceGemItem.chargeFromKill(player, event.getEntity());
+            if (theflogat.technomancy.common.items.technom.ExistenceGemItem.hasAny(player)) {
+                theflogat.technomancy.common.items.technom.ExistenceGemItem
+                        .chargeFromKill(player, event.getEntity());
+            } else {
+                theflogat.technomancy.common.player.PlayerAffinity
+                        .addExistencePower(player.getRandom(), player);
+            }
         }
     }
 

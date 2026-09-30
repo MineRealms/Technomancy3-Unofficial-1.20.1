@@ -73,7 +73,7 @@ public final class BotaniaContent {
                                 state.getValue(ProcessorBlock.LIT) ? ProcessorBlock.LIT_LIGHT : 0)));
         MANA_EXCHANGER = block("mana_exchanger",
                 () -> new ManaExchangerBlock(BlockBehaviour.Properties.of()
-                        .mapColor(MapColor.COLOR_PURPLE).strength(3.0F, 6.0F).sound(SoundType.METAL)
+                        .mapColor(MapColor.COLOR_PURPLE).strength(2.0F, 10.0F).sound(SoundType.METAL)
                         .requiresCorrectToolForDrops().noOcclusion()
                         .isValidSpawn((state, level, pos, entity) -> false)));
 

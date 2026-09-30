@@ -67,7 +67,7 @@ public final class TechnomBlocks {
     public static final RegistryObject<Block> QUANTUM_JAR = register("quantum_jar",
             () -> new QuantumJarBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_LIGHT_BLUE)
-                    .strength(0.5F)
+                    .strength(1.0F)
                     .sound(SoundType.GLASS)
                     .noOcclusion()
                     .isValidSpawn((state, level, pos, type) -> false)
@@ -149,6 +149,7 @@ public final class TechnomBlocks {
                     .mapColor(MapColor.COLOR_PURPLE)
                     .strength(2.0F)
                     .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
                     .noOcclusion()
                     .isValidSpawn((state, level, pos, type) -> false)));
 
@@ -193,6 +194,7 @@ public final class TechnomBlocks {
                     .mapColor(MapColor.WOOD)
                     .strength(2.0F)
                     .sound(SoundType.WOOD)
+                    .requiresCorrectToolForDrops()
                     .noOcclusion()
                     .isValidSpawn((state, level, pos, type) -> false)
                     .isRedstoneConductor((state, level, pos) -> false)));
@@ -253,7 +255,7 @@ public final class TechnomBlocks {
     public static final RegistryObject<Block> BASALT = register("basalt",
             () -> new BasaltBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_BLACK)
-                    .strength(2.5F, 8.0F)
+                    .strength(2.0F)
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()));
 
@@ -279,7 +281,7 @@ public final class TechnomBlocks {
         return register("crystal_" + type.name().toLowerCase(java.util.Locale.ROOT),
                 () -> new CrystalBlock(type, BlockBehaviour.Properties.of()
                         .mapColor(MapColor.COLOR_PURPLE)
-                        .strength(0.3F)
+                        .strength(2.0F)
                         .sound(SoundType.GLASS)
                         .lightLevel(state -> 1)
                         .noOcclusion()
