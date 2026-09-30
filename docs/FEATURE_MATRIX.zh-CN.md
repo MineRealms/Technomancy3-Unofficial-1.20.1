@@ -123,6 +123,18 @@
 | 鲜血净化器 | `TileBMProcessor` | Blood Magic LP/soul network + 共享加工链；旧名字 owner 改现代身份；常数 16 成本不能当兼容修复 | S3 | 网络主人、离线/无网络、LP 不足、成本与加工记录、自动化 | 待迁移 |
 | Blood Magic 材料与祭坛配方 | 祭献锭、blood coil；祭坛/普通配方 | 现代 altar 数据与依赖隔离，使用无 TE 材料路径 | S3 | 祭坛等级、LP/流体成本、配方获取、未安装时核心能启动 | 待迁移 |
 
+## 现代化联动（Jade / JEI / KubeJS）
+
+原版 1.7 只有 Waila HUD 联动（`lib/compat/waila/WailaProvider` 及各 `*HUDHandler`，并用 `registerNBTProvider`/`getNBTData` 把服务端数据送到客户端）；JEI 与 KubeJS 是后来才有的接口。原则：**只补别人推导不出来的信息**——配方、燃料表、矿石标签、配置都已经由数据包或 ForgeConfigSpec 表达，一律不写代码重复一遍。实施细节与坑见 [COMPAT 第 7 节](COMPAT.zh-CN.md)。
+
+| 联动 | 依赖与适配 | 阶段 | 必须验证 | 状态 |
+|---|---|---|---|---|
+| Jade（Waila 后继） | `compat/jade/`：`@WailaPlugin` + 一个 common 侧 provider（`IServerDataProvider.appendServerData` 服务端采集、`IBlockComponentProvider.appendTooltip` 客户端只读回传 NBT）。`compileOnly` 常驻，`runtimeOnly` 由 `-PwithJade` 控制 | S5 | 专用服务器不加载任何客户端类；`-PwithJade=false` 能启动；数值与 GUI 一致 | **已实现**：15 个方块实体（能量、源质存量/容量、加工进度、节点灵气与储能、仪式要素/阶级/倒计时、存在之力）；`EnergyHolder` 让 8 台机器的 FE 缓冲走同一分支。Rosetta 探针 `probes/client/40_compat_plugins.java` 核对 uid、登记数量与 13 个 lang key。**未验证**：实机把光标对准机器看排版；**刻意不含** Botania 三台机器（登记它们会让 common 侧插件类引用 Botania 方块实体类，在"有 Jade 无 Botania"的包里 `NoClassDefFoundError`） |
+| JEI | `compat/jei/`：`@JeiPlugin`，唯一类别 `technom:essentia_fuel`，手绘无槽位页面；沿用原有 `compileOnly` + `runtimeOnly`，不加开关 | S5 | 类别只在客户端加载；表为空时不注册任何页面；`/reload` 改表后页面同步 | **已实现**：逐要素一页 + 一条兜底页，显示燃料值、每单位 Q、各地形条件与随机加成，源质发电机为催化剂。探针核对页数与表格逐行一致、14 个 lang key。**刻意不做**：普通配方类别（数据包配方 JEI 免费展示，重复注册只是多一处要同步的地方）。**未验证**：实机打开 JEI 看排版 |
+| KubeJS | `compat/kubejs/`：`kubejs.plugins.txt`（jar 根目录，KubeJS 的发现机制，**不是注解**）+ 只覆写 `registerBindings` 的插件；**仅 `compileOnly`**，永不进任何运行时 | S5 | 未安装时插件类不被加载；发现文件名与类名一致 | **已实现**：绑定 `Technom` 全局，暴露燃料表查询（`maxFuelValue`/`maxEnergyPerUnit`/`fuelValueAt`）、`qPerEu`、`essentiaFuelScale`、`listedAspects`；未知要素抛异常而非回落兜底值。**刻意不做**：配方 schema（本模组无自定义配方类型）、事件组（无可监听事件）。**未验证**：开发运行时没有 KubeJS，只有探针核对发现文件与类资源 |
+
+三者的共同边界：Jade 插件是 **common 代码**（两侧都加载，不能引用 `net.minecraft.client.*`），JEI 插件是**客户端代码**（JEI 本身仅客户端），KubeJS 插件**永不进运行时**。
+
 ## 非目标、遗留未注册内容与公共验收
 
 | 内容 | 基准事实与本轮决定 | 实现状态 |

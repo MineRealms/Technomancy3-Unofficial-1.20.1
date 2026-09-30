@@ -31,7 +31,7 @@ Society Sunlit Valley（1.20.1 Forge）已加载与本工程相关的：
 | Botania | `1.20.1-454` | 保留为 S3 选装 |
 | AE2 系 | `appliedenergistics2 15.4.10` + ExtendedAE/mae2/ae2wtlib | 与 Thaumic Energistics 配合 |
 | GregTech | `gtceu 7.5.3` + GTMFO/gtmutils/gtmthings/gtnn/gtse/gtca/gregmek/applied_greg/gregfluxology | FE/EU 能源与内容 |
-| Jade | `11.13.2` + JadeAddons | 现代 HUD 替代 Waila |
+| Jade | `11.13.2` + JadeAddons | 现代 HUD 替代 Waila；本工程锁定 `11.13.3+forge`（同一 1.20.1-Forge 线的更高构建），第 7 节的插件只用两侧都存在的稳定 API |
 | Blood Magic 系 | `forbidden-magic`/`tainted-magic` | **用户已排除，不做** |
 
 ## 3. TC4R 20711 vs 20721 的 API 差异
@@ -68,7 +68,7 @@ Society Sunlit Valley（1.20.1 Forge）已加载与本工程相关的：
 | Botania | S3 选装模块（5 项 + Lexicon） |
 | BloodMagic | **排除，不做** |
 | Thaumic Energistics | **自动兼容**（实现 TC4R 接口即可），不写注册代码；补文档与验证 |
-| Waila | 用 Jade；TC4R 有 `api/integration/JadeRegistration`，可后补 |
+| Waila | 用 Jade，**已实现**（见第 7 节） |
 
 ## 6. S4 三台机器触及的 TC4R 边界（实施记录）
 
@@ -81,3 +81,23 @@ S4 的注魔稳定灯、电动风箱、生态转换器各自撞到一个 TC4R 20
 | 生态转换器 | 把一列群系写成魔法森林/阴森/污染之地 | `api/taint/TaintBiomeApi` 只支持污染；但 `block/TaintSpreadLogic.setSpecialBiomeColumn(ServerLevel, BlockPos, ResourceKey<Biome>)` 是 public static，`worldgen/TCBiomes` 给出四个 biome key | 直接用公开静态方法，**无需 Mixin**。注意它不在 `api.*` 包内，属于版本锁定面：升级 TC4R 时要复核签名 |
 
 结论：S4 只引入**一处集中式反射桥**（`compat/thaumcraft/ThaumcraftInternals`），没有新增 Mixin；`TaintSpreadLogic` 与 `FurnaceAccessor` 都是 TC4R 自己的公开入口，登记为版本升级复核点。
+
+## 7. 现代化联动：Jade / JEI / KubeJS（实施记录）
+
+原版 1.7 的 `lib/compat` 里只有 `waila/*` 是 HUD 类联动，JEI 与 KubeJS 当时不存在。三者的取舍原则一致：**只做别人做不了的那部分**，能由数据包或已有 API 表达的一律不写代码。
+
+| 联动 | 依赖方式 | 做了什么 | 为什么只做这些 |
+|---|---|---|---|
+| Jade | `compileOnly` 常驻 + 开发运行时可关（`-PwithJade=false`）；插件类在 common 侧，靠 `@WailaPlugin` 注解扫描 | `TechnomJadePlugin` 把 15 个方块实体登记到 `TechnomJadeProvider`；数值在服务端 `appendServerData` 采集（能量/源质/进度/灵气/燃料/仪式/存在），客户端 `appendTooltip` 只读回传的 NBT | Jade 两侧都会加载插件，所以插件类不能碰任何客户端类；用 Jade 自己的 server→client 通道，客户端看到的是服务端真值，而不是自己那份可能过期的副本 |
+| JEI | 沿用原有 `compileOnly` + `runtimeOnly`（不加开关） | 新增类别 `technom:essentia_fuel`：把数据驱动的源质燃料表逐要素画成一页（要素图标、燃料值、每单位 Q、地形条件、随机加成），并把源质发电机登记为催化剂 | 本模组所有合成/熔炼/无序配方都是普通数据包配方，JEI 本来就免费展示，重复注册只会多一处需要同步的地方；JEI 唯一推导不出来的是**燃料值表**——它在数据包里，且没有任何物品承载它 |
+| KubeJS | **仅 `compileOnly`**，永不进开发运行时 | jar 根目录的 `kubejs.plugins.txt` + `TechnomKubeJSPlugin` 只覆写 `registerBindings`，绑定 `Technom` 全局（`TechnomJS`） | 配方系统无可加（同上），本模组也没有自己的可监听事件。脚本真正拿不到的是燃料表数值、Q/EU 汇率与燃料倍率，`TechnomJS` 只暴露这些 |
+
+要点与坑：
+
+- **Jade 的注册面**：`registerBlockComponent(..., Block.class)` 一次覆盖全部方块，provider 对非本模组的方块实体立刻返回，代价是每次瞄准一个方块一次 `instanceof` 加一次空 NBT 判断。Jade 11 没有 `IComponentProvider`，只有 `IBlockComponentProvider` / `IEntityComponentProvider`。
+- **Jade 的 15 个方块实体不含 Botania 三台机器**：它们有隐藏的魔力数值，但登记它们意味着 `TechnomJadePlugin` 的静态初始化要引用 Botania 方块实体类，在装了 Jade 而没装 Botania 的整合包里会 `NoClassDefFoundError`。要覆盖必须另开一个只在 `BotaniaPresence.isLoaded()` 时才加载的类，本轮不做。
+- **JEI 的页面没有槽位**，这是刻意的：要素不是物品（TC4R 里它是流体、罐内内容或物品的要素标签），JEI 塞不进槽也搜不到，所以整页由 `draw()` 手绘。`getBackground()` 保持默认 `null`——JEI 15 自带外框并且对返回值判空（`RecipeLayout.drawRecipe` 的 `ifnull`），尺寸改由 `getWidth()/getHeight()` 回答，返回 drawable 反而是已废弃路径且会让外框有两个尺寸来源。
+- **JEI 时序**：`registerRecipes` 每次配方重载都会被调用，而数据包也在同一次重载里读取，所以 `/reload` 改燃料表后 JEI 里立刻可见；表为空（首次加载前，或数据包删光了所有行）时**不注册任何页面**，否则兜底页会宣称所有要素都值 0，比没有这个类别更糟。
+- **KubeJS 的发现方式不是注解**：是 jar 根目录的 `kubejs.plugins.txt`，每行 `FQCN [side]`（KubeJS 自己的插件也这么列，`client` 表示仅客户端，其余 token 是必需的模组 id）。类名写错完全静默——KubeJS 只是永远不加载它。`TechnomJS` 对未知要素抛异常而不是回落到 `fallback`，否则脚本把 `ignis` 拼成 `ignus` 会读到 25 却不知道错在哪。
+- **KubeJS 的编译期限制**：`transitive = false` 意味着 rhino 不在编译类路径上，所以只覆写 `registerBindings`；若要覆写 `registerTypeWrappers` 需另加 `dev.latvian.mods:rhino-forge` 为 `compileOnly`。
+

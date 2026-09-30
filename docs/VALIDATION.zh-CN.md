@@ -878,3 +878,81 @@ GameTest 由 91 增至 95：新增批次 `technom_s4_deep_tc` 三项（全工程
 - 未跑：专用服务器长期运行、多人联机、跨维度与死亡重生、无 Botania 客户端（`-PwithBotania=false runClient`）、JEI/Jade 集成（至今没有代码）。服务端 `/reload` 已由新增 GameTest 覆盖，但真实专用服务器上的重载流程仍未人工验证。
 - 校验器 16 条 warning 未处理：13 条是“category 未在本文件声明”（分类确实声明在 `technomancy.json`，校验器逐文件检查看不到），2 条是未知目录 schema，属既有噪声。
 - 校验器读取的 `run-gametest/technom-data-inventory.json` 由最后一次 GameTest 运行写入；因此**必须在“有 Botania”的那次运行之后立刻跑校验器**，否则会把 Botania 物品误报为缺失（本轮第一次跑就踩到了这个顺序问题）。
+## 现代化联动、客户端渲染器移植与资产审计（2026-09-30）
+
+### 本轮范围
+
+- **现代化联动**：补齐 Jade / JEI / KubeJS 三处（此前一行代码都没有）。原则是只补"别人推导不出来的信息"，配方这类数据包能表达的一律不写代码。详见 [COMPAT 第 7 节](COMPAT.zh-CN.md)。
+- **客户端渲染器移植**：上游用代码画的三台机器搬到新的 `TechneModel` 构建器上——注魔稳定灯（`TileFluxLampRenderer` + `ModelFluxLamp`，13 个盒体）、节点制造器、存在之泉（只画液面，机身仍是 JSON 模型）。
+- **资产审计**：`tools/check_unwrap.py` 全量核对 Techne 版式模型的 UV 展开，找出并修掉生成器留下的系统性错位。
+
+### JEI 版本结论被推翻（取代 2026-09-28 一节）
+
+2026-09-28 那一节把 JEI 从 `15.56.0.205` 降到 `15.20.0.115`，理由是"本工程没有任何 JEI 代码，JEI 纯粹是开发客户端用来显示配方的运行时依赖，因此可以自由选版本"。本轮本工程有了自己的 JEI 插件，这个前提不再成立，而两个消费者对 JEI 的要求完全不重叠：
+
+| 消费者 | 需要 | 证据 |
+|---|---|---|
+| TC4R `0.1.0-20721` | `>= 15.56.0.202`（`ISubtypeInterpreter`、`ITextWidget.setPosition`） | `tools/jei_link_check.py` 对 15.20.0.115 报 9 处失效调用，对 15.56.0.205 / 15.62.0.216 报 0 |
+| GTCEu 7.5.3 | `<= 15.35.0.175` | `jei.FluidHelperMixin` 注入 `FluidHelper.getTooltip(ITooltipBuilder, ...)`，而 JEI 在 15.40.0.176 把这个签名改回了 `List<Component>` |
+
+`require = 0` 救不了 GTCEu 那边：它只覆盖"选择器没匹配到目标"，而按名选择器仍会找到存活的 `getTooltip` 重载，随后 `CallbackInjector` 因处理函数描述符不匹配直接抛错——这是致命的。
+
+**决定**：JEI 固定回 `15.56.0.205`（TC4R 那一侧，因为 TC4R 是必需依赖、GTCEu 是可选），并由本工程自己的 `mixin/GtceuJeiFluidHelperMixin.java` 把 GTCEu 要找的那个重载补成一个空壳，注册在 `technom.mixins.json` 的 priority 900（先于 GTCEu 的默认 1000）。没有任何代码调用它——JEI 15.56 里根本没有 `ITooltipBuilder` 重载——唯一效果是让 GTCEu 的选择器找到目标、客户端能启动。
+
+两个后果值得记住：
+
+- 崩溃只在客户端。`mezz.jei.forge.platform.FluidHelper` 在专用服务器上从不加载，所以 `runServer` / `runGameTestServer -PwithGtceu=true` 从来不会踩到。
+- 整合包里若已有等价 shim（Sunlit Valley 带 `pollution-*.jar`，其 `FluidHelperCompatMixin` 在同一优先级做同一件事），只是先到先得；落败方会被报成 "Method overwrite conflict ... Skipping method" 警告，结果完全相同，因为两边方法体都是空的。
+
+### 三处联动
+
+| 联动 | 依赖方式 | 做了什么 | 探针证据 |
+|---|---|---|---|
+| Jade | `compileOnly` 常驻，`runtimeOnly` 由 `-PwithJade` 控制（默认开） | 15 个方块实体登记到 `TechnomJadeProvider`，数值在服务端 `appendServerData` 采集、客户端 `appendTooltip` 只读回传的 NBT | uid `technom:machine_data`；13/13 lang key；15 个方块实体 |
+| JEI | 沿用 `compileOnly` + `runtimeOnly`，不加开关 | 唯一类别 `technom:essentia_fuel`，逐要素一页 + 一条兜底页，无槽位手绘 | 类别 `technom:essentia_fuel`；44 要素 + 兜底 25 → 45 页；44/44 页与燃料表逐行一致 |
+| KubeJS | **仅 `compileOnly`**，默认不进运行时；`-PwithKubejs=true` 才装（连同 Rhino 与 Architectury） | jar 根目录 `kubejs.plugins.txt` + 只覆写 `registerBindings` 的插件，绑定 `Technom` 只读全局 | 发现文件内容正确；6 个插件加载、本工程在列；`Technom.maxFuelValue(ignis)=800`、`maxEnergyPerUnit=16000` |
+
+`TechnomJadePlugin` 的静态初始化**刻意不含** Botania 三台机器：登记它们会让 common 侧的插件类引用 Botania 方块实体类，在"有 Jade 无 Botania"的整合包里 `NoClassDefFoundError`。
+
+### 修复的客户端缺陷（用户实机报告）
+
+| 现象 | 根因 | 修复 |
+|---|---|---|
+| 稳定灯与节点制造器**手持/物品栏透明** | 两个 item 模型的 parent 不是 `builtin/entity`。`ItemRenderer` 是按**烘焙后**的模型分支的（`!model.isCustomRenderer()` 走普通路径，否则才调 `getCustomRenderer().renderByItem`），而只有 `builtin/entity` 会烘成 `BuiltInModel`。两个物品因此烘出空模型，渲染器压根没被调用。`IClientItemExtensions` 一直是注册好的——旧断言只查它非空，所以看不见这个缺陷 | 两个 item 模型改成 `builtin/entity` + 显式 `display`（照 vanilla `item/chest.json`） |
+| 稳定灯**放置在世界里是黑的** | `FluxLampRenderer.draw` 无条件套用了上游的 `glColor3f(amount, 0, amount)`。上游那句在 `if (tank.getFluidAmount() > 0)` **里面**，空罐时 `amount == 0`，顶点色变成 `(0,0,0,1)`。core 走 cutout，而它 2/3 的像素是 alpha 0 会被丢掉，剩下那 1/3 就是一块纯黑 | 只在 `amount > 0` 时染色，否则纯白 |
+
+`probes/client/14_flux_lamp_and_coil.java` 把两条都钉死了：它断言两个物品的**烘焙模型**是 `BuiltInModel` 且 `customRenderer=true`，并用顶点捕获读回核心的实际顶点色——空罐必须是 `0xffffffff`、满罐必须是 `0xff00ffff`。
+
+同一探针还数值钉死了稳定灯四个水平喷嘴的世界朝向。上游的 `switch` 看起来是错的（模型的 `FrontPost` 在 `z = -7`，读起来像北面），但整个模型是在 `scale(-1, -1, 1)` 之后绘制的，这一步会翻转旋转的输出，变换链实际把 `FrontPost` 送到西面、`BackPost` 送到东面——与上游的 `switch` 完全一致。**上游是对的，不要"修正"它**，探针会挡住。
+
+### Techne UV 展开审计
+
+上游的 `Model*.java` 是 Techne 导出，本工程把它们转成了 JSON 方块模型。转换脚本在写 `up`/`down` 与 `east`/`west` 时搞错了顺序，是一个**系统性**缺陷而非个例。
+
+`tools/check_unwrap.py` 用 vanilla 的展开规则核对每个元素：从六个面反推 `u`、`v`（取最小坐标，对交换稳健），遍历所有可能的贴图尺寸，取能让六面全部自洽的那一个，然后点名生成器实际做的那两种交换。`--fix` 只修"唯一故障就是交换"的元素。
+
+工具自己也有两个 bug，本轮一并修掉：
+
+- `repair()` 原来无条件同时交换 up/down **和** east/west。`coil.json` 本来**只有** up/down 是错的，结果修好了 up/down 却把 east/west 弄坏了——把一种错换成了另一种。现在只交换 `analyse` 实际检测到的那一对。
+- 对"逐面手写 uv"的模型（`essentia_dynamo`、`flower_dynamo`、`mana_fabricator`、各 `*_inv`、`fountain` 占位模型）全是误报——它们本来就不遵循 Techne 版式。现在只有半数以上可判定元素已符合规则的文件才判定。
+
+结果：扫描 196 个元素，修掉 `coil.json` 的 11 个（up/down 交换）与 `node_dynamo.json` 的 `panel3`/`panel4`（版式按 1 宽 4 深写、盒子却是 4 宽 1 深，六个面全错，按 64×32 的贴图重算）。
+
+### 本轮实际执行
+
+| 命令 | 结果 |
+|---|---|
+| `gradlew.bat build` | BUILD SUCCESSFUL；**JUnit 241 通过 / 0 失败**（29 个测试类） |
+| Rosetta 客户端探针（`-PwithGtceu=true -PwithKubejs=true`，`probes/client`） | **10/10 通过** |
+
+首轮 8/10，两个失败都不是回归：
+
+- `11_renderers_verify` 报"客户端只看到 0/44 方块"——刚启动的世界同步竞态（"桥就绪 ≠ 世界就绪"）。`--attach` 重跑即 44/44。
+- `14_flux_lamp_and_coil` 是探针自身的颜色常量写反：顶点色打包是 `(r << 24) | (g << 16) | (b << 8) | a`，洋红是 `0xff00ffff`，探针写成了 `0xffff00ff`（那是黄色）。
+
+### 本轮未验证
+
+- **没有重新跑 GameTest**：本轮只跑了 `build`（JUnit）与客户端探针。上一次全绿是 2026-09-29 的 95/95；本轮改动不触及服务端 tick 逻辑，但默认 / `-PwithGtceu=true` / `-PwithBotania=false` / `-PwithJade=false` 四种运行时都还没有在本轮跑过。
+- **没有任何人工实机点击**：稳定灯空/满罐的颜色与两个物品的图标只由顶点捕获与烘焙模型断言证明；"看上去对不对"仍需人眼。Jade 提示行与 JEI 燃料页的排版同样只有数值证据。
+- `check_unwrap.py` 修好的 `coil.json`（east/west）与 `node_dynamo.json`（panel3/4）只过了规则校验，**没有在游戏里目视确认**。
+- KubeJS 那一半只有发现文件与类资源的证据；`-PwithKubejs=true` 的完整运行时只验证了插件被加载（探针 40），没有写任何真实脚本去调用 `Technom` 全局。

@@ -1,6 +1,6 @@
 # Technomancy Unofficial — Forge 1.20.1
 
-基于官方 Forge MDK 初始化的现代移植工程。**S0–S4 已落地**：S1 精华闭环、S2 机器/线圈/节点/法杖/工具、S3 仪式 16/16 与 Existence 全套（含合成配方与 Existence 宝石）、S4 注魔稳定灯/电动风箱/生态转换器与节点创建。S4 三台机器有配方、研究与测试，但**尚未人工实机验收**；**S5** 已开始，服务端 GameTest 已覆盖 `/reload`，专用服务器长期运行、多人、跨维度、守恒总账、无 Botania 客户端与 JEI/Jade 集成仍未完成。逐项证据见[功能矩阵](docs/FEATURE_MATRIX.zh-CN.md)与[验证记录](docs/VALIDATION.zh-CN.md)。
+基于官方 Forge MDK 初始化的现代移植工程。**S0–S4 已落地**：S1 精华闭环、S2 机器/线圈/节点/法杖/工具、S3 仪式 16/16 与 Existence 全套（含合成配方与 Existence 宝石）、S4 注魔稳定灯/电动风箱/生态转换器与节点创建。S4 三台机器有配方、研究与测试，但**尚未人工实机验收**；**S5** 已开始，服务端 GameTest 已覆盖 `/reload`，Jade/JEI/KubeJS 联动已实现（见[兼容分析](docs/COMPAT.zh-CN.md)第 7 节），专用服务器长期运行、多人、跨维度、守恒总账与无 Botania 客户端仍未完成。逐项证据见[功能矩阵](docs/FEATURE_MATRIX.zh-CN.md)与[验证记录](docs/VALIDATION.zh-CN.md)。
 
 目标是恢复 Technomancy 的 TC4 玩法，使用 TC4R 20721，移除 Thermal Expansion 和 CoFH RF 依赖，提供 Forge Energy 与 GTCEu EU 兼容。Botania 和 Blood Magic 作为后续可选模块。
 
@@ -30,7 +30,7 @@ Set-Location 'H:\MinecraftMods\Technomancy-1.20.1'
 .\gradlew.bat runData
 ```
 
-`runGameTestServer` 现有 95 个必跑 GameTest（批次见 `src/main/java/theflogat/technomancy/gametest/`），在默认、`-PwithGtceu=true`、`-PwithBotania=false` 三种开发运行时均 95/95 通过；它们覆盖注册、守恒、方向、服务端 `/reload` 与安全边界，仍不等于人工实机验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
+`runGameTestServer` 现有 95 个必跑 GameTest（批次见 `src/main/java/theflogat/technomancy/gametest/`），在默认、`-PwithGtceu=true`、`-PwithBotania=false`、`-PwithJade=false` 四种开发运行时均 95/95 通过；它们覆盖注册、守恒、方向、服务端 `/reload` 与安全边界，仍不等于人工实机验收。`runData` 目前仍没有内容提供器。首次手动启动服务端时按 Minecraft 的提示处理开发目录中的 EULA。
 
 ## 客户端实机探针
 
@@ -53,7 +53,9 @@ python .\tools\client_probe.py probes\client --attach                        # P
 - `tools/client_probe.py <探针> [--attach]`：每个探针是一段 Java 方法体，经桥在客户端线程执行并自带 PASS/FAIL；`--attach` 只跑探针，不开、不关客户端。
 - 该流程首次运行即抓到 `technom:node_dynamo` 的模型引用了不存在的 `technom:models/nodedynamo`（粒子图标为 missingno），已改为 `technom:block/nodedynamo`。
 - S3/Botania 资产重跑又抓到三个同类问题：`fake_air_light` 的 JSON 带 BOM、`existence_fountain` 引用了不会进方块图集的 `entity/` 贴图、`mana_fabricator` 用了非法的 `±15/±30` 旋转角，均已修复（见 [VALIDATION](docs/VALIDATION.zh-CN.md)）。
-- JEI 固定在 `15.20.0.115`：GTCEu 7.5.3 的 JEI Mixin 对更新的 JEI（`ITooltipBuilder`）不兼容。本工程没有自己的 JEI 插件，JEI 只是开发客户端显示配方用，含 GT 的客户端现已能启动，探针 2/2。
+- JEI 现在固定在 **`15.56.0.205`**（TC4R 那一侧），不再降到 `15.20.0.115`。TC4R 的 JEI 插件按 15.56+ 的 API 写（`ISubtypeInterpreter`、`ITextWidget.setPosition`），降版会让 Thaumcraft 丢掉物品子类型与整个 `thaumcraft:aspect_sources` 类别；GTCEu 7.5.3 的 `jei.FluidHelperMixin` 则要 `<= 15.35.0.175`。两者无交集，由 `GtceuJeiFluidHelperMixin` 把 GTCEu 要找的那个 `getTooltip` 重载补成空壳（priority 900，先于 GTCEu 的 1000），客户端因此能启动。`tools/jei_api_matrix.py` / `jei_link_check.py` 是这条结论的度量工具。
+- 探针目录 `probes/client/` 现在有 **10 个探针**：`40_compat_plugins` 核对 Jade/JEI/KubeJS 三处联动（Jade provider uid 与登记数量、JEI 类别页数与燃料表逐行一致、`kubejs.plugins.txt` 与插件类资源），`14_flux_lamp_and_coil` 用顶点捕获证明稳定灯空罐是白、满罐是洋红，并把模型变换链的四个喷嘴面钉死。KubeJS 不进开发运行时，所以它那一半只查发现文件与类资源，不加载任何 KubeJS 类。
+- `-PwithJade=false` 是 Jade 的缺席路径：`@WailaPlugin` 注解扫描不会加载插件类，因此整个 `compat/jade` 包在无 Jade 时不被解析。
 
 ## 工程文档
 

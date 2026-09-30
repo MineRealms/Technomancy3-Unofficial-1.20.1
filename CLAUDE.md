@@ -23,14 +23,14 @@
   - **生态转换器** `technom:biome_morpher`：公开 `TaintSpreadLogic.setSpecialBiomeColumn`，无需 Mixin；右键切换魔法森林/阴森/污染之地。
   - **融合焦点恢复“吸收节点→右键空地再造节点”**（潜行右键吸收、空地右键立起，节点只存在于世界或焦点之一，不会复制或丢失）。
   - 三台机器都有配方、研究（`FLUXLAMP`/`ELECTRICBELLOWS`/`BIOMEMORPHER`）与模型，均**未实机验证**。
-- **S5**：部分完成（GameTest 已验证服务端 `/reload` 数据包重载；专用服务器长期运行/客户端/多人/跨维度/死亡重生/守恒总验收仍未做）。
+- **S5**：部分完成。GameTest 已验证服务端 `/reload` 数据包重载；**Jade/JEI/KubeJS 三处联动已实现**（见 [COMPAT 第 7 节](docs/COMPAT.zh-CN.md)）：Jade 覆盖 15 个方块实体、JEI 一个源质燃料值类别、KubeJS 只绑定 `Technom` 只读全局且默认不进运行时。专用服务器长期运行/多人/跨维度/死亡重生/守恒总验收仍未做。
 
 ## 最近一次全量验证（2026-09-29）
 
 - `build`：**JUnit 238 通过 / 0 失败**（28 个测试类）。
 - `runGameTestServer` ×3（默认 / `-PwithGtceu=true` / `-PwithBotania=false`）：**各 95/95 通过**（批次 `technom_s4_deep_tc` 是本轮新增；另加服务端 `/reload` 燃料表替换测试）。
 - `python tools/validate_technom_data.py`：**OK: no errors**（16 warning / 1 skip；本轮修复前是 45 errors）。
-- Rosetta 客户端探针（带 GTCEu）：**5/5 通过**（`probes/client/`）。其中 `10_`/`11_` 这一对是真正的渲染器检查：10 在**集成服务端**放置全部 44 个方块（旧版用 `mc.level.setBlock`，`ClientLevel` 根本不接受写入，所以此前从未通过），11 等 3 秒后确认客户端看到 44/44 方块、36 个方块实体、3 个已注册渲染器。两者通过 JVM 系统属性传递原点，因为测试世界是虚空、玩家会掉落，位置不能各自重算。
+- Rosetta 客户端探针（带 GTCEu + KubeJS）：**10/10 通过**（`probes/client/`）。其中 `10_`/`11_` 这一对是真正的渲染器检查：10 在**集成服务端**放置全部 44 个方块（旧版用 `mc.level.setBlock`，`ClientLevel` 根本不接受写入，所以此前从未通过），11 等 3 秒后确认客户端看到 44/44 方块、36 个方块实体、3 个已注册渲染器。两者通过 JVM 系统属性传递原点，因为测试世界是虚空、玩家会掉落，位置不能各自重算。`12_`/`14_` 从烘焙模型与顶点捕获取证（不依赖人眼），`40_`/`41_` 覆盖三处联动与 TC4R 的要素来源页。首轮 8/10 的两个失败都不是回归：`11_` 是世界同步竞态（`--attach` 重跑 44/44），`14_` 是探针自身的颜色常量写反。
 - 本轮修复的 10 个缺陷（含 21 个此前就已存在的“要工具却无 mineable 标签”方块）逐条记录在 [VALIDATION](docs/VALIDATION.zh-CN.md) 的 2026-09-29 一节。
 
 ## 先读这些文件（按顺序）
@@ -45,8 +45,8 @@
 
 ## 下一步（按优先级）
 
-1. **S5 总验收（现在是唯一剩下的阶段）**：专用服务器长期运行、多人联机、跨维度/死亡重生、持久化往返、守恒总账、研究/配方可达性全链、无 Botania 客户端（`-PwithBotania=false runClient` 未跑）、JEI/Jade 集成（目前没有任何代码）；服务端 `/reload` 已由 GameTest 验证。
-2. **人眼验收**：S4 三台机器的实机行为（尤其稳定灯对真实祭坛、风箱对真实炼金炉）、客户端几何/朝向、魔力流体与桶。节点创建闪电与仪式光效已实现（数值/颜色有 JUnit 与 Rosetta 探针覆盖），但仍未被人眼确认过观感。
+1. **S5 总验收（现在是唯一剩下的阶段）**：专用服务器长期运行、多人联机、跨维度/死亡重生、持久化往返、守恒总账、研究/配方可达性全链、无 Botania 客户端（`-PwithBotania=false runClient` 未跑）；服务端 `/reload` 已由 GameTest 验证。Jade/JEI/KubeJS 联动已实现并有探针覆盖，但**仍未被人在游戏里看过排版**。
+2. **人眼验收**：S4 三台机器的实机行为（尤其稳定灯对真实祭坛、风箱对真实炼金炉）、客户端几何/朝向、魔力流体与桶、Jade 提示行与 JEI 燃料页的排版。节点创建闪电与仪式光效已实现（数值/颜色有 JUnit 与 Rosetta 探针覆盖），但仍未被人眼确认过观感。
 3. 全部完成后：`build` + `runGameTestServer`（有/无 GTCEu/无 Botania）+ Rosetta 客户端探针，并更新 FEATURE_MATRIX 与 VALIDATION。
 4. 工程卫生：`main` 领先 `origin/main` 的提交需要推送；`s1x/assets`、`s2/coils`、`s2/machines`、`s2/nodes-wands` 四个分支已全部合并（0 ahead），但挂在另一个 worktree 上，不要删。
 
@@ -66,9 +66,15 @@
 .\gradlew.bat build --console=plain --no-daemon            # JUnit
 .\gradlew.bat runGameTestServer --console=plain --no-daemon            # 无 GT
 .\gradlew.bat runGameTestServer -PwithGtceu=true --console=plain --no-daemon
-.\gradlew.bat runGameTestServer -PwithBotania=false --console=plain --no-daemon  # 缺席安全
+.\gradlew.bat runGameTestServer -PwithBotania=false --console=plain --no-daemon  # Botania 缺席安全
+.\gradlew.bat runGameTestServer -PwithJade=false --console=plain --no-daemon     # Jade 缺席安全
+.\gradlew.bat runGameTestServer -PwithKubejs=true --console=plain --no-daemon    # KubeJS 完整运行时
 python tools\validate_technom_data.py                      # OK: no errors
 ```
+
+**验证顺序有要求**：`validate_technom_data.py` 读的是**上一次** `runGameTestServer` 写出的 `run-gametest/technom-data-inventory.json`。必须紧跟在**带 Botania**的那次运行之后跑，否则 Botania 配方里的 `botania:*` 物品会被报成"不在物品注册表里"（11 条假错误）。带 Botania 的默认运行放在最后即可。
+
+`-PwithKubejs=true` 会把 KubeJS 连同它声明为必需的 Rhino 与 Architectury 一起装进开发运行时（三者都是 mod，必须各自成 jar）。默认关闭：脚本引擎会改变启动与每次资源重载，普通测试不需要为它付出这个代价。它存在的意义是让 `probes/client/40_compat_plugins.java` 能真的验证插件被加载，而不只是验证发现文件写对了。
 
 需要 JDK 17（`JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot`）。客户端实机探针见 README，**非阻塞**启动用 `Start-Process`。
 
