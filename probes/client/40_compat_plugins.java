@@ -134,6 +134,61 @@ for (String key : jeiKeys) {
     }
 }
 
+// The usage pages. JEI puts these in its own built-in Information category, so "did the plugin
+// run" is not the question - the question is whether JEI can find a page by item, which is what
+// the player does with the U key. A page whose translation key is missing renders as the key
+// itself, in a GUI no other test opens.
+boolean botaniaLoaded = net.minecraftforge.fml.ModList.get().isLoaded("botania");
+java.util.Set<String> withUsagePage = new java.util.HashSet<String>();
+java.util.List<String> rawInfoKeys = new java.util.ArrayList<String>();
+if (jeiRuntime.isPresent()) {
+    java.util.Iterator<mezz.jei.api.recipe.vanilla.IJeiIngredientInfoRecipe> infoPages =
+            jeiRuntime.get().getRecipeManager()
+                    .createRecipeLookup(mezz.jei.api.constants.RecipeTypes.INFORMATION).get()
+                    .iterator();
+    while (infoPages.hasNext()) {
+        mezz.jei.api.recipe.vanilla.IJeiIngredientInfoRecipe infoPage = infoPages.next();
+        for (mezz.jei.api.ingredients.ITypedIngredient<?> ingredient : infoPage.getIngredients()) {
+            Object value = ingredient.getIngredient();
+            if (value instanceof net.minecraft.world.item.ItemStack stack && !stack.isEmpty()) {
+                withUsagePage.add(net.minecraft.core.registries.BuiltInRegistries.ITEM
+                        .getKey(stack.getItem()).toString());
+            }
+        }
+        for (net.minecraft.network.chat.FormattedText line : infoPage.getDescription()) {
+            String rendered = line.getString();
+            if (rendered.startsWith(theflogat.technomancy.compat.jei.JeiUsagePages.PREFIX)) {
+                rawInfoKeys.add(rendered);
+            }
+        }
+    }
+}
+out.append("jei info recipes cover ").append(withUsagePage.size()).append(" item(s)\n");
+int pagesChecked = 0;
+int pagesMissing = 0;
+for (theflogat.technomancy.compat.jei.JeiUsagePages.Page usage :
+        theflogat.technomancy.compat.jei.JeiUsagePages.PAGES) {
+    if (usage.botania() && !botaniaLoaded) {
+        continue;
+    }
+    String usageId = net.minecraft.core.registries.BuiltInRegistries.ITEM
+            .getKey(usage.item().get().asItem()).toString();
+    if (!withUsagePage.contains(usageId)) {
+        bad.add("JEI has no usage page for " + usageId + " (key "
+                + theflogat.technomancy.compat.jei.JeiUsagePages.PREFIX + usage.path() + ")");
+        pagesMissing++;
+    }
+    pagesChecked++;
+}
+out.append("usage pages JEI can find = ").append(pagesChecked - pagesMissing).append("/")
+        .append(pagesChecked).append("\n");
+if (pagesChecked < 30) {
+    bad.add("only " + pagesChecked + " usage pages were declared, so this proves little");
+}
+if (!rawInfoKeys.isEmpty()) {
+    bad.add("these usage pages rendered their key instead of their text: " + rawInfoKeys);
+}
+
 // ---- KubeJS ----
 // KubeJS reads this file from the root of every mod jar, one plugin per line. A typo here is
 // completely silent: KubeJS simply never loads the plugin. The file and the class are checked in

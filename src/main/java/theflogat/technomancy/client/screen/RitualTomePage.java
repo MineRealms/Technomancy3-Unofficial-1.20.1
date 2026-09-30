@@ -15,8 +15,10 @@ import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.level.Level;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.ToIntFunction;
 
 /**
  * One half-page in the ritual tome. The tome treats a spread as two halves: a left half
@@ -90,20 +92,75 @@ public final class RitualTomePage {
         int maxLength = 100;
         int lineHeight = font.lineHeight + 1;
         int y = 0;
-        for (String line : lines) {
-            int x = 0;
-            String[] words = line.split(" ");
-            for (int wi = 0; wi < words.length; wi++) {
-                String word = words[wi];
-                int w = font.width(word);
-                if (x + w > maxLength && x > 0) {
-                    y += lineHeight;
-                    x = 0;
-                }
-                g.drawString(font, word, halfLeft + x, halfTop + y, 0x000000);
-                x += w + font.width(" ");
+        for (String paragraph : lines) {
+            for (String line : wrap(paragraph, maxLength, font::width)) {
+                g.drawString(font, line, halfLeft, halfTop + y, 0x000000);
+                y += lineHeight;
             }
-            y += lineHeight;
+        }
+    }
+
+    /**
+     * Greedy line wrap, in pixels.
+     *
+     * <p>The width of a run of characters is injected rather than read from a {@link Font} so the
+     * routine can be tested without a game. It has to work for two kinds of text: the English
+     * source, which has spaces to break at, and the Chinese translation, which does not. So it
+     * breaks at the last space on the line when there is one and falls back to breaking between
+     * characters when there is not. The old version split on {@code " "} and could not wrap an
+     * unspaced line at all, which would have run Chinese text straight off the page.</p>
+     *
+     * <p>A character wider than {@code maxLength} on its own is still emitted, on a line of its
+     * own, rather than looping forever.</p>
+     *
+     * <p>When the break falls on a space the space is dropped rather than carried onto the next
+     * line. That also covers the case of a space landing exactly on the break, which would
+     * otherwise be emitted as a line of its own - a blank line in the middle of a paragraph reads
+     * as a mistake, and a half page only has about twenty lines to spend.</p>
+     */
+    static List<String> wrap(String paragraph, int maxLength, ToIntFunction<String> width) {
+        List<String> out = new ArrayList<>();
+        StringBuilder line = new StringBuilder();
+        int lineWidth = 0;
+        int lastSpace = -1;
+        for (int i = 0; i < paragraph.length(); i++) {
+            String ch = String.valueOf(paragraph.charAt(i));
+            int chWidth = width.applyAsInt(ch);
+            if (lineWidth + chWidth > maxLength && line.length() > 0) {
+                if (lastSpace > 0) {
+                    // lastSpace is the index just past the space, so [lastSpace, end) is the
+                    // part of the word that has to move down, with the space already gone.
+                    emit(out, line.substring(0, lastSpace));
+                    String carry = line.substring(lastSpace);
+                    line.setLength(0);
+                    line.append(carry);
+                    lineWidth = width.applyAsInt(carry);
+                } else {
+                    emit(out, line.toString());
+                    line.setLength(0);
+                    lineWidth = 0;
+                }
+                lastSpace = -1;
+            }
+            line.append(ch);
+            lineWidth += chWidth;
+            if (" ".equals(ch)) {
+                lastSpace = line.length();
+            }
+        }
+        emit(out, line.toString());
+        if (out.isEmpty()) {
+            // An empty paragraph is still a line; the book has to advance the cursor.
+            out.add("");
+        }
+        return out;
+    }
+
+    /** Adds a wrapped line unless it came out blank; see the space-on-the-break note above. */
+    private static void emit(List<String> out, String line) {
+        String trimmed = line.stripTrailing();
+        if (!trimmed.isEmpty()) {
+            out.add(trimmed);
         }
     }
 

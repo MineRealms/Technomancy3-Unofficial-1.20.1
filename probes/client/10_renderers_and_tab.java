@@ -28,18 +28,44 @@ net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension =
 StringBuilder out = new StringBuilder();
 java.util.List<String> bad = new java.util.ArrayList<String>();
 
-// The creative tab is a pure client thing and can be checked right here. A technom item
-// that no tab shows is one a player cannot reach without /give.
-java.util.Set<String> shown = new java.util.HashSet<>();
-for (net.minecraft.world.item.CreativeModeTab tab
-        : net.minecraft.core.registries.BuiltInRegistries.CREATIVE_MODE_TAB) {
-    for (net.minecraft.world.item.ItemStack stack : tab.getDisplayItems()) {
-        net.minecraft.resources.ResourceLocation key =
-                net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
-        if (key.getNamespace().equals("technom")) {
-            shown.add(key.getPath());
+// The creative tab is a pure client thing, but it cannot be read straight from here. A tab's
+// display items are only filled in by CreativeModeTabs.tryRebuildTabContents, which vanilla calls
+// from CreativeModeInventoryScreen and nowhere else, and an unbuilt tab returns an EMPTY
+// collection rather than throwing - so reading it from the connection thread silently reported
+// "no technom item is in any creative tab", which looks exactly like a regression. Rebuild first,
+// on the client thread, then read.
+//
+// hasPermissions is true so the rebuild is not skipped for a non-op; every technom item is
+// reachable without permissions anyway, so it cannot mask a missing one.
+java.util.Set<String> shown = new java.util.HashSet<String>();
+java.util.concurrent.atomic.AtomicReference<String> tabFailure =
+        new java.util.concurrent.atomic.AtomicReference<String>();
+java.util.concurrent.CountDownLatch tabsDone = new java.util.concurrent.CountDownLatch(1);
+mc.execute(() -> {
+    try {
+        net.minecraft.world.item.CreativeModeTabs.tryRebuildTabContents(
+                mc.level.enabledFeatures(), true, mc.level.registryAccess());
+        for (net.minecraft.world.item.CreativeModeTab tab
+                : net.minecraft.core.registries.BuiltInRegistries.CREATIVE_MODE_TAB) {
+            for (net.minecraft.world.item.ItemStack stack : tab.getDisplayItems()) {
+                net.minecraft.resources.ResourceLocation key =
+                        net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
+                if (key.getNamespace().equals("technom")) {
+                    shown.add(key.getPath());
+                }
+            }
         }
+    } catch (Throwable thrown) {
+        tabFailure.set(String.valueOf(thrown));
+    } finally {
+        tabsDone.countDown();
     }
+});
+if (!tabsDone.await(60, java.util.concurrent.TimeUnit.SECONDS)) {
+    return "FAIL: the client thread did not rebuild the creative tabs within 60s\n";
+}
+if (tabFailure.get() != null) {
+    return "FAIL: rebuilding the creative tabs threw " + tabFailure.get() + "\n";
 }
 
 // Every one of our blocks, in a stable order so both probes agree on the layout.
@@ -84,9 +110,25 @@ server.execute(() -> {
 });
 out.append("asked the integrated server to place ").append(ids.size())
    .append(" block(s); 11_renderers_verify.java checks them once they arrive\n");
-out.append("creative tabs hold ").append(shown.size()).append(" technom item(s)\n");
-if (shown.isEmpty()) {
-    bad.add("no technom item is in any creative tab");
+// The tab is filled from the item registry, so the property worth asserting is not "some item is
+// in a tab" but "no registered item is missing from every tab" - an item that is in none is one a
+// player can only get with /give.
+java.util.List<String> unreachable = new java.util.ArrayList<String>();
+int itemCount = 0;
+for (net.minecraft.resources.ResourceLocation id
+        : net.minecraft.core.registries.BuiltInRegistries.ITEM.keySet()) {
+    if (!id.getNamespace().equals("technom")) {
+        continue;
+    }
+    itemCount++;
+    if (!shown.contains(id.getPath())) {
+        unreachable.add(id.getPath());
+    }
+}
+out.append("creative tabs hold ").append(shown.size()).append(" technom item(s) of ")
+   .append(itemCount).append(" registered\n");
+if (unreachable.size() > 0) {
+    bad.add("no creative tab shows " + unreachable);
 }
 
 out.append(bad.isEmpty() ? "PASS\n" : "FAIL: " + bad + "\n");

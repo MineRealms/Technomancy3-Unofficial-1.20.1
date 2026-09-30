@@ -1411,3 +1411,105 @@ else if (activeTab != -1) { drawTabs(left, top, activeTab, x, y); }
 - **这一条没有任何自动守卫。** 探针 `13_client_surface` 只做到 `new RitualTomeScreen()` + `init(...)` + `removed()`，能抓 init 里的异常，抓不到"两段文字画在同一行"。要断言重叠得把屏幕渲染进帧缓冲再比像素，代价和脆弱度都不划算。所以这个 bug 是**人眼发现、也只能靠人眼确认修好**的。
 - 我**没有**亲眼看到修复后的书页；本轮只有编译、GameTest 与探针。
 - 条目行距端口用的是 `lineHeight + 1`（10），上游是固定 8 —— 上游的字高是 9，所以上游的条目行之间本来就差 1 像素地互相压着。这是上游自身的问题，端口没照抄，**未改**。
+
+## JEI 用途说明与双语手册（2026-10-01 第八轮）
+
+用户提两条需求：给 JEI 补「你觉得有必要的方块/机器的 U 用途说明」，以及汉化手册；追问后确认手册**两本都做**（仪式书 + Patchouli 图鉴）。
+
+本轮的重点不只是把文案写出来，而是补上**守卫**。「文本缺失」是本工程唯一一类既编译得过、又跑得过服务端测试、还能在游戏里明晃晃显示成 `technom.xxx` 的缺陷 —— 服务端不加载 lang，GameTest 不开 GUI，`javac` 只看得到类型。
+
+### 1. JEI 用途页（`technom.jei.info.*`）
+
+**为什么不自己开一个类别。** JEI 15.56 自带 Information 类别（`RecipeTypes.INFORMATION`，uid `jei:information`，元素类型 `IJeiIngredientInfoRecipe`），描述文字放进一个滚动框（`IRecipeExtrasBuilder.addScrollBoxWidget` + `setContents(getDescription())`），所以长文案不会被截断。插件只要 `registration.addIngredientInfo(ItemLike, Component...)` 一条一次调用，归类与排版都由 JEI 负责。
+
+**清单：38 条 key / 48 个物品。** 选的是「光看配方看不出来它在干什么」的东西 —— 机器、线圈、工具、水晶与仪式核心、存在之力全套、三件宝物、Botania 四台。三组共用一条 key，因为它们只差一个维度：五颗水晶（只差颜色）、五个仪式核心（只差元素）、三座存在之塔（只差 5 / 25 / 125 的通量）。
+
+**刻意不列**：`fake_air_light` 与 `node_fabricator_shell`（无物品的隐形脚手架）、`basalt`（普通装饰岩石）、以及纯合成材料（`technoturge_core` / `mana_coil` / `manasteel_gear`）—— 除了配方没有别的可说，而配方 JEI 本来就会展示。
+
+**`JeiUsagePages` 为什么单独成类、且不 import 任何 JEI 类型。** `compat/jei` 只在 `compileOnly` + `runtimeOnly` 上（`build.gradle:131-132`），**测试运行时没有**；`TechnomJeiPlugin` 实现了 `IModPlugin`，JUnit 一 `Class.forName` 就会 `NoClassDefFoundError`。把表放进一个只依赖 `ItemLike` 的类，守卫才能读到它。物品用 `Supplier` 而不是直接持有，因为注册表对象的值在注册跑完之前不存在；Botania 那四条只在 `BotaniaPresence.isLoaded()` 为真时才调用 supplier，否则 `BotaniaContent` 的字段还是 null，一调用就 NPE。
+
+**一处顺序问题（自查发现）**：`registerUsagePages` 起初写在燃料表「空表就早退」的**后面**，于是「数据包删光了燃料行」的包会把用途页一起带走。用途页与燃料表无关，已提到早退之前。
+
+### 2. 手册双语
+
+**仪式书：53 条 key**（8 个标签名 + 16 个章节名 + 29 个页体），全部走 `Component.translatable`，形如 `technom.tome.{tab,entry,page}.*`。`RitualTomeContent.build()` 每次开屏重建，所以换语言下次开书就生效。
+
+**中文换行。** 换行器原先只按空格断行 —— 英文够用，中文没有空格，整页会被排成**一行跑出书页**。`RitualTomePage.wrap` 改成「优先在最后一个空格处断，没有空格就逐字断」，并把「某个字符本身宽过整行」这个原先会**死循环**的情形一并处理。
+
+顺手修掉第二处：空格正好落在断点上时，旧逻辑会吐出一个**空行**。半页只有约 20 行，段中空行看起来像排版事故，所以断点上的空格直接丢弃。
+
+两处都有负控制：`RitualTomeWrapTest` 在改 `wrap` **之前**先跑了一遍，`aSpaceOnTheBreakDoesNotProduceAnEmptyLine` 报 `expected: <[abcd, efgh]> but was: <[abcd, , efgh]>`，确认它抓得到；改完 6/6 通过。
+
+**Patchouli 图鉴：不需要 `zh_cn` 目录。** 这一条是查过映射 jar 才敢下的结论，不是推测：
+
+- `BookContentsBuilder` 里有硬编码的 `en_us` 兜底（`DEFAULT_LANG` 字段 + 常量池里的 `"en_us"`），所以 `zh_cn` 目录缺失时，图鉴的**结构**回退到 `en_us`。
+- 条目的 `name` / `text` 本来就是翻译 key（`technom.lexicon.*`），走标准 `I18n`，与书目录用的是哪种语言无关。
+
+而 `technom.lexicon.*` 的中文早在第四轮就写好了（22 条，中英 key 集合一致）。所以「汉化图鉴」在数据层**早已完成**，本轮只是核实并记录，没有新增任何文件。
+
+**术语统一。** 语言文件里本来有一条界线：`要素` 指一个 aspect（元初要素 / 研究要素 / 复合要素 / 金·污染要素 / 仪式偏向的要素），`源质` 指 essentia 这种**物质**（方块名 `源质能源炉`/`源质储罐`/`源质融合器`/`源质能量线圈`，Jade 行 `源质：%s`）。新写的 JEI 文案混用了两者，已按这条界线统一 14 处。
+
+### 3. 新增守卫
+
+| 守卫 | 位置 | 抓什么 |
+|---|---|---|
+| `everyLanguageHasTheSameKeys` | JUnit `LangGuardTest` | 中英 key 集合必须完全一致 |
+| `everyJeiUsagePageHasText` | JUnit `LangGuardTest` | `JeiUsagePages` 每条 path 在两语都有非空文案 |
+| `everyRitualTomeKeyHasText` | JUnit `LangGuardTest` | 仪式书每个 tab / entry / page 在两语都有非空文案 |
+| `RitualTomeWrapTest`（6 条） | JUnit | 英文按空格断、中文逐字断、超宽字符不死循环、断点空格不产生空行、不丢字 |
+| 用途页段 | Rosetta 探针 `40_compat_plugins` | JEI 真的能按物品找到这一页，且描述不是原始 key |
+
+key 是**从源码里恢复**的，不是手抄的清单：`JeiUsagePages` 读注册表对象、JUnit 加载不了，所以正则匹配 `Page.of(item, "path")` / `Page.botania(...)`；仪式书同理匹配 `new Tab("…")` / `entry("…")` / `page("…")`。三处都有数量下限断言（≥30 / ≥50 / ≥200），防止正则某天失配后守卫变成**空洞的通过**。
+
+### 4. 探针这一轮抓到的两个问题（都是探针自己的，产品代码未动）
+
+**（a）`30_client_fx` 把客户端炸了。** 第一次跑，客户端在 `30_` 之后直接崩溃：
+
+```
+java.util.ConcurrentModificationException
+    at theflogat.technomancy.client.fx.TechnomClientFx.onRenderLevel(TechnomClientFx.java:142)
+```
+
+原因是**探针的线程亲和性错了**：Rosetta 桥在**连接线程**上执行探针体，而 `TechnomClientFx.BOLTS` 在生产里只由客户端线程碰（唯一调用方是 `TechnomFxPacket.handle` 里的 `ctx.enqueueWork`，它把工作排到主线程）。从连接线程写、渲染线程遍历 → CME → 客户端死亡 → 后面的 `40_` / `41_` 只能报 `TRANSPORT ERROR`，整轮变成 6/10。**改的是探针**：整段检查体交给 `mc.execute(...)` 再等 `CountDownLatch`，跑在客户端线程上。
+
+**（b）`10_` 的创造栏断言是误报。** 它报 `creative tabs hold 0 technom item(s)`，看着像功能回归。查映射 jar 得到两个事实：
+
+- `CreativeModeTab.getDisplayItems()` 只是 `return this.displayItems`，**不抛异常**；该字段的初值是一个空集合。
+- `CreativeModeTabs.tryRebuildTabContents` 的调用方**只有** `CreativeModeInventoryScreen` —— 也就是说，**只有玩家打开过创造模式物品栏，标签页内容才会被填充**。
+
+所以从连接线程直接读，读到的是「空」而不是「没建」，静默地把「还没构建」报成了「一个物品都没有」。**改的是探针**：在客户端线程上先调一次 `CreativeModeTabs.tryRebuildTabContents(mc.level.enabledFeatures(), true, mc.level.registryAccess())` 再读；顺便把断言从「至少有一个物品在栏里」加强成「**注册表里没有任何一个 technom 物品被所有标签页漏掉**」—— 那正是 `TechnomCreativeTabs` 的 javadoc 声称的性质。修完输出 `creative tabs hold 77 technom item(s) of 77 registered`。
+
+### 5. 本轮实际执行
+
+| 命令 | 结果 |
+|---|---|
+| `gradlew.bat build` | BUILD SUCCESSFUL；**JUnit 262 通过 / 0 失败**（34 个测试类） |
+| `gradlew.bat runGameTestServer` | **107/107 required tests passed** |
+| Rosetta 客户端探针（GTCEu + KubeJS，世界 `technom-autotest`） | **10/10 通过** |
+| `python tools/validate_technom_data.py` | **OK: no errors**（16 warning / 1 skip） |
+
+探针这一轮跑了两次，过程记在这里：
+
+| # | 时点 | 结果 | 说明 |
+|---|---|---|---|
+| 1 | 修探针前 | 6/10 | `10_` 创造栏误报；`11_` 已知世界同步竞态；`30_` 把客户端撞崩，`40_`/`41_` 因此 `TRANSPORT ERROR` |
+| 2 | 修探针后 | 10/10 | `10_` 77/77；`11_` **一次通过** 44/44（本次未触发竞态）；`40_` `usage pages JEI can find = 48/48` |
+
+第 2 次的关键几行：
+
+```
+creative tabs hold 77 technom item(s) of 77 registered
+client saw 44/44 block(s)
+block entities: 41, with a registered renderer: 18
+jei info recipes cover 48 item(s)
+usage pages JEI can find = 48/48
+ritual tome screen built and initialised
+```
+
+### 6. 本轮未验证 / 说明
+
+- **JEI 用途页与两本手册的排版都没有人眼看过。** 探针能证明「JEI 按物品找得到这一页、描述不是原始 key」，证明不了滚动框里好不好看；仪式书换行后的实际观感同样只有人眼能判。
+- 仪式书与 JEI 的英文文案以 HEAD 的上游英文为底、按本端口径改写；**中文是翻译，不是上游文本**（上游没有中文）。三处已知的上游错误在两种语言里都改掉了：加速器 9×9 → **11×11**、封印器「4 秒」→ 改为「封印携带宝物的村民以便取走宝物」、火焰仪式三级「DISABLED」→ 「尚未实现」。
+- `10_` 现在会在客户端线程上重建一次创造栏（`[34445ms]`），比其它探针慢很多。这是为确定性付的代价，记在这里以免以后被当成卡死。
+- 本轮只跑了默认运行时的 `runGameTestServer`，没有跑 `-PwithGtceu=true` / `-PwithBotania=false` / `-PwithJade=false`。
+- 上一轮遗留、本轮未动的项：存在燃烧器与水晶的**碰撞箱仍是整格**；仪式书条目行距端口用 `lineHeight + 1` 而上游是固定 8。
