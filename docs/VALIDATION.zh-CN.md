@@ -543,7 +543,7 @@ JAR 内 `theflogat/technomancy/gametest/` 0 条、`com/gregtechceu` 0 条；`dat
 - **扳手 tag 在纯 TC4R 环境下是空的**：`technom:tools/wrench` 只含可选引用 `#forge:tools/wrench` 与 `#c:wrenches`，没有任何 mod 提供时无物品命中。因此**另加了一条不依赖任何 mod 的触发方式：潜行空手右键能量输出面即旋转**（其余五面仍是取回效能宝石），否则修掉 A-19 反而会让旋转在纯净环境下无法触发。旋转逻辑本身由 GameTest 直接驱动 `cycleFacing()` 验证过，但 `use()` 里这两条分派路径都**未在游戏内点击验证**。
 - **配方与研究**：发电机与效能宝石都还没有配方或研究条目，生存中不可获得（战利品表已验证，但那只解决“挖了能拿回来”）。这部分属于其他批次。
 - **管道**：验证了紧贴 `thaumcraft:warded_jar` 与经过 **2 节** `thaumcraft:essentia_tube`。**没有**验证长链路与吸力衰减的实际极限（按 §8.5 推算约 59 节到已贴标签的量子罐）、`restricted_essentia_tube`（吸力砍半）、`filtered_essentia_tube` 与 `directional_essentia_tube`。
-- **原生 EU 输出**：发电机按 `320 / (32 × qPerEu)` 推导出 LV 2 安培（默认 4 Q/EU），但**没有**任何 GameTest 让它向真实 GT 机器推送 EU —— 现有的 EU 交换测试仍然用木桶托管一个独立的 `MachineEnergy`。发电机的 EU 通路目前只有代码审查依据。
+- **原生 EU 输出**：发电机按 `320 / (32 × qPerEu)` 推导出 LV 2 安培（默认 4 Q/EU）。**已实机端到端验证**（2026-10-01 第九轮补测 + 第十轮）：`probes/client/50_eu_ratings.java` 确认三台发电机的输出面都交出真实的 32 V / 2 A `IEnergyContainer`；`probes/client/53_power_flow.java` 进一步确认 GT 电网**真的会**从它取电——把节点能源炉的输出面转向线缆之后，GT 的路由解析到我们的 `GtEnergyContainerView`，一台 HV 电池箱在约 12 秒内从 0 充到 16,640 EU（约 64 EU/t）。此前「发电机 EU 通路只有代码审查依据」的说法**不再成立**。
 - **多人、跨维度、区块卸载、长时间运行**：均未验证。数据包 `/reload` 在运行中更换燃料表的行为也未验证（代码上是发布一张新的不可变表）。
 - **凝聚器联动**：永动机边界（凝聚器成本必须严格大于发电机烧 potentia 的产出）未加启动期断言，也未联动验证；凝聚器尚未实现。
 - 功能矩阵开头那句“当前工程只有初始化骨架，以下游戏内容全部待迁移”在量子罐落地时就已过时，本批次未改动它以免与其它分支冲突。
@@ -1571,6 +1571,30 @@ ritual tome screen built and initialised
 | `gradlew.bat build` | BUILD SUCCESSFUL；JUnit **267 通过 / 0 失败 / 0 错误**（35 个测试类） |
 | `gradlew.bat runGameTestServer` | **107/107 required tests passed** |
 | （GameTest 内的隔离扫描） | `scanned 316 shipped classes, 0 link GTCEu outside theflogat/technomancy/compat/gtceu/` |
+| `python tools/client_probe.py probes/client/50_eu_ratings.java --attach` | **PASS**：13 行全部命中预期档位（见下） |
+
+实机读到的档位 —— 每个方块放在玩家身边，六个面逐一 `GTCapabilityHelper.getEnergyContainer`，取最大档位（可旋转机器的 EU 只在朝向面）：
+
+```
+essentia_dynamo            in      0V 0A, out     32V 2A, 1/6 face(s)
+node_dynamo                in      0V 0A, out     32V 2A, 1/6 face(s)
+flower_dynamo              in      0V 0A, out     32V 2A, 1/6 face(s)
+biome_morpher              in   8192V 2A, out      0V 0A, 6/6 face(s)
+electric_bellows           in   2048V 2A, out      0V 0A, 6/6 face(s)
+eldritch_consumer          in 131072V 2A, out      0V 0A, 6/6 face(s)
+energy_condenser           in   2048V 2A, out      0V 0A, 6/6 face(s)
+mana_exchanger             in    512V 2A, out      0V 0A, 5/6 face(s)
+mana_fabricator            in 131072V 2A, out      0V 0A, 1/6 face(s)
+node_fabricator            in   8192V 2A, out      0V 0A, 5/6 face(s)
+existence_dynamic_burner   in   8192V 2A, out      0V 0A, 1/6 face(s)
+essentia_fusor             in 131072V 2A, out      0V 0A, 5/6 face(s)
+existence_burner           in      0V 0A, out      0V 0A, 0/6 face(s)
+flower_dynamo output faces offering real EU: 1
+```
+
+面数不足 6 的是可旋转机器（EU 只在朝向面）；静态存在燃烧器一个面都不开，正是它应有的样子。探针还断言：消费者绝不广告输出、发电机绝不广告输入、安培数恰好 2。
+
+这个探针本身踩过两个坑，都写进了文件头，重跑时别踩回去：桥是在集成服务器的 `ServerStartedEvent` 上开始监听的，那一刻客户端**还没收到区块**，`setBlock` 会静默失败、每台机器都读成「placed no block entity」，所以有 `//@wait 15` 与 `isLoaded` 硬闸门；另外 GTCEu 会给**任何**暴露 Forge Energy 的方块实体挂上自己的 `EUToFEProvider$GTEnergyWrapper`，它在非 EU 面返回 0 V 且 `outputsEnergy() == false`，不跳过它就会把消费者的非 EU 面误读成「EU 拒收」。
 
 新增 `EuRatingTest`（5 个用例）钉住三件事：九台机器在出厂 4 Q/EU 下各自落在哪个档位；**任何**档位算出来的整包都装得进预算；**没有更低的档位**能同时满足「付得起最贵一 tick」和「整包装得进」，以及向上取整与返回 0 的边界。
 
@@ -1578,8 +1602,58 @@ ritual tome screen built and initialised
 
 ### 6. 本轮未验证 / 说明
 
-- **实机未点击、未接 GT 线缆。** 本轮只跑了 JUnit 与 `runGameTestServer`；花卉发电机的 EU 输出、九台消费者在真实 GT 网络下的收电，都**没有**实机验证。`VALIDATION` 第 546 行那条「发电机的 EU 通路目前只有代码审查依据」**对本轮仍然成立**。
-- **没有为九台消费者补 GameTest。** 只有凝聚器有（`CondenserGtceuChecks`）。新增的 `EuRatingTest` 是纯单元测试，证明的是推导规则，不是「GT 线缆真的能充上电」。要补的话，`CondenserGtceuChecks` 就是模板。
+- **能力广告与 GT 路由都已实机验证。** 本轮补跑了两个探针（第 5 节 + 第十轮）：`50_eu_ratings.java` 证明九台消费者与三台发电机都交出了档位正确、方向正确、安培数为 2 的 `IEnergyContainer`，花卉发电机恰好一个活输出面，静态存在燃烧器一个面都不开；`53_power_flow.java` 证明 GT 网络**真的会**从发电机取电并充进一台 HV 电池箱。第 546 行那条「发电机的 EU 通路目前只有代码审查依据」至此**全部关闭**。
+- **没有为九台消费者补 GameTest。** 只有凝聚器有（`CondenserGtceuChecks`）。新增的 `EuRatingTest` 是纯单元测试，证明的是推导规则；两个客户端探针证明的是机器真的调用了它、并把结果挂到了 GT 能看见的能力上。**消费侧的收电**仍然只在 `CondenserGtceuChecks` 里被测过，其余八台没有 GameTest。要补的话，`CondenserGtceuChecks` 就是模板。
 - **档位是配置期的、不是运行期的。** `EuRating` 读的是会话开始时冻结的 `qPerEu`；把 `energy.fePerEu` 改成非 4 之后，第 3 节的档位表全部要重算（`EuRatingTest` 的档位用例会 `assumeTrue` 跳过，但另外三个性质用例仍然成立）。
-- **极端档位没有实机验证。** ZPM / IV 这些高档位在真实 GT 网络里的行为（GT 是否因为我们的 `getInputVoltage()` 很高而改变路由或损耗判定）只有代码审查依据；`acceptPackets` 对过压一律返回 0、不爆炸，所以不存在过压爆炸风险，但路由侧未实测。
+- **极端档位的路由行为没有实机验证。** ZPM / IV 这些高档位**广告出来是多少**已经实机确认（第 5 节的表），但 GT 在真实网络里**如何对待**这么高的 `getInputVoltage()`（是否改变路由或损耗判定）仍然只有代码审查依据；`acceptPackets` 对过压一律返回 0、不爆炸，所以不存在过压爆炸风险，但路由侧未实测。
 - **`MachineEnergy.getCapability` 对 FE 视图的潜在不对称**（对 `ForgeCapabilities.ENERGY` 无条件返回 `feView(side).cast()`，因此一个只开 EU 的面仍会广告一个惰性 `IEnergyStorage` 并挡掉 GT 的 `nativeEUToFE` 包装）**仍然存在**。本轮所有机器都是 fe+eu 同时开，所以触发不到；花卉发电机修复后也不再触发。这是一处待办，不是本轮引入的问题。
+
+## 电网实测与探针泄漏（2026-10-01 第十轮）
+
+第十轮是纯验证与开发工具修复：**产品代码一行未动**。目的是关掉第九轮留下的两处「只有代码审查依据」，并修掉一个会污染存档的探针缺陷。
+
+### 1. GT 电网真的会从发电机取电
+
+实机里用户搭了一套「节点能源炉 → MBCC 线缆 → HV 电池箱」。用 `probes/client/53_power_flow.java` 对着它读（探针读**服务端** level：客户端那份方块实体不同步能量账本）：
+
+```
+节点能源炉 (-20,-60,-121)   facing=down   stored=40000/40000   lit=true
+  ├ 输出面 down -> (-20,-61,-121) = minecraft:grass_block      ← 朝下，下面是草
+  └ 东面     east -> (-19,-60,-121) = MBCC 四重导线  [CABLE]   ← 线接在这里
+HV 电池箱 (-18,-60,-121)   stored=0/1600000
+```
+
+三条结论：
+
+- **节点能源炉只在朝向面输出。** 它当时 `facing=down`，下面是草方块，而线缆在**东面**——那个面既不输出 EU 也不输出 FE。于是它憋在满缓冲 40000/40000，电池恒为 0。这是**搭建问题，不是产品缺陷**。
+- **线材没有问题。** `gtceu:mercury_barium_calcium_cuprate_quadruple_wire` 的 `lossPerBlock=0`（零损耗超导线，额定 HV 512 V / 4 A），所以不属于「损耗 ≥ 电压导致整条线路被 GT 丢弃」那一类。
+- **转向后立刻通电。** 用方块自身的 `cycleFacing()`（与潜行空手右键输出面同一条路径）把朝向转到东面后，该面的 GT 容器从 `EUToFEProvider$GTEnergyWrapper` 变成我们自己的 `GtEnergyContainerView`（32 V / 2 A，`outputsEnergy=true`），GT 路由解析到它，HV 电池箱在约 12 秒内 **0 → 16,640 EU**（约 64 EU/t），发电机缓冲随之排空。
+
+这同时验证了 `GtEnergyContainerView` / `EuPort` 的**发电侧**语义：GT 的电网确实会来取电，而不只是把它当成一个只读视图。第 546 行那条「发电机 EU 通路只有代码审查依据」至此关闭。
+
+### 2. 探针泄漏了玩家的 `NoGravity` 标志
+
+`probes/client/10_renderers_and_tab.java` 为了让测试玩家别往下掉、好让区块在 `11_` 检查期间保持加载，对**服务端玩家**调用了 `player.setNoGravity(true)`，但**从未还原**。
+
+`NoGravity` 是会被写进玩家 NBT 的**实体字段**，不是状态效果，所以它随存档持久化。实机表现就是玩家永久「漂浮」，而 `getActiveEffects()` 为空——很容易被误判成漂浮药水。在 `run-client/saves/technom-autotest/playerdata/<uuid>.dat` 里可以直接读到 `NoGravity=1`。
+
+修复分两处：探针 10 先把原值存进系统属性 `technom.probe.gravity.was`，探针 11 收尾时还原；当前存档里已经泄漏的那一份单独清掉，并确认存档重写后该字段消失。
+
+这是**开发期工具的缺陷，不是产品缺陷**：`probes/` 不随 jar 发布，玩家不受影响。它之所以会伤到人，是因为这对探针当初是按「一次性虚空测试世界」写的，而现在同一个存档被拿来手动游玩。
+
+### 3. 本轮执行
+
+| 命令 | 结果 |
+|---|---|
+| `python tools/client_probe.py probes/client/50_eu_ratings.java --attach` | PASS（13 行全部命中预期档位） |
+| `python tools/client_probe.py probes/client/53_power_flow.java --attach` | 抓到朝向缺陷；转向后电池 0 → 16,640 EU |
+| `python tools/client_probe.py probes/client/52_jade_state.java --attach` | Jade 11.13.3+forge 已加载、显示开关全开、`hideFromDebug=true` |
+| `python tools/client_probe.py probes/client/56_player_effects.java --attach` | 状态效果 0 个、`noGravity=true`（据此定位漂浮） |
+
+**未跑 `build` 与 `runGameTestServer`**：本轮没有改动任何产品代码，改动只落在 `probes/` 与本文档。
+
+### 4. 本轮未验证
+
+- **高档位的路由与损耗判定**仍未实测（本轮只走了 LV 32 V）。
+- **消费侧（九台机器收电）**仍然只有凝聚器有 GameTest。
+- **探针 10/11 的改动没有重跑**：跑一次会在玩家身边铺满全部 technom 方块，属于破坏性操作，留待下一次整套探针运行时一并验证。

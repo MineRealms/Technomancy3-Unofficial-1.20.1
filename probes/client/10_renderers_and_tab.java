@@ -87,12 +87,15 @@ server.execute(() -> {
     // Anchor on the server player so the chunk is loaded on the client - a block the
     // client cannot see is indistinguishable from one that never arrived. Gravity is
     // switched off so the player stops falling and the chunk stays put while 11 runs.
+    // The old value is stashed because NoGravity is saved in the player NBT: leaving it
+    // set would float whoever plays this save afterwards. 11 restores it.
     java.util.List<net.minecraft.server.level.ServerPlayer> players = level.players();
     net.minecraft.core.BlockPos origin;
     if (players.isEmpty()) {
         origin = new net.minecraft.core.BlockPos(0, 100, 0);
     } else {
         net.minecraft.server.level.ServerPlayer player = players.get(0);
+        System.setProperty("technom.probe.gravity.was", Boolean.toString(player.isNoGravity()));
         player.setNoGravity(true);
         player.setDeltaMovement(0.0D, 0.0D, 0.0D);
         player.hurtMarked = true;

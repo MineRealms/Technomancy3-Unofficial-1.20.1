@@ -78,5 +78,17 @@ if (jar == null) {
             + "its essentia level and label would never draw");
 }
 
+// Hand the player's gravity back. Probe 10 switched it off to stop the test player falling, and
+// NoGravity is saved in the player NBT, so leaving it set floats whoever plays this save next.
+if (mc.getSingleplayerServer() != null && mc.player != null) {
+    net.minecraft.server.level.ServerPlayer sp =
+            mc.getSingleplayerServer().getPlayerList().getPlayer(mc.player.getUUID());
+    if (sp != null) {
+        boolean was = Boolean.parseBoolean(System.getProperty("technom.probe.gravity.was", "false"));
+        sp.setNoGravity(was);
+        out.append("restored player gravity to noGravity=").append(was).append("\n");
+    }
+}
+
 out.append(bad.isEmpty() ? "PASS\n" : "FAIL: " + bad + "\n");
 return out.toString();
